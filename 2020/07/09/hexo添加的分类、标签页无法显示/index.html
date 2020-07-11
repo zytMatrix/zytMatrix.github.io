@@ -345,7 +345,7 @@
       
         <h2 id="1-点击home、tags等显示404"><a href="#1-点击home、tags等显示404" class="headerlink" title="1. 点击home、tags等显示404"></a>1. 点击home、tags等显示404</h2><p><strong>url：</strong><a href="https://zytmatrix.github.io/tags/" target="_blank" rel="noopener">https://zytmatrix.github.io/tags/%20</a></p>
 <p>页面显示内容：</p>
-<img src="/Users/zyt/Library/Application Support/typora-user-images/image-20200709224900196.png" alt="image-20200709224900196" style="zoom:50%;" />
+<img src="/Users/zyt/Library/Application Support/typora-user-images/image-20200709224900196.png" alt="image-20200709224900196" style="zoom:50%;">
 
 <p><strong>原因及解决办法</strong></p>
 <p>在主题的配置文件<code>themes/next/_config.yml</code>中，为了打开<code>home、tags、categories</code>等页面，需要去掉前面的注释。但是在<code>||</code>前面有一个空格，更新后在博客中点<code>tags</code>，浏览器显示404且<code>url</code>的末尾有一个%20（表示空格）。因此我们需要去掉所有<code>||</code>前面的空格：</p>

@@ -347,7 +347,7 @@
 <h2 id="二、LaTeX-WorkShop-插件配置中文环境"><a href="#二、LaTeX-WorkShop-插件配置中文环境" class="headerlink" title="二、LaTeX WorkShop 插件配置中文环境"></a>二、LaTeX WorkShop 插件配置中文环境</h2><p>LaTeX WorkShop 插件默认只提供<code>PDFLaTeX</code>，而中文编译需要<code>XeFLaTeX</code>，所以还需另行配置。进入 Settings 的 JSON 文件，加入以下配置：</p>
 <ol>
 <li><p>在latex-workshop.latex.tools配置中，增加xelatex项，具体如下。这一项的作用是在工具集中定义xelatex项，以便下一项配置能找到。在setting搜索框中搜索<code>latex-workshop.latex.tools</code>，打开进行编辑</p>
-<p><img src="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/zyt/Documents/myBlog/source/_posts/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/image-20200711114101327.png" alt="image-20200711114101327"></p>
+<p><img src="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/image-20200711114101327.png" alt="image-20200711114101327"></p>
 <p>增加的内容为：</p>
 <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"name"</span>: <span class="string">"xelatex"</span>,</span><br><span class="line">    <span class="attr">"command"</span>: <span class="string">"xelatex"</span>,</span><br><span class="line">    <span class="attr">"args"</span>: [</span><br><span class="line">        <span class="string">"-synctex=1"</span>,</span><br><span class="line">        <span class="string">"-interaction=nonstopmode"</span>,</span><br><span class="line">        <span class="string">"-file-line-error"</span>,</span><br><span class="line">        <span class="string">"-pdf"</span>,</span><br><span class="line">        <span class="string">"%DOC%"</span></span><br><span class="line">    ]</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
 
@@ -357,7 +357,7 @@
 </ol>
 <ol start="2">
 <li><p>在latex-workshop.latex.recipes配置中，将第一项的latexmk改为xelatex。这里定义的是编译时调用的工具顺序，默认第一个为latexmk，因为我们要支持中文，所以替换为xelatex。在setting搜索框中搜索<code>latex-workshop.latex.tools</code>，打开进行编辑：</p>
-<p><img src="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/zyt/Documents/myBlog/source/_posts/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/image-20200711114358156.png" alt="image-20200711114358156"></p>
+<p><img src="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/image-20200711114358156.png" alt="image-20200711114358156"></p>
 <p>增加的内容为：</p>
 <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"name"</span>: <span class="string">"xelatex"</span>,</span><br><span class="line">    <span class="attr">"tools"</span>: [</span><br><span class="line">    		<span class="string">"xelatex"</span></span><br><span class="line">    ]</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
 </li>
@@ -368,7 +368,7 @@
 <figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">\<span class="name">documentclass</span><span class="string">[UTF8]</span><span class="string">&#123;ctexart&#125;</span></span></span><br><span class="line"><span class="tag">\<span class="name">title</span><span class="string">&#123;你好，world!&#125;</span></span></span><br><span class="line"><span class="tag">\<span class="name">author</span><span class="string">&#123;李明&#125;</span></span></span><br><span class="line"><span class="tag">\<span class="name">date</span><span class="string">&#123;\today&#125;</span></span></span><br><span class="line"><span class="tag">\<span class="name">begin</span><span class="string">&#123;document&#125;</span></span></span><br><span class="line"><span class="tag">\<span class="name">maketitle</span></span></span><br><span class="line">你好，world!</span><br><span class="line"><span class="tag">\<span class="name">end</span><span class="string">&#123;document&#125;</span></span></span><br></pre></td></tr></table></figure>
 
 <p>得到的结果为：</p>
-<p><img src="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/zyt/Documents/myBlog/source/_posts/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/image-20200711115109103.png" alt="image-20200711115109103"></p>
+<p><img src="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/image-20200711115109103.png" alt="image-20200711115109103"></p>
 </li>
 </ol>
 <h2 id="三、配置VSCode与Skim的LaTeX正反跳转"><a href="#三、配置VSCode与Skim的LaTeX正反跳转" class="headerlink" title="三、配置VSCode与Skim的LaTeX正反跳转"></a>三、配置VSCode与Skim的LaTeX正反跳转</h2><ol>
@@ -404,7 +404,7 @@
 <p>至此，我们在命令行中执行 <strong><code>vscode -g &quot;%file&quot;:%line</code></strong> 即可打开 <strong><code>%file</code></strong> 文件并定位到第 <strong><code>%line</code></strong> 行。于是，我们只需要在 Skim 的同步配置中将预设改为「自定义」(必须改为自动以才可以使用后向跳转)，并将命令和参数分别设置如下：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Command: vscode</span><br><span class="line">Arguments: -g &quot;%file&quot;:%line</span><br></pre></td></tr></table></figure>
 
-<img src="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/zyt/Documents/myBlog/source/_posts/MacOS下配置Latex/image-20200711115731991.png" alt="image-20200711115109103" style="zoom:50%;">
+<img src="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/image-20200711115731991.png" alt="image-20200711115109103" style="zoom:50%;">
 
 <p>如此即完成了配置。</p>
 <p><strong>在 Skim 中跳转到TeX源码对应的位置的快捷键: <code>command + shift + click</code></strong></p>
@@ -791,7 +791,7 @@
           
             <h2 id="1-点击home、tags等显示404"><a href="#1-点击home、tags等显示404" class="headerlink" title="1. 点击home、tags等显示404"></a>1. 点击home、tags等显示404</h2><p><strong>url：</strong><a href="https://zytmatrix.github.io/tags/" target="_blank" rel="noopener">https://zytmatrix.github.io/tags/%20</a></p>
 <p>页面显示内容：</p>
-<img src="/Users/zyt/Library/Application Support/typora-user-images/image-20200709224900196.png" alt="image-20200709224900196" style="zoom:50%;" />
+<img src="/Users/zyt/Library/Application Support/typora-user-images/image-20200709224900196.png" alt="image-20200709224900196" style="zoom:50%;">
 
 <p><strong>原因及解决办法</strong></p>
 <p>在主题的配置文件<code>themes/next/_config.yml</code>中，为了打开<code>home、tags、categories</code>等页面，需要去掉前面的注释。但是在<code>||</code>前面有一个空格，更新后在博客中点<code>tags</code>，浏览器显示404且<code>url</code>的末尾有一个%20（表示空格）。因此我们需要去掉所有<code>||</code>前面的空格：</p>
@@ -1138,7 +1138,7 @@
 <p>An Exploit object represents the successful application of an exploit technique to a crash state.</p>
 </blockquote>
 <p>rex 实现了 ExploitFactory 类，用于管理和构建 exploit,</p>
-<p>调用 exploit() 方法时，ExploitFactory 会依次应用每一种利用技术, 尝试生成 exploit, 得到的 exploit 会以arsenal[<techinique_name>] 形式存储在 arsenal 属性中. 针对 CGC 实现了 CGCExploitFactory 类.</p>
+<p>调用 exploit() 方法时，ExploitFactory 会依次应用每一种利用技术, 尝试生成 exploit, 得到的 exploit 会以arsenal[<techinique_name>] 形式存储在 arsenal 属性中. 针对 CGC 实现了 CGCExploitFactory 类.</techinique_name></p>
 <p>构建 exp:</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">exploit</span><span class="params">(self, blacklist_symbolic_explore=True, **kwargs)</span>:</span></span><br><span class="line">        <span class="string">"""</span></span><br><span class="line"><span class="string">        Initialize an exploit factory, with which you can build exploits.</span></span><br><span class="line"><span class="string">        :return:    An initialized ExploitFactory instance.</span></span><br><span class="line"><span class="string">        :rtype:     ExploitFactory</span></span><br><span class="line"><span class="string">        """</span></span><br><span class="line">        factory = self._prepare_exploit_factory(blacklist_symbolic_explore, **kwargs)</span><br><span class="line">        factory.initialize()</span><br><span class="line">        <span class="keyword">return</span> factory</span><br></pre></td></tr></table></figure>
 
