@@ -249,6 +249,177 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/14/INS_Address()%20%E5%92%8C%20IARG_INST_PTR%20%E7%9A%84%E4%B8%8D%E5%90%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/07/14/INS_Address()%20%E5%92%8C%20IARG_INST_PTR%20%E7%9A%84%E4%B8%8D%E5%90%8C/" itemprop="url">INS_Address()和IARG_INST_PTR的不同</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-07-14T17:35:45+08:00">
+                2020-07-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Pin/" itemprop="url" rel="index">
+                    <span itemprop="name">Pin</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="一、INS-Address-和-IARG-INST-PTR-的地址可能不一样"><a href="#一、INS-Address-和-IARG-INST-PTR-的地址可能不一样" class="headerlink" title="一、INS_Address() 和 IARG_INST_PTR 的地址可能不一样"></a>一、INS_Address() 和 IARG_INST_PTR 的地址可能不一样</h2><p>INS_Address（ins）：在<code>image</code>加载的时加载到当前指令时，打印该指令的地址</p>
+<p>IARG_INST_PTR：执行指令时给出指令的地址。<code>image</code>的重定位在运行时发生，因此地址可能不同。</p>
+<h2 id="二、同样的代码静态编译、动态编译，执行的地址不一样"><a href="#二、同样的代码静态编译、动态编译，执行的地址不一样" class="headerlink" title="二、同样的代码静态编译、动态编译，执行的地址不一样"></a>二、同样的代码静态编译、动态编译，执行的地址不一样</h2><p>由于动态链接程序不会直接以二进制开始执行：在控制权转移到可执行文件main中的_start之前，前几千条指令在动态链接器（ld-linux）中执行。</p>
+<p>动态链接的<code>hello</code>的执行地址：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:test# gcc -o hello hello.c -m32</span><br><span class="line">root@ubuntu:test# file hello</span><br><span class="line">hello: ELF 32-bit LSB  executable, Intel 80386, version 1 (SYSV), dynamically linked (uses shared libs), for GNU&#x2F;Linux 2.6.24, BuildID[sha1]&#x3D;141cdcbf96da50c2e5b37f2f8b933a971d1a4f63, not stripped</span><br><span class="line"></span><br><span class="line">root@ubuntu:test# &#x2F;home&#x2F;vuzzer&#x2F;pin&#x2F;pin -t ..&#x2F;obj-ia32&#x2F;itrace.so -- .&#x2F;hello</span><br><span class="line">Hello World!</span><br><span class="line"></span><br><span class="line">root@ubuntu:test# head -10 itrace.out </span><br><span class="line">0xb76e8030</span><br><span class="line">0xb76e8032</span><br><span class="line">0xb76e86a0</span><br><span class="line">0xb76e86a1</span><br><span class="line">0xb76e86a3</span><br><span class="line">0xb76e86a4</span><br><span class="line">0xb76e86a5</span><br><span class="line">0xb76e86a6</span><br><span class="line">0xb76e86a9</span><br><span class="line">0xb76ff978</span><br></pre></td></tr></table></figure>
+
+<p>静态链接的<code>hello</code>的执行地址：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:test# gcc -o hello hello.c -m32 -static</span><br><span class="line">root@ubuntu:test# file hello</span><br><span class="line">hello: ELF 32-bit LSB  executable, Intel 80386, version 1 (GNU&#x2F;Linux), statically linked, for GNU&#x2F;Linux 2.6.24, BuildID[sha1]&#x3D;800af8cbd98ee14dfc12aa4264dcc80e4727b333, not stripped</span><br><span class="line"></span><br><span class="line">root@ubuntu:test# &#x2F;home&#x2F;vuzzer&#x2F;pin&#x2F;pin -t ..&#x2F;obj-ia32&#x2F;itrace.so -- .&#x2F;hello</span><br><span class="line">Hello World!</span><br><span class="line"></span><br><span class="line">root@ubuntu:test# head -10 itrace.out </span><br><span class="line">0x8048d2a</span><br><span class="line">0x8048d2c</span><br><span class="line">0x8048d2d</span><br><span class="line">0x8048d2f</span><br><span class="line">0x8048d32</span><br><span class="line">0x8048d33</span><br><span class="line">0x8048d34</span><br><span class="line">0x8048d35</span><br><span class="line">0x8048d3a</span><br><span class="line">0x8048d3f</span><br></pre></td></tr></table></figure>
+
+<p>动态链接的程序在运行时的步骤是：</p>
+<ol>
+<li><p>内核创建一个新进程“ shell”，并将可执行文件映射到其中。</p>
+</li>
+<li><p>内核观察到该可执行文件具有<code>PT_INTERP</code>段，并将其中引用的文件映射到进程中。此处，<code>PT_INTERP</code>的内容是<code>/lib64/ld-linux-x86-64.so.2</code>，又名动态加载程序，不要与<code>/usr/bin/ld</code>（又名静态链接器）混淆。此外，因为需要程序解释器，所以内核将控制权转移给它（而不是main文件中的_start，因为main文件尚未准备好运行）。</p>
+</li>
+<li><p>当<code>ld-linux</code>开始运行时，它会首先对自己重定位，然后映射main文件链接到的所有库。可以使用<code>readelf -d a.out |grep NEEDED</code>查看这些库。</p>
+<p>注意：由于这些库中的每个库本身可能直接依赖于其他库，因此将以递归方式重复此过程。</p>
+</li>
+<li><p>库被初始化（通过调用其构造函数，该函数通常称为<em>init，但也可以具有不同的名称）</em></p>
+</li>
+<li><p>加载并初始化所有库后，<code>ld-linux</code>最终调用_start，最终将调用main。</p>
+</li>
+</ol>
+<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><blockquote>
+<ol>
+<li><a href="https://stackoverflow.com/questions/62050627/pin-tool-the-static-ins-address-ins-addressins-is-different-from-the-address" target="_blank" rel="noopener">https://stackoverflow.com/questions/62050627/pin-tool-the-static-ins-address-ins-addressins-is-different-from-the-address</a></li>
+<li><a href="https://stackoverflow.com/questions/62125651/instruction-point-value-of-dynamic-linking-and-static-linking" target="_blank" rel="noopener">https://stackoverflow.com/questions/62125651/instruction-point-value-of-dynamic-linking-and-static-linking</a></li>
+<li><a href="https://stackoverflow.com/questions/61789860/how-to-set-breakpoint-on-entry-of-dynamically-opened-shared-library/61790355#61790355" target="_blank" rel="noopener">https://stackoverflow.com/questions/61789860/how-to-set-breakpoint-on-entry-of-dynamically-opened-shared-library/61790355#61790355</a></li>
+</ol>
+</blockquote>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/14/Instruction-Address-Trace/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1919,7 +2090,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-count">9</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
