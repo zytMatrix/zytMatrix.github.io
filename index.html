@@ -249,6 +249,320 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/14/Instruction-Address-Trace/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/07/14/Instruction-Address-Trace/" itemprop="url">Instruction_Address_Trace</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-07-14T16:59:23+08:00">
+                2020-07-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Pin/" itemprop="url" rel="index">
+                    <span itemprop="name">Pin</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="二、Instruction-Address-Trace-Instruction-Instrumentation"><a href="#二、Instruction-Address-Trace-Instruction-Instrumentation" class="headerlink" title="二、Instruction Address Trace (Instruction Instrumentation)"></a>二、Instruction Address Trace (Instruction Instrumentation)</h2><p>在上一个例子中，我们没有给分析函数<code>docount</code>传递任何参数。在本例中，将展示如何进行参数传递。当调用分析函数时候，Pin允许传入指令指针、当前寄存器的值、内存操作的有效地址、常量等。具体可见<a href="https://software.intel.com/sites/landingpage/pintool/docs/98223/Pin/html/group__INST__ARGS.html#ga089c27ca15e9ff139dd3a3f8a6f8451d" target="_blank" rel="noopener">IARG_TYPE</a>。</p>
+<p>在之前的例子上稍作改动，我们将指令计数的例子转化为打印每条执行过的指令地址的Pintool。这有助于调试时理解程序的控制流，或益于模拟指令缓存时的处理器设计中。</p>
+<p>我们改变函数<code>INS_InsertCall</code>的参数，将被执行过的指令的地址作为参数。将<code>docount</code>替换为<code>printip</code>，打印指令的地址。将输出写入文件<code>itrace.out</code>中。</p>
+<p>首先进行编译：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># cd source&#x2F;tools&#x2F;ManualExamples</span><br><span class="line"></span><br><span class="line"># make obj-ia32&#x2F;itrace.so TARGET&#x3D;ia32</span><br><span class="line">g++ -DBIGARRAY_MULTIPLIER&#x3D;1 -Wall -Werror -Wno-unknown-pragmas -fno-stack-protector -DTARGET_IA32 -DHOST_IA32 -DTARGET_LINUX  -I..&#x2F;..&#x2F;..&#x2F;source&#x2F;include&#x2F;pin -I..&#x2F;..&#x2F;..&#x2F;source&#x2F;include&#x2F;pin&#x2F;gen -I..&#x2F;..&#x2F;..&#x2F;extras&#x2F;components&#x2F;include -I..&#x2F;..&#x2F;..&#x2F;extras&#x2F;xed2-ia32&#x2F;include -I..&#x2F;..&#x2F;..&#x2F;source&#x2F;tools&#x2F;InstLib -O3 -fomit-frame-pointer -fno-strict-aliasing   -c -o obj-ia32&#x2F;itrace.o itrace.cpp</span><br><span class="line">g++ -shared -Wl,--hash-style&#x3D;sysv -Wl,-Bsymbolic -Wl,--version-script&#x3D;..&#x2F;..&#x2F;..&#x2F;source&#x2F;include&#x2F;pin&#x2F;pintool.ver    -o obj-ia32&#x2F;itrace.so obj-ia32&#x2F;itrace.o  -L..&#x2F;..&#x2F;..&#x2F;ia32&#x2F;lib -L..&#x2F;..&#x2F;..&#x2F;ia32&#x2F;lib-ext -L..&#x2F;..&#x2F;..&#x2F;ia32&#x2F;runtime&#x2F;glibc -L..&#x2F;..&#x2F;..&#x2F;extras&#x2F;xed2-ia32&#x2F;lib -lpin -lxed -ldwarf -lelf -ldl</span><br></pre></td></tr></table></figure>
+
+<p>下面是如何运行它并显示它的输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># &#x2F;home&#x2F;vuzzer&#x2F;pin&#x2F;pin -t ..&#x2F;obj-ia32&#x2F;itrace.so -- &#x2F;bin&#x2F;ls</span><br><span class="line">2comp  hello.txt  inscount0.log  inscount.out  itrace.out  pinatrace.out  pin.log  tmp_res.out</span><br><span class="line"></span><br><span class="line">root@ubuntu:test# head -10 itrace.out </span><br><span class="line">0x804c041</span><br><span class="line">0x804c043</span><br><span class="line">0x804c044</span><br><span class="line">0x804c046</span><br><span class="line">0x804c049</span><br><span class="line">0x804c04a</span><br><span class="line">0x804c04b</span><br><span class="line">0x804c04c</span><br><span class="line">0x804c051</span><br><span class="line">0x804c056</span><br></pre></td></tr></table></figure>
+
+<p>Pintool 运行在 32 位系统上，发现打印出很多以 0xb 开头的指令地址，所以加了判断，限定仅分析二进制属于范围：0x8048000 - 0x8800000 中的指令，结果如上所示。</p>
+<p>本例的源码在<code>source/tools/ManualExamples/itrace.cpp</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"pin.H"</span></span></span><br><span class="line">FILE * trace;</span><br><span class="line"><span class="comment">// This function is called before every instruction is executed</span></span><br><span class="line"><span class="comment">// and prints the IP</span></span><br><span class="line"><span class="function">VOID <span class="title">printip</span><span class="params">(VOID *ip)</span> </span>&#123; <span class="built_in">fprintf</span>(trace, <span class="string">"%p\n"</span>, ip); &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Pin calls this function every time a new instruction is encountered</span></span><br><span class="line"><span class="function">VOID <span class="title">Instruction</span><span class="params">(INS ins, VOID *v)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Insert a call to printip before every instruction, and pass it the IP</span></span><br><span class="line">  	<span class="comment">// IARG_INST_PTR：被插桩指令的地址</span></span><br><span class="line">    <span class="comment">// INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)printip, IARG_INST_PTR, IARG_END);</span></span><br><span class="line">  </span><br><span class="line">  	<span class="keyword">if</span> (INS_Address(ins) &gt; <span class="number">0x8048000</span> &amp;&amp; INS_Address(ins) &lt; <span class="number">0x8800000</span>)&#123;</span><br><span class="line">        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)printip, IARG_INST_PTR, IARG_END);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// This function is called when the application exits</span></span><br><span class="line"><span class="function">VOID <span class="title">Fini</span><span class="params">(INT32 code, VOID *v)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(trace, <span class="string">"#eof\n"</span>);</span><br><span class="line">    fclose(trace);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Print Help Message                                                    */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="function">INT32 <span class="title">Usage</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    PIN_ERROR(<span class="string">"This Pintool prints the IPs of every instruction executed\n"</span> </span><br><span class="line">              + KNOB_BASE::StringKnobSummary() + <span class="string">"\n"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Main                                                                  */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    trace = fopen(<span class="string">"itrace.out"</span>, <span class="string">"w"</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Initialize pin</span></span><br><span class="line">    <span class="keyword">if</span> (PIN_Init(argc, argv)) <span class="keyword">return</span> Usage();</span><br><span class="line">    <span class="comment">// Register Instruction to be called to instrument instructions</span></span><br><span class="line">    INS_AddInstrumentFunction(Instruction, <span class="number">0</span>);</span><br><span class="line">    <span class="comment">// Register Fini to be called when the application exits</span></span><br><span class="line">    PIN_AddFiniFunction(Fini, <span class="number">0</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Start the program, never returns</span></span><br><span class="line">    PIN_StartProgram();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>本例使用的API：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">INS_Address（INS ins）</span><br><span class="line">返回值：指令的地址</span><br></pre></td></tr></table></figure>
+
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/14/Simple-Instruction-Count/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/07/14/Simple-Instruction-Count/" itemprop="url">Simple_Instruction_Count</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-07-14T16:58:05+08:00">
+                2020-07-14
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Pin/" itemprop="url" rel="index">
+                    <span itemprop="name">Pin</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="一、Simple-Instruction-Count-Instruction-Instrumentation"><a href="#一、Simple-Instruction-Count-Instruction-Instrumentation" class="headerlink" title="一、Simple Instruction Count (Instruction Instrumentation)"></a>一、Simple Instruction Count (Instruction Instrumentation)</h2><p>下面的例子对程序进行插桩，统计其指令数目。在每一条指令前插入函数<code>docount</code>。当程序退出的时候，将<code>count</code>保存在文件<code>iscount.pout</code>中。</p>
+<p>首先进行编译：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"># cd source&#x2F;tools&#x2F;ManualExamples</span><br><span class="line"></span><br><span class="line"># make obj-ia32&#x2F;inscount0.so TARGET&#x3D;ia32</span><br><span class="line">g++ -DBIGARRAY_MULTIPLIER&#x3D;1 -Wall -Werror -Wno-unknown-pragmas -fno-stack-protector -DTARGET_IA32 -DHOST_IA32 -DTARGET_LINUX  -I..&#x2F;..&#x2F;..&#x2F;source&#x2F;include&#x2F;pin -I..&#x2F;..&#x2F;..&#x2F;source&#x2F;include&#x2F;pin&#x2F;gen -I..&#x2F;..&#x2F;..&#x2F;extras&#x2F;components&#x2F;include -I..&#x2F;..&#x2F;..&#x2F;extras&#x2F;xed2-ia32&#x2F;include -I..&#x2F;..&#x2F;..&#x2F;source&#x2F;tools&#x2F;InstLib -O3 -fomit-frame-pointer -fno-strict-aliasing   -c -o obj-ia32&#x2F;inscount0.o inscount0.cpp</span><br><span class="line">g++ -shared -Wl,--hash-style&#x3D;sysv -Wl,-Bsymbolic -Wl,--version-script&#x3D;..&#x2F;..&#x2F;..&#x2F;source&#x2F;include&#x2F;pin&#x2F;pintool.ver    -o obj-ia32&#x2F;inscount0.so obj-ia32&#x2F;inscount0.o  -L..&#x2F;..&#x2F;..&#x2F;ia32&#x2F;lib -L..&#x2F;..&#x2F;..&#x2F;ia32&#x2F;lib-ext -L..&#x2F;..&#x2F;..&#x2F;ia32&#x2F;runtime&#x2F;glibc -L..&#x2F;..&#x2F;..&#x2F;extras&#x2F;xed2-ia32&#x2F;lib -lpin -lxed -ldwarf -lelf -ldl</span><br><span class="line"></span><br><span class="line"># ls .&#x2F;obj-ia32&#x2F;</span><br><span class="line">inscount0.o  inscount0.so</span><br></pre></td></tr></table></figure>
+
+<p>下面是如何运行它并显示它的输出：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># &#x2F;home&#x2F;vuzzer&#x2F;pin&#x2F;pin -t ..&#x2F;obj-ia32&#x2F;inscount0.so -- &#x2F;bin&#x2F;ls</span><br><span class="line">2comp  hello.txt  inscount.out	pinatrace.out  pin.log	tmp_res.out</span><br><span class="line"></span><br><span class="line"># cat inscount.out </span><br><span class="line">Count 454790</span><br></pre></td></tr></table></figure>
+
+<p><code>KNOB</code>可以覆盖默认的输出文件的名字，在命令行中增加<code>-o &lt;file_name&gt;</code>即可使用。工具的命令行选项应当插入在<code>pintool_name</code>和<code>--</code>之间：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># &#x2F;home&#x2F;vuzzer&#x2F;pin&#x2F;pin -t ..&#x2F;obj-ia32&#x2F;inscount0.so -o inscount0.log -- &#x2F;bin&#x2F;ls</span><br><span class="line">2comp  hello.txt  inscount0.log  inscount.out  pinatrace.out  pin.log  tmp_res.out</span><br><span class="line"></span><br><span class="line"># cat inscount0.log </span><br><span class="line">Count 463404</span><br></pre></td></tr></table></figure>
+
+<p>本例的源码在<code>source/tools/ManualExamples/inscount0.cpp</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fstream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"pin.H"</span></span></span><br><span class="line"></span><br><span class="line">ofstream OutFile;</span><br><span class="line"></span><br><span class="line"><span class="comment">// The running count of instructions is kept here</span></span><br><span class="line"><span class="comment">// make it static to help the compiler optimize docount</span></span><br><span class="line"><span class="keyword">static</span> UINT64 icount = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// This function is called before every instruction is executed </span></span><br><span class="line"><span class="comment">// 每一条指令被执行前调用此函数</span></span><br><span class="line"><span class="function">VOID <span class="title">docount</span><span class="params">()</span> </span>&#123; icount++; &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Pin calls this function every time a new instruction is encountered </span></span><br><span class="line"><span class="comment">// 每当遇到新的指令时调用此函数</span></span><br><span class="line"><span class="function">VOID <span class="title">Instruction</span><span class="params">(INS ins, VOID *v)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Insert a call to docount before every instruction, no arguments are passed</span></span><br><span class="line">    INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)docount, IARG_END);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">KNOB&lt;<span class="built_in">string</span>&gt; <span class="title">KnobOutputFile</span><span class="params">(KNOB_MODE_WRITEONCE, <span class="string">"pintool"</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="string">"o"</span>, <span class="string">"inscount.out"</span>, <span class="string">"specify output file name"</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// This function is called when the application exits</span></span><br><span class="line"><span class="function">VOID <span class="title">Fini</span><span class="params">(INT32 code, VOID *v)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Write to a file since cout and cerr maybe closed by the application</span></span><br><span class="line">    OutFile.setf(ios::showbase);</span><br><span class="line">    OutFile &lt;&lt; <span class="string">"Count "</span> &lt;&lt; icount &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    OutFile.<span class="built_in">close</span>();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Print Help Message                                                    */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"></span><br><span class="line"><span class="function">INT32 <span class="title">Usage</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">cerr</span> &lt;&lt; <span class="string">"This tool counts the number of dynamic instructions executed"</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="built_in">cerr</span> &lt;&lt; <span class="built_in">endl</span> &lt;&lt; KNOB_BASE::StringKnobSummary() &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Main                                                                  */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/*   argc, argv are the entire command line: pin -t &lt;toolname&gt; -- ...    */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Initialize pin</span></span><br><span class="line">    <span class="keyword">if</span> (PIN_Init(argc, argv)) <span class="keyword">return</span> Usage();</span><br><span class="line"></span><br><span class="line">    OutFile.<span class="built_in">open</span>(KnobOutputFile.Value().c_str());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Register Instruction to be called to instrument instructions</span></span><br><span class="line">    <span class="comment">// 对指令进行插桩</span></span><br><span class="line">    INS_AddInstrumentFunction(Instruction, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Register Fini to be called when the application exits</span></span><br><span class="line">    <span class="comment">// 程序退出时的回调函数</span></span><br><span class="line">    PIN_AddFiniFunction(Fini, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Start the program, never returns</span></span><br><span class="line">    PIN_StartProgram();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>指令插桩的API:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">VOID <span class="title">LEVEL_PINCLIENT::INS_InsertCall</span>	<span class="params">(	INS ins, IPOINT action, AFUNPTR funptr, ... )</span>		</span></span><br><span class="line">对于指令ins插入函数调用funptr。</span><br><span class="line"></span><br><span class="line">参数:</span><br><span class="line">ins			被插桩的指令</span><br><span class="line">action	特指 before, after等等</span><br><span class="line">				IPOINT_BEFORE 对所有指令永久有效</span><br><span class="line">				IPOINT_AFTER 仅当存在`fall-through`时才有效(i.e. call指令和无条件跳转指令将失败).</span><br><span class="line">				IPOINT_TAKEN_BRANCH 对非分支指令无效</span><br><span class="line">funptr	插入的函数</span><br><span class="line">...			传给函数 funptr 的参数列表，以 IARG_END 结束</span><br><span class="line">  </span><br><span class="line">若对同一指令插入了多个函数调用，那么函数调用的顺序取决于IARG_CALL_ORDER</span><br></pre></td></tr></table></figure>
+
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/11/Hexo%E5%8D%9A%E5%AE%A2%E4%B8%AD%E5%9B%BE%E7%89%87%E6%98%BE%E7%A4%BA%E9%97%AE%E9%A2%98/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1605,7 +1919,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-count">8</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -1616,7 +1930,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-count">4</span>
                   <span class="site-state-item-name">categories</span>
                 </a>
               </div>
