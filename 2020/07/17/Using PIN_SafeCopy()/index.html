@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Using PIN_SafeCopy()PIN_SafeCopy用于将指定数量的字节从source内存区域复制到destination内存区域。即使source或destination区域不能被访问（部分或完全），此函数也会保证安全的返回到调用方。 使用此函数还可以保证tool读取或写入那些被程序使用的值。例如，在Windows上，Pin会在运行tool的分析代码时替换某些TEB字段。如果tool">
+<meta property="og:type" content="article">
+<meta property="og:title" content="九、Using PIN_SafeCopy()">
+<meta property="og:url" content="http://yoursite.com/2020/07/17/Using%20PIN_SafeCopy()/index.html">
+<meta property="og:site_name" content="Matrix">
+<meta property="og:description" content="Using PIN_SafeCopy()PIN_SafeCopy用于将指定数量的字节从source内存区域复制到destination内存区域。即使source或destination区域不能被访问（部分或完全），此函数也会保证安全的返回到调用方。 使用此函数还可以保证tool读取或写入那些被程序使用的值。例如，在Windows上，Pin会在运行tool的分析代码时替换某些TEB字段。如果tool">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-07-17T02:06:58.000Z">
+<meta property="article:modified_time" content="2020-07-17T02:08:24.767Z">
+<meta property="article:author" content="zyt">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/07/17/Using PIN_SafeCopy()/"/>
+
+
+
+
+
+  <title>九、Using PIN_SafeCopy() | Matrix</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Matrix</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/17/Using%20PIN_SafeCopy()/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">九、Using PIN_SafeCopy()</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-07-17T10:06:58+08:00">
+                2020-07-17
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Pin/" itemprop="url" rel="index">
+                    <span itemprop="name">Pin</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="Using-PIN-SafeCopy"><a href="#Using-PIN-SafeCopy" class="headerlink" title="Using PIN_SafeCopy()"></a>Using PIN_SafeCopy()</h2><p><code>PIN_SafeCopy</code>用于将指定数量的字节从<code>source</code>内存区域复制到<code>destination</code>内存区域。即使<code>source</code>或<code>destination</code>区域不能被访问（部分或完全），此函数也会保证安全的返回到调用方。</p>
+<p>使用此函数还可以保证tool读取或写入那些被程序使用的值。例如，在Windows上，Pin会在运行tool的分析代码时替换某些TEB字段。如果tool直接访问这些字段，它将看到修改后的值而不是原始值。使用PIN_SafeCopy（）可使tool读取或写入这些字段的应用程序值。</p>
+<p>每当tool读取或写入应用程序内存时可以使用此API。</p>
+<p>首先进行编译：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># make obj-ia32&#x2F;safecopy.so TARGET&#x3D;ia32</span><br><span class="line"></span><br><span class="line">g++ -DBIGARRAY_MULTIPLIER&#x3D;1 -Wall -Werror -Wno-unknown-pragmas -fno-stack-protector -DTARGET_IA32 -DHOST_IA32 -DTARGET_LINUX  -I..&#x2F;..&#x2F;..&#x2F;source&#x2F;include&#x2F;pin -I..&#x2F;..&#x2F;..&#x2F;source&#x2F;include&#x2F;pin&#x2F;gen -I..&#x2F;..&#x2F;..&#x2F;extras&#x2F;components&#x2F;include -I..&#x2F;..&#x2F;..&#x2F;extras&#x2F;xed2-ia32&#x2F;include -I..&#x2F;..&#x2F;..&#x2F;source&#x2F;tools&#x2F;InstLib -O3 -fomit-frame-pointer -fno-strict-aliasing   -c -o obj-ia32&#x2F;safecopy.o safecopy.cpp</span><br><span class="line">g++ -shared -Wl,--hash-style&#x3D;sysv -Wl,-Bsymbolic -Wl,--version-script&#x3D;..&#x2F;..&#x2F;..&#x2F;source&#x2F;include&#x2F;pin&#x2F;pintool.ver    -o obj-ia32&#x2F;safecopy.so obj-ia32&#x2F;safecopy.o  -L..&#x2F;..&#x2F;..&#x2F;ia32&#x2F;lib -L..&#x2F;..&#x2F;..&#x2F;ia32&#x2F;lib-ext -L..&#x2F;..&#x2F;..&#x2F;ia32&#x2F;runtime&#x2F;glibc -L..&#x2F;..&#x2F;..&#x2F;extras&#x2F;xed2-ia32&#x2F;lib -lpin -lxed -ldwarf -lelf -ldl</span><br></pre></td></tr></table></figure>
+
+<p>测试程序：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:test<span class="meta"># cat hello.c </span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">	<span class="built_in">printf</span>(<span class="string">"Hello World!\n"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行它并显示它的输出：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:test# /<span class="built_in">home</span>/vuzzer/pin/pin -t ../obj-ia32/safecopy.so -- ./hello</span><br><span class="line">Hello World!</span><br><span class="line"></span><br><span class="line">root@ubuntu:test<span class="meta"># cat safecopy.out </span></span><br><span class="line"><span class="number">0x8048350</span> mov ebx, dword ptr [esp] Emulate loading from addr <span class="number">0xbfc869e8</span> to ebx</span><br><span class="line"><span class="number">0x8048454</span> mov ebp, dword ptr [esp+<span class="number">0x30</span>] Emulate loading from addr <span class="number">0xbfc86a00</span> to ebp</span><br><span class="line"><span class="number">0x8048350</span> mov ebx, dword ptr [esp] Emulate loading from addr <span class="number">0xbfc869bc</span> to ebx</span><br><span class="line"><span class="number">0x80482bf</span> mov eax, dword ptr [ebx<span class="number">-0x4</span>] Emulate loading from addr <span class="number">0x8049ffc</span> to eax</span><br><span class="line"><span class="number">0x8048478</span> mov eax, dword ptr [esp+<span class="number">0x38</span>] Emulate loading from addr <span class="number">0xbfc86a08</span> to eax</span><br><span class="line"><span class="number">0x8048483</span> mov eax, dword ptr [esp+<span class="number">0x34</span>] Emulate loading from addr <span class="number">0xbfc86a04</span> to eax</span><br><span class="line"><span class="number">0x80483f0</span> mov eax, dword ptr [<span class="number">0x8049f10</span>] Emulate loading from addr <span class="number">0x8049f10</span> to eax</span><br><span class="line"><span class="number">0x8048350</span> mov ebx, dword ptr [esp] Emulate loading from addr <span class="number">0xbfc8690c</span> to ebx</span><br></pre></td></tr></table></figure>
+
+<p>本例源码在<code>source/tools/ManualExamples/safecopy.cpp.</code></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"pin.H"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fstream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">cerr</span>;</span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">std</span>::ofstream* out = <span class="number">0</span>;</span><br><span class="line"><span class="comment">//=======================================================</span></span><br><span class="line"><span class="comment">//  Analysis routines</span></span><br><span class="line"><span class="comment">//=======================================================</span></span><br><span class="line"><span class="comment">// Move from memory to register</span></span><br><span class="line"><span class="function">ADDRINT <span class="title">DoLoad</span><span class="params">(REG reg, ADDRINT * addr, <span class="built_in">std</span>::<span class="built_in">string</span> ins_str, ADDRINT *ip)</span></span>&#123;</span><br><span class="line">    *out &lt;&lt; ip &lt;&lt; <span class="string">" "</span> &lt;&lt; ins_str.c_str() &lt;&lt; <span class="string">" Emulate loading from addr "</span> &lt;&lt; addr &lt;&lt; <span class="string">" to "</span> &lt;&lt; REG_StringShort(reg) &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    ADDRINT value;</span><br><span class="line">    PIN_SafeCopy(&amp;value, addr, <span class="keyword">sizeof</span>(ADDRINT)); <span class="comment">//将内存中的值读取到 value 中，并返回</span></span><br><span class="line">    <span class="keyword">return</span> value;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//=======================================================</span></span><br><span class="line"><span class="comment">// Instrumentation routines</span></span><br><span class="line"><span class="comment">//=======================================================</span></span><br><span class="line"><span class="function">VOID <span class="title">EmulateLoad</span><span class="params">(INS ins, VOID* v)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (INS_Address(ins) &lt;= <span class="number">0x8048000</span> || INS_Address(ins) &gt;= <span class="number">0x80000000</span>)&#123;<span class="comment">// 仅打印main中的指令</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// Find the instructions that move a value from memory to a register</span></span><br><span class="line">    <span class="keyword">if</span> (INS_Opcode(ins) == XED_ICLASS_MOV &amp;&amp;</span><br><span class="line">        INS_IsMemoryRead(ins) &amp;&amp;</span><br><span class="line">        INS_OperandIsReg(ins, <span class="number">0</span>) &amp;&amp;</span><br><span class="line">        INS_OperandIsMemory(ins, <span class="number">1</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// op0 &lt;- *op1</span></span><br><span class="line">        INS_InsertCall(ins,</span><br><span class="line">                       IPOINT_BEFORE,</span><br><span class="line">                       AFUNPTR(DoLoad),</span><br><span class="line">                       IARG_UINT32,	REG(INS_OperandReg(ins, <span class="number">0</span>)),<span class="comment">// REG reg</span></span><br><span class="line">                       IARG_MEMORYREAD_EA, <span class="comment">//ADDRINT * addr</span></span><br><span class="line">                       IARG_RETURN_REGS, INS_OperandReg(ins, <span class="number">0</span>), <span class="comment">//因为删除了指令，所以需要把读取内存中的数据存入寄存器使用函数 PIN_SafeCopy 自己实现，最后将返回值存入到第一个操作数对应的寄存器中</span></span><br><span class="line">                       IARG_PTR, <span class="keyword">new</span> <span class="built_in">string</span>(INS_Disassemble(ins)), <span class="comment">//std::string ins_str</span></span><br><span class="line">                       IARG_INST_PTR, <span class="comment">//ADDRINT *ip</span></span><br><span class="line">                       IARG_END);</span><br><span class="line">        <span class="comment">// 删除该指令，需要模拟该指令的功能</span></span><br><span class="line">        INS_Delete(ins);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Print Help Message                                                    */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="function">INT32 <span class="title">Usage</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="built_in">cerr</span> &lt;&lt; <span class="string">"This tool demonstrates the use of SafeCopy"</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="built_in">cerr</span> &lt;&lt; <span class="built_in">endl</span> &lt;&lt; KNOB_BASE::StringKnobSummary() &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Main                                                                  */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[])</span></span>&#123;</span><br><span class="line">    <span class="comment">// Write to a file since cout and cerr maybe closed by the application</span></span><br><span class="line">    out = <span class="keyword">new</span> <span class="built_in">std</span>::ofstream(<span class="string">"safecopy.out"</span>);</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// Initialize pin &amp; symbol manager</span></span><br><span class="line">    <span class="keyword">if</span> (PIN_Init(argc, argv)) <span class="keyword">return</span> Usage();</span><br><span class="line">    PIN_InitSymbols();</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// Register EmulateLoad to be called to instrument instructions</span></span><br><span class="line">    INS_AddInstrumentFunction(EmulateLoad, <span class="number">0</span>);</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// Never returns</span></span><br><span class="line">    PIN_StartProgram();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>INS_InsertCall参数解释：</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">IARG_UINT32：Type: UINT32. 常量值 (需要额外的整型参数)</span><br><span class="line">IARG_RETURN_REGS：保存分析函数返回值的寄存器 (需要额外的寄存器作为参数)</span><br><span class="line">IARG_PTR：Type: &quot;VOID *&quot;. 常量值 (需要额外的指针类型数据作为参数)</span><br><span class="line">IARG_INST_PTR：Type: ADDRINT. 被插桩指令的地址。该值在IPOINT_AFTER不会改变，是IARG_ADDRINT和INS_Address（ins）的简写</span><br><span class="line">IARG_MEMORYREAD_EA：有效内存读的地址，仅当INS_IsMemoryRead时True，且设置了IPOINT_BEFORE</span><br></pre></td></tr></table></figure>
+
+<p><strong>API：INS_OperandReg(INS ins, UINT32 n)</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">REG <span class="title">LEVEL_CORE::INS_OperandReg</span><span class="params">(INS ins, UINT32 n)</span>		</span></span><br><span class="line"><span class="function">	Returns:</span></span><br><span class="line">  返回此操作数对应的寄存器"名字"(返回的其实是一个数字，REG是一个枚举类型，代表不同的寄存器)</span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">enum  	LEVEL_BASE::REG &#123;</span></span><br><span class="line"><span class="comment">  REG_INVALID_ = 0,</span></span><br><span class="line"><span class="comment">  REG_GR_BASE = REG_RBASE,</span></span><br><span class="line"><span class="comment">  REG_EDI = REG_GR_BASE,</span></span><br><span class="line"><span class="comment">  REG_GDI = REG_EDI,</span></span><br><span class="line"><span class="comment">  REG_ESI,</span></span><br><span class="line"><span class="comment">  REG_GSI = REG_ESI,</span></span><br><span class="line"><span class="comment">  REG_EBP,</span></span><br><span class="line"><span class="comment">  REG_GBP = REG_EBP,</span></span><br><span class="line"><span class="comment">  REG_ESP,</span></span><br><span class="line"><span class="comment">  ......</span></span><br><span class="line"><span class="comment">*/</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>API：REG_StringShort(REG reg)</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="built_in">string</span> <span class="title">LEVEL_BASE::REG_StringShort</span><span class="params">(REG reg)</span>	</span></span><br><span class="line"><span class="function">	<span class="comment">//将一个REG转换成可打印的字符串</span></span></span><br></pre></td></tr></table></figure>
+
+<p><strong>API：INS_IsMemoryRead(INS ins)</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">BOOL <span class="title">LEVEL_CORE::INS_IsMemoryRead</span>	<span class="params">(	INS 	ins	)</span>	</span></span><br><span class="line"><span class="function">	Returns:</span></span><br><span class="line">	若该指令读取内存返回 true（有的系统的指令读取gs、fs中的值不会被视为访问内存）</span><br></pre></td></tr></table></figure>
+
+<p><strong>API：INS_OperandIsReg(INS ins, UINT32 n )</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">BOOL <span class="title">LEVEL_CORE::INS_OperandIsReg</span><span class="params">(INS ins, UINT32 n)</span>		</span></span><br><span class="line"><span class="function">	Returns:</span></span><br><span class="line">	若该操作数是一个寄存器则返回true</span><br></pre></td></tr></table></figure>
+
+<p><strong>API：INS_OperandIsMemory(INS ins, UINT32 n)</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">BOOL <span class="title">LEVEL_CORE::INS_OperandIsMemory</span><span class="params">(INS ins, UINT32 n)</span>		</span></span><br><span class="line"><span class="function">	Returns:</span></span><br><span class="line">	若该操作数是一个内存的引用则返回true。注意：不包括LEA操作数</span><br></pre></td></tr></table></figure>
+
+<p><strong>API：PIN_SafeCopy(VOID *dst，const VOID *src，size_t size)：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">size_t</span> <span class="title">LEVEL_PINCLIENT::PIN_SafeCopy</span><span class="params">(VOID *dst, <span class="keyword">const</span> VOID *src, <span class="keyword">size_t</span> <span class="built_in">size</span>)</span>		</span></span><br><span class="line"><span class="function"><span class="comment">/*</span></span></span><br><span class="line"><span class="function"><span class="comment">将指定数量的字节从 source 内存区域复制到 destination 内存区域。即使 source 或 destination 区域不能被访问（部分或完全），此函数也会保证安全的返回到调用方。</span></span></span><br><span class="line"><span class="function"><span class="comment"></span></span></span><br><span class="line"><span class="function"><span class="comment">Pintool 应使用此函数来确保安全访问应用程序内存的原始内容。例如，在Windows上，在tool中运行分析例程时，Pin会替换某些TEB字段。 如果tool直接访问这些字段，它将看到由Pin分配的值而不是原始值。相反，PIN_SafeCopy() 始终读取和修改这些字段的原始应用程序值。</span></span></span><br><span class="line"><span class="function"><span class="comment"></span></span></span><br><span class="line"><span class="function"><span class="comment">此函数可以在任何线程中使用，包括tool产生的任何内部线程。</span></span></span><br><span class="line"><span class="function"><span class="comment">*/</span></span></span><br><span class="line"><span class="function">Parameters:</span></span><br><span class="line">    [out]	dst	destination region</span><br><span class="line">    [in]	src	region to copy from</span><br><span class="line">    [in]	<span class="built_in">size</span>	number of bytes to copy</span><br><span class="line">Returns:</span><br><span class="line">		Number of bytes successfully copied from the source to the destination region.</span><br><span class="line">Note:</span><br><span class="line">		PIN_SafeCopy() should <span class="keyword">not</span> be called before the application has been started. For instance, it cannot be called in an Image load callback. Unexpected results will occur.</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/07/15/Finding-the-Value-of-Function-Arguments/" rel="next" title="十一、Finding the Value of Function Arguments">
+                <i class="fa fa-chevron-left"></i> 十一、Finding the Value of Function Arguments
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">zyt</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Using-PIN-SafeCopy"><span class="nav-number">1.</span> <span class="nav-text">Using PIN_SafeCopy()</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zyt</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Pisces</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
