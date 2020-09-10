@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="一、API介绍PIN_InitSymbols（） 12VOID LEVEL_PINCLIENT::PIN_InitSymbols	(	)	  初始化符号表。Pin不会读取任何符号，除非调用此函数，并且应当在调用函数PIN_StartProgram之前调用它。  PIN_InitSymbolsAlt（） 12345678910111213BOOL LEVEL_PINCLIENT::PIN_InitS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PIN_InitSymbolsAlt与PIN_InitSymbols">
+<meta property="og:url" content="http://yoursite.com/2020/09/10/PIN-InitSymbolsAlt%E4%B8%8EPIN-InitSymbols/index.html">
+<meta property="og:site_name" content="Matrix">
+<meta property="og:description" content="一、API介绍PIN_InitSymbols（） 12VOID LEVEL_PINCLIENT::PIN_InitSymbols	(	)	  初始化符号表。Pin不会读取任何符号，除非调用此函数，并且应当在调用函数PIN_StartProgram之前调用它。  PIN_InitSymbolsAlt（） 12345678910111213BOOL LEVEL_PINCLIENT::PIN_InitS">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-09-10T03:40:18.000Z">
+<meta property="article:modified_time" content="2020-09-10T03:47:04.081Z">
+<meta property="article:author" content="zyt">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"always","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/09/10/PIN-InitSymbolsAlt与PIN-InitSymbols/"/>
+
+
+
+
+
+  <title>PIN_InitSymbolsAlt与PIN_InitSymbols | Matrix</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Matrix</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/10/PIN-InitSymbolsAlt%E4%B8%8EPIN-InitSymbols/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">PIN_InitSymbolsAlt与PIN_InitSymbols</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-09-10T11:40:18+08:00">
+                2020-09-10
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Pin/" itemprop="url" rel="index">
+                    <span itemprop="name">Pin</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="一、API介绍"><a href="#一、API介绍" class="headerlink" title="一、API介绍"></a>一、API介绍</h2><p><strong>PIN_InitSymbols（）</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">VOID <span class="title">LEVEL_PINCLIENT::PIN_InitSymbols</span>	<span class="params">(	)</span>	</span></span><br><span class="line">  初始化符号表。Pin不会读取任何符号，除非调用此函数，并且应当在调用函数PIN_StartProgram之前调用它。</span><br></pre></td></tr></table></figure>
+
+<p><strong>PIN_InitSymbolsAlt（）</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">BOOL <span class="title">LEVEL_PINCLIENT::PIN_InitSymbolsAlt</span><span class="params">(SYMBOL_INFO_MODE mode)</span>	</span></span><br><span class="line">  使用一些指定的模式来更明确的初始化符号表。Pin不会读取任何符号，除非调用此函数，并且应当在调用函数PIN_StartProgram之前调用它。在 Windows和Linux 上函数PIN_InitSymbolsAlt和PIN_InitSymbols 不同，但是在MacOS上和PIN_InitSymbols一样。</span><br><span class="line"></span><br><span class="line">Parameters:</span><br><span class="line">[in]	mode	支持的不同模式：</span><br><span class="line">    EXPORT_SYMBOLS 仅读取<span class="keyword">export</span> table中的符号，不包括行号信息 (Windows only).</span><br><span class="line">    DEBUG_SYMBOLS 与DEBUG_OR_EXPORT_SYMBOLS一样 (Windows only).</span><br><span class="line">    IFUNC_SYMBOLS 间接调用的函数 (Linux only).</span><br><span class="line">    DEBUG_OR_EXPORT_SYMBOLS 如有debug的符号则读取，否则读取<span class="keyword">export</span> table 的符号。PIN_InitSymbols() 实际上是设置的此种模式(Windows only)</span><br><span class="line">这个参数除了在操作系统 Windows &amp; Linux 外可被忽略</span><br><span class="line"></span><br><span class="line">Returns:</span><br><span class="line">操作成功返回<span class="literal">true</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="二、代码测试"><a href="#二、代码测试" class="headerlink" title="二、代码测试"></a>二、代码测试</h2><h3 id="测试源代码："><a href="#测试源代码：" class="headerlink" title="测试源代码："></a>测试源代码：</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">const</span> <span class="keyword">char</span> **argv)</span></span>&#123;</span><br><span class="line">    <span class="keyword">char</span> *arg1 = argv[<span class="number">1</span>];</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">strlen</span>(arg1) == <span class="number">8</span>)&#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"Correct len\n"</span>);</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">strcmp</span>(<span class="string">"password"</span>, arg1) == <span class="number">0</span>)</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"Win!\n"</span>);</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"Loose\n"</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"Len is not correct\n"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="测试pintool代码（pin-2-13）"><a href="#测试pintool代码（pin-2-13）" class="headerlink" title="测试pintool代码（pin-2.13）"></a>测试pintool代码（pin-2.13）</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"pin.H"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fstream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">strlenTriggered</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"strlen triggered"</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">strcmpTriggered</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"strcmp triggered"</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">VOID <span class="title">Image</span><span class="params">(IMG img, VOID *v)</span> </span>&#123;</span><br><span class="line">    RTN strlenRTN = RTN_FindByName(img, <span class="string">"strlen"</span>);</span><br><span class="line">    <span class="keyword">if</span> (RTN_Valid(strlenRTN))&#123;</span><br><span class="line">      RTN_Open(strlenRTN);</span><br><span class="line">      RTN_InsertCall(strlenRTN, IPOINT_BEFORE, (AFUNPTR)strlenTriggered, IARG_END);</span><br><span class="line">      RTN_Close(strlenRTN);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    RTN strcmpRTN = RTN_FindByName(img, <span class="string">"strcmp"</span>);</span><br><span class="line">    <span class="keyword">if</span> (RTN_Valid(strcmpRTN))&#123;</span><br><span class="line">      RTN_Open(strcmpRTN);</span><br><span class="line">      RTN_InsertCall(strcmpRTN, IPOINT_BEFORE, (AFUNPTR)strcmpTriggered, IARG_END);</span><br><span class="line">      RTN_Close(strcmpRTN);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> *argv[])</span></span>&#123;</span><br><span class="line">    PIN_InitSymbols();</span><br><span class="line">    <span class="keyword">if</span>(PIN_Init(argc,argv)) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    IMG_AddInstrumentFunction(Image, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    PIN_StartProgram();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="三、测试结果："><a href="#三、测试结果：" class="headerlink" title="三、测试结果："></a>三、测试结果：</h2><p>由测试源码可知，函数即调用了<strong>strcmp</strong>、也调用了<strong>strlen</strong>，但是最终却只捕获到了<strong>strlen</strong>。（调用<strong>strlen</strong>的次数比较多，可能是其他函数最终也调用了<strong>strlen</strong>）</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"># ..&#x2F;..&#x2F;..&#x2F;pin -t .&#x2F;obj-ia32&#x2F;strcmp.so -- .&#x2F;test &quot;password&quot;</span><br><span class="line">Correct len</span><br><span class="line">Win!</span><br></pre></td></tr></table></figure>
+
+<p>输出的所有 <strong>IMG</strong> 所对应的 <strong>RTN</strong> 的信息为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .init RTN name: _init</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .plt RTN name: .plt</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: _start</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: __x86.get_pc_thunk.bx</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: deregister_tm_clones</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: register_tm_clones</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: __do_global_dtors_aux</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: frame_dummy</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: main</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: __libc_csu_init</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: __libc_csu_fini</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .fini RTN name: _fini</span><br><span class="line">......</span><br><span class="line"></span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: __strcat_g</span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: __strncat_g</span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: __strcmp_gg</span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: __strncmp_g</span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: __strlen_g</span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+<p>如上所示，<strong>strlen</strong>、<strong>strcmp</strong>在目标程序的 <strong>IMG test</strong> 中没有，在 <strong>libc.so.6</strong> 的 *<em>IMG *</em>中也没有。有两种修改方法</p>
+<h2 id="四、解决方法"><a href="#四、解决方法" class="headerlink" title="四、解决方法"></a>四、解决方法</h2><h3 id="方法一：（需要知道strcmp、strlen在-plt中的地址）"><a href="#方法一：（需要知道strcmp、strlen在-plt中的地址）" class="headerlink" title="方法一：（需要知道strcmp、strlen在.plt中的地址）"></a>方法一：（需要知道<strong>strcmp</strong>、<strong>strlen</strong>在<strong>.plt</strong>中的地址）</h3><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">08048330</span> &lt;<span class="built_in">strcmp</span>@plt&gt;:</span><br><span class="line"> <span class="number">8048330</span>:       ff <span class="number">25</span> <span class="number">0</span>c a0 <span class="number">04</span> <span class="number">08</span>       jmp    *<span class="number">0x804a00c</span></span><br><span class="line"> <span class="number">8048336</span>:       <span class="number">68</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span>          push   $<span class="number">0x0</span></span><br><span class="line"> <span class="number">804833b</span>:       e9 e0 ff ff ff          jmp    <span class="number">8048320</span> &lt;_init+<span class="number">0x2c</span>&gt;</span><br><span class="line"> </span><br><span class="line"> </span><br><span class="line"><span class="number">08048360</span> &lt;<span class="built_in">strlen</span>@plt&gt;:</span><br><span class="line"> <span class="number">8048360</span>:       ff <span class="number">25</span> <span class="number">18</span> a0 <span class="number">04</span> <span class="number">08</span>       jmp    *<span class="number">0x804a018</span></span><br><span class="line"> <span class="number">8048366</span>:       <span class="number">68</span> <span class="number">18</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span>          push   $<span class="number">0x18</span></span><br><span class="line"> <span class="number">804836b</span>:       e9 b0 ff ff ff          jmp    <span class="number">8048320</span> &lt;_init+<span class="number">0x2c</span>&gt;</span><br></pre></td></tr></table></figure>
+
+<p><strong>strcmp</strong>：08048330；<strong>strlen</strong>：08048360</p>
+<p>修改<strong>pintool</strong>的代码为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">strcmpTriggered</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"strcmp triggered"</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// call 0x8048aa0 --&gt; call strcmp</span></span><br><span class="line"><span class="function">VOID <span class="title">contextDbg</span><span class="params">(ADDRINT insAddr, <span class="keyword">const</span> CONTEXT *ctxt , <span class="built_in">std</span>::<span class="built_in">string</span> insDis)</span></span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (insDis.<span class="built_in">find</span>(<span class="string">"0x8048aa0"</span>) != <span class="built_in">string</span>::npos)&#123;</span><br><span class="line">    PIN_LockClient();</span><br><span class="line">    RTN strcmpRtn = RTN_FindByAddress(<span class="number">0x8048aa0</span>);</span><br><span class="line">    PIN_UnlockClient();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (RTN_Valid(strcmpRtn))&#123;</span><br><span class="line">      RTN_Open(strcmpRtn);</span><br><span class="line">      RTN_InsertCall(</span><br><span class="line">          strcmpRtn,</span><br><span class="line">          IPOINT_BEFORE, (AFUNPTR)strcmpTriggered,</span><br><span class="line">          IARG_END);</span><br><span class="line">      RTN_Close(strcmpRtn);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">VOID <span class="title">Instruction</span><span class="params">(INS ins, VOID *v)</span></span>&#123;</span><br><span class="line">  <span class="keyword">xed_iclass_enum_t</span> ins_indx = (<span class="keyword">xed_iclass_enum_t</span>)INS_Opcode(ins);</span><br><span class="line">  <span class="keyword">switch</span> (ins_indx) &#123;</span><br><span class="line">    <span class="keyword">case</span> XED_ICLASS_CALL_FAR:</span><br><span class="line">    <span class="keyword">case</span> XED_ICLASS_CALL_NEAR:</span><br><span class="line">        INS_InsertCall( ins,</span><br><span class="line">            IPOINT_BEFORE,</span><br><span class="line">            (AFUNPTR)contextDbg,</span><br><span class="line">            IARG_ADDRINT, INS_Address(ins),</span><br><span class="line">            IARG_CONST_CONTEXT,<span class="comment">//获取上下文，可以得到此时的寄存器值</span></span><br><span class="line">            IARG_PTR, <span class="keyword">new</span> <span class="built_in">string</span>(INS_Disassemble(ins)),</span><br><span class="line">            IARG_END );</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>实际上是截取调用 <strong>strcmp</strong> 函数的<strong>call</strong>指令，如：call 8048aa0，然后利用其来寻找 <strong>RTN</strong>对象（RTN_FindByAddress()）。在之前一个项目中确实是成功了，但是复现失败。具体原因不知道，留待后续研究。</p>
+<h3 id="方法二（使用PIN-InitSymbolsAlt）"><a href="#方法二（使用PIN-InitSymbolsAlt）" class="headerlink" title="方法二（使用PIN_InitSymbolsAlt）"></a>方法二（使用PIN_InitSymbolsAlt）</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"pin.H"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fstream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">strlenTriggered</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"strlen triggered"</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">strcmpTriggered</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">  <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"strcmp triggered"</span> &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">VOID <span class="title">Image</span><span class="params">(IMG img, VOID *v)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec))&#123; <span class="comment">//获取程序的section</span></span><br><span class="line">      <span class="keyword">for</span> (RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn))&#123;<span class="comment">//获取section的RTN对象</span></span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">string</span> ans = RTN_Name(rtn);</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"IMG name: "</span> &lt;&lt; IMG_Name(img) &lt;&lt; <span class="string">" SEC name: "</span> &lt;&lt; SEC_Name(sec) </span><br><span class="line">                &lt;&lt; <span class="string">" RTN name: "</span> &lt;&lt; RTN_Name(rtn) &lt;&lt; <span class="string">"\n"</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    RTN strlenRTN = RTN_FindByName(img, <span class="string">"strlen"</span>);</span><br><span class="line">    <span class="keyword">if</span> (RTN_Valid(strlenRTN))&#123;</span><br><span class="line">      <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"strlenRTN: "</span> &lt;&lt; RTN_Name(strlenRTN) &lt;&lt; <span class="string">"\n"</span>;</span><br><span class="line">      RTN_Open(strlenRTN);</span><br><span class="line">      RTN_InsertCall(strlenRTN, IPOINT_BEFORE, (AFUNPTR)strlenTriggered, IARG_END);</span><br><span class="line">      RTN_Close(strlenRTN);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    RTN strcmpRTN = RTN_FindByName(img, <span class="string">"strcmp"</span>);</span><br><span class="line">    <span class="keyword">if</span> (RTN_Valid(strcmpRTN))&#123;</span><br><span class="line">      <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"strcmpRTN: "</span> &lt;&lt; RTN_Name(strcmpRTN) &lt;&lt; <span class="string">" "</span> &lt;&lt; RTN_Address(strcmpRTN)  &lt;&lt; <span class="string">"\n"</span>; </span><br><span class="line">      RTN_Open(strcmpRTN);</span><br><span class="line">      RTN_InsertCall(strcmpRTN, IPOINT_BEFORE, (AFUNPTR)strcmpTriggered, IARG_END);</span><br><span class="line">      RTN_Close(strcmpRTN);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// PIN_InitSymbols();</span></span><br><span class="line">    PIN_InitSymbolsAlt(SYMBOL_INFO_MODE(UINT32(IFUNC_SYMBOLS) | UINT32(DEBUG_OR_EXPORT_SYMBOLS)));</span><br><span class="line">    <span class="keyword">if</span>(PIN_Init(argc,argv)) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    IMG_AddInstrumentFunction(Image, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    PIN_StartProgram();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>最终的结果如下，可以截取到<strong>strcmp</strong>、<strong>strlen</strong>函数。说明<strong>PIN_InitSymbolsAlt</strong>、<strong>PIN_InitSymbols</strong>两个初始化符号的函数还是有明显区别的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">strlenRTN: strlen</span><br><span class="line">strcmpRTN: strcmp 3061247472 （0xb676edf0）</span><br><span class="line">strlen triggered</span><br><span class="line">strcmp triggered</span><br><span class="line">Correct len</span><br><span class="line">Win!</span><br></pre></td></tr></table></figure>
+
+<p><strong>RTN</strong> 对象详情：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .init RTN name: _init</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .plt RTN name: .plt</span><br><span class="line">IMG name: source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: _start</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: __x86.get_pc_thunk.bx</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: deregister_tm_clones</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: register_tm_clones</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: __do_global_dtors_aux</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: frame_dummy</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: main</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: __libc_csu_init</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .<span class="built_in">text</span> RTN name: __libc_csu_fini</span><br><span class="line">IMG name: /source/tools/ManualExamples/test SEC name: .fini RTN name: _fini</span><br><span class="line">IMG name: /lib/ld-linux.so<span class="number">.2</span> SEC name: .plt RTN name: .plt</span><br><span class="line"></span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: __memcpy_chk</span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: <span class="built_in">memcpy</span></span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: __mempcpy_chk</span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: __mempcpy</span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: __memmove_chk</span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: memmove</span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: bcopy</span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: <span class="built_in">strcmp</span></span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: <span class="built_in">strncmp</span></span><br><span class="line">IMG name: /lib/i386-linux-gnu/libc.so<span class="number">.6</span> SEC name: .<span class="built_in">text</span> RTN name: __strcas</span><br></pre></td></tr></table></figure>
+
+<p>由上可知，截取的<strong>strcmp</strong>是来自于 <strong>libc.so.6</strong> 的 <strong>IMG</strong>，不是主程序 test。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/08/21/More%20Efficient%20Instruction%20Counting%20/" rel="next" title="五、More Efficient Instruction Counting (Trace Instrumentation)">
+                <i class="fa fa-chevron-left"></i> 五、More Efficient Instruction Counting (Trace Instrumentation)
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">zyt</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">16</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、API介绍"><span class="nav-number">1.</span> <span class="nav-text">一、API介绍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、代码测试"><span class="nav-number">2.</span> <span class="nav-text">二、代码测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#测试源代码："><span class="nav-number">2.1.</span> <span class="nav-text">测试源代码：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#测试pintool代码（pin-2-13）"><span class="nav-number">2.2.</span> <span class="nav-text">测试pintool代码（pin-2.13）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、测试结果："><span class="nav-number">3.</span> <span class="nav-text">三、测试结果：</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、解决方法"><span class="nav-number">4.</span> <span class="nav-text">四、解决方法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#方法一：（需要知道strcmp、strlen在-plt中的地址）"><span class="nav-number">4.1.</span> <span class="nav-text">方法一：（需要知道strcmp、strlen在.plt中的地址）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#方法二（使用PIN-InitSymbolsAlt）"><span class="nav-number">4.2.</span> <span class="nav-text">方法二（使用PIN_InitSymbolsAlt）</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zyt</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
