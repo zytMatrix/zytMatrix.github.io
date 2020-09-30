@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="监控重复执行特定的指令时所遇到的问题一、Instrumentation Granularity（插桩的粒度）Pin的插桩是采取及时编译的方式（JIT）。在第一次执行代码序列之前进行插桩，我们将这种操作称为 trace instrumentation 模式。 trace instrumention 使得 Pintool 可以监控、插桩每一个 tarce。Trace 开始于一个分支的目标位置（targ">
+<meta property="og:type" content="article">
+<meta property="og:title" content="监控重复执行特定的指令时所遇到的问题">
+<meta property="og:url" content="http://yoursite.com/2020/09/30/%E7%9B%91%E6%8E%A7%E9%87%8D%E5%A4%8D%E6%89%A7%E8%A1%8C%E7%89%B9%E5%AE%9A%E7%9A%84%E6%8C%87%E4%BB%A4%E6%97%B6%E6%89%80%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:site_name" content="Matrix">
+<meta property="og:description" content="监控重复执行特定的指令时所遇到的问题一、Instrumentation Granularity（插桩的粒度）Pin的插桩是采取及时编译的方式（JIT）。在第一次执行代码序列之前进行插桩，我们将这种操作称为 trace instrumentation 模式。 trace instrumention 使得 Pintool 可以监控、插桩每一个 tarce。Trace 开始于一个分支的目标位置（targ">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/image-20200930121146144.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20200930145327.png">
+<meta property="article:published_time" content="2020-09-30T07:38:50.000Z">
+<meta property="article:modified_time" content="2020-09-30T07:39:39.817Z">
+<meta property="article:author" content="zyt">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/image-20200930121146144.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"always","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/09/30/监控重复执行特定的指令时所遇到的问题/"/>
+
+
+
+
+
+  <title>监控重复执行特定的指令时所遇到的问题 | Matrix</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Matrix</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/30/%E7%9B%91%E6%8E%A7%E9%87%8D%E5%A4%8D%E6%89%A7%E8%A1%8C%E7%89%B9%E5%AE%9A%E7%9A%84%E6%8C%87%E4%BB%A4%E6%97%B6%E6%89%80%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">监控重复执行特定的指令时所遇到的问题</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-09-30T15:38:50+08:00">
+                2020-09-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Pin/" itemprop="url" rel="index">
+                    <span itemprop="name">Pin</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="监控重复执行特定的指令时所遇到的问题"><a href="#监控重复执行特定的指令时所遇到的问题" class="headerlink" title="监控重复执行特定的指令时所遇到的问题"></a>监控重复执行特定的指令时所遇到的问题</h1><h2 id="一、Instrumentation-Granularity（插桩的粒度）"><a href="#一、Instrumentation-Granularity（插桩的粒度）" class="headerlink" title="一、Instrumentation Granularity（插桩的粒度）"></a>一、Instrumentation Granularity（插桩的粒度）</h2><p>Pin的插桩是采取及时编译的方式（JIT）。在第一次执行代码序列之前进行插桩，我们将这种操作称为 <em>trace instrumentation</em> 模式。</p>
+<p><em>trace instrumention</em> 使得 Pintool 可以监控、插桩每一个 <code>tarce</code>。Trace 开始于一个分支的目标位置（target of a taken branch），结束于非条件跳转分支，包括 call 和 ret。Pin 保证 Trace 在顶部仅有一个入口，但是它可以有多个出口。如果一个分支跳转到一个 Trace 的中间，Pin 会从该分支跳转的目标位置开始构建出一个新的 Trace。Pin 将 trace 分为基本块序列，BBLs。一个 BBL 是一个指令序列，包含唯一的入口和出口。分支的跳转目标若属于一个 BBL，那么会产生一个新的 trace 和 BBL。通常可以为 BBL 插入一个分析函数，而不是为每个指令插入一个分析函数。减少分析函数调用的数量可以提高检测效率。<code>Trace instrumentation</code> 使用 API TRACE_AddInstrumentFunction API 来实现。</p>
+<p>Trace的特征：</p>
+<ul>
+<li>起始：trace由一个branch的目标代码处起始</li>
+<li>结束：遇到非条件的jmp指令，call指令，以及ret指令结束。</li>
+</ul>
+<p>因此trace可以包含jcc指令，代表着一个trace可以有多个出口，即trace中的代码可能会有多条执行路径，即手册中所说的“一个入口，多个出口”。trace会在实际执行中不断地划分，如果trace中包含了子trace，即有其他代码跳转到trace中的某个位置，这时需要细分trace。BBL是比trace再小一个级别的代码块，它符合“一个入口，一个出口”的特点。因此，我们可以在实际使用中，将BBL作为代码块的最小单位，以减少插桩的次数。</p>
+<p>但是，由于Pin在执行程序时会动态发现程序的控制流，因此 Pin 的 BBL 可能不同于在编译原理中对于 BBL 的定义。例如，考虑下面switch 语句的代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">switch</span>(i)&#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="number">4</span>: total++;</span><br><span class="line">  <span class="keyword">case</span> <span class="number">3</span>: total++;</span><br><span class="line">  <span class="keyword">case</span> <span class="number">2</span>: total++;</span><br><span class="line">  <span class="keyword">case</span> <span class="number">1</span>: total++;</span><br><span class="line">  <span class="keyword">case</span> <span class="number">0</span>:</span><br><span class="line">  <span class="keyword">default</span>: <span class="keyword">break</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p> 生成的指令可能如下所示：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">.L7:</span><br><span class="line">        addl    $<span class="number">1</span>, <span class="number">-4</span>(%ebp)</span><br><span class="line">.L6:</span><br><span class="line">        addl    $<span class="number">1</span>, <span class="number">-4</span>(%ebp)</span><br><span class="line">.L5:</span><br><span class="line">        addl    $<span class="number">1</span>, <span class="number">-4</span>(%ebp)</span><br><span class="line">.L4:</span><br><span class="line">        addl    $<span class="number">1</span>, <span class="number">-4</span>(%ebp)</span><br></pre></td></tr></table></figure>
+
+<p>上述代码对应的基本块可能为：</p>
+<p><img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/image-20200930121146144.png" alt></p>
+<p>就经典基本块定义而言，每个addl指令都在单个基本块中。但是，由于 switch 会执行不同的情况，Pin会生成BBL，可能包含所有的四条指令（当 .L7 为入口时），包含三条指令（当 .L6 为入口时），等等。这意味着如果认为 Pin BBL与课本中的基本块相同，那么对 Pin 中BBL 进行计数就不太可能得到所期望的计数。例如，执行了分支 .L7，只会得到一个Pin BBL，但是实际上执行了四个经典的基本块。</p>
+<p>当 Pin 遇到某些可能无法预料的指令时会“打碎”BBL。例如，cpuid，popf和REP前缀的指令会终止所有trace和BBL。由于REP前缀指令被视为隐式循环。因此，如果REP前缀指令多次迭代，则在第一条指令之后的迭代将导致生成一个单独的BBL，因此在这种情况下，将得到比预期更多的基本块。</p>
+<p>为了方便 Pintool 的编写，Pin 还提供了一种指令插桩模式，该模式可使 Pintool 一次仅对一条可执行的指令进行检查和插桩。这本质上与trace instrumentation 相同。但是在 trace instrumentation中，Pintool 不必要迭代处理一个 trace 中的所有指令。如在  trace instrumentation 中所述，某些BBL及其内部的指令可能会多次生成（并因此被插桩）。指令插桩使用的 API 是 INS_AddInstrumentFunction。</p>
+<p>但是，除了 trace 之外，对不同的粒度进行插桩可能会很有用。为此，Pin提供了两种附加模式：对 image 和 routine 进行插桩。这些模式是通过“缓存”插桩请求来实现的，因此会产生空间开销，这些模式也被称为  ahead-of-time instrumentation。</p>
+<p>Image instrumentation 使 Pintool 在首次加载 image（IMG） 时对其进行检测和插桩。Pintool可以遍历 image 的 sections（SEC），section 的 routines（RTN），routine 的 instruction（INS）。插桩代码可以在执行 routines 之前或之后、在执行指令之前或之后被执行它。Image instrumentation 使用的 API 是 IMG_AddInstrumentFunction API。Image instrumentation 取决于符号信息来确定 routine 的边界，因此必须在 PIN_Init 之前调用 PIN_InitSymbol。</p>
+<p>routine instrumentation 使得 Pintool 在 image 刚被加载的时候来检测、插桩一个完整的 routine。Pintool 可以遍历 routine 中的指令。目前没有足够的信息来将指令分解为BBL。插桩代码可以在执行 routine 之前或之后、在执行指令之前或之后被执行。如上一段所述，提供了 routine instrumentation 来检测程序，以便在对 Image 插桩时遍历 image 中的 sections 和 routines。Routine instrumentation 使用的 API 是 RTN_AddInstrumentFunction。在存在尾部调用或无法检测到返回指令的情况下，routine instrumentation 会退出。</p>
+<p>请注意，在对 Image和Routine 的插桩中，不可能知道 routine 是否会被实际执行（因为这些插桩代码是在 image 加载时完成的）。通过标识作为 routine 开始的指令，可以仅跟踪在Trace或Instruction工具例程中执行的例程的指令。请参阅工具Tests / parse_executed_rtns.cpp。</p>
+<h2 id="二、四种粒度的插桩"><a href="#二、四种粒度的插桩" class="headerlink" title="二、四种粒度的插桩"></a>二、四种粒度的插桩</h2><ol>
+<li>IMG 粒度的插桩：Pintool 在首次加载 image（IMG） 时对其进行检测和插桩（主要的 main 程序、库函数的加载）</li>
+<li>RTN 粒度的插桩：检测、插桩一个完整的 routine</li>
+<li>TRACE 粒度的插桩：Trace是BBL的一个进阶概念（基本块：单个入口，单个出口的指令序列）。可将 TRACE 从头到尾视为 BBL 的序列，如下所示：</li>
+</ol>
+<img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20200930145327.png" style="zoom:50%;">
+
+<ol start="4">
+<li>INS 粒度的插桩：对每条指令进行检测</li>
+</ol>
+<h2 id="三、例子"><a href="#三、例子" class="headerlink" title="三、例子"></a>三、例子</h2><h3 id="目标程序源代码："><a href="#目标程序源代码：" class="headerlink" title="目标程序源代码："></a>目标程序源代码：</h3><p>应用场景：使用 PIN 来做污点分析，目标程序读取数据的方式是使用 getc() 函数，每次从打开的文件中读取一个字节，为了将读取的数据标记为污点源，可行的方法是截取到 call getc 指令结束后将返回值从 eax 移动到目标地址的指令：mov   BYTE PTR [ebp-0xd], al。将目标地址内的值污点化。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">parse_getc</span><span class="params">(FILE *fd)</span></span>&#123;</span><br><span class="line">        <span class="keyword">int</span> sum = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">char</span> ch;</span><br><span class="line">        <span class="keyword">while</span>((ch = getc(fd)) != EOF)&#123;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">"char is %d\n"</span>, ch);</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">"location is %d\n"</span>, ftell(fd));</span><br><span class="line">                sum += (<span class="keyword">int</span>)ch;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> sum;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">        FILE *fd = fopen(<span class="string">"./PoC"</span>, <span class="string">"r"</span>);</span><br><span class="line">        <span class="keyword">int</span> sum = parse_getc(fd);</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"sum is %d\n"</span>, sum);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上述程序是利用 getc() 函数重复的从文件中读取一个字符。其中，函数 parse_getc 对应的汇编代码为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">080484</span>cd &lt;parse_getc&gt;:</span><br><span class="line"> <span class="number">80484</span>cd:	<span class="number">55</span>                   	push   ebp</span><br><span class="line"> <span class="number">80484</span>ce:	<span class="number">89</span> e5                	mov    ebp,esp</span><br><span class="line"> <span class="number">80484</span>d0:	<span class="number">83</span> ec <span class="number">28</span>             	sub    esp,<span class="number">0x28</span></span><br><span class="line"> <span class="number">80484</span>d3:	c7 <span class="number">45</span> f4 <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> <span class="number">00</span> 	mov    DWORD PTR [ebp<span class="number">-0xc</span>],<span class="number">0x0</span></span><br><span class="line"> <span class="number">80484</span>da:	eb <span class="number">36</span>                	jmp    <span class="number">8048512</span> &lt;parse_getc+<span class="number">0x45</span>&gt;</span><br><span class="line"> <span class="number">80484</span>dc:	<span class="number">0f</span> be <span class="number">45</span> f3          	movsx  eax,BYTE PTR [ebp<span class="number">-0xd</span>]</span><br><span class="line"> ......</span><br><span class="line"> <span class="number">8048515</span>:	<span class="number">89</span> <span class="number">04</span> <span class="number">24</span>             	mov    DWORD PTR [esp],eax</span><br><span class="line"> <span class="number">8048518</span>:	e8 <span class="number">63</span> fe ff ff       	call   <span class="number">8048380</span> &lt;_IO_getc@plt&gt;</span><br><span class="line"> <span class="number">804851</span>d:	<span class="number">88</span> <span class="number">45</span> f3             	mov    BYTE PTR [ebp<span class="number">-0xd</span>],al</span><br><span class="line"> <span class="number">8048520</span>:	<span class="number">80</span> <span class="number">7</span>d f3 ff          	cmp    BYTE PTR [ebp<span class="number">-0xd</span>],<span class="number">0xff</span></span><br><span class="line"> <span class="number">8048524</span>:	<span class="number">75</span> b6                	jne    <span class="number">80484</span>dc &lt;parse_getc+<span class="number">0xf</span>&gt; <span class="comment">// 循环，继续执行函数 getc()</span></span><br><span class="line"> <span class="number">8048526</span>:	<span class="number">8b</span> <span class="number">45</span> f4             	mov    eax,DWORD PTR [ebp<span class="number">-0xc</span>]</span><br><span class="line"> <span class="number">8048529</span>:	c9                   	leave</span><br><span class="line"> <span class="number">804852</span>a:	c3                   	ret</span><br></pre></td></tr></table></figure>
+
+<p>PoC文件中的内容为：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:test<span class="meta"># cat PoC</span></span><br><span class="line">ABCD</span><br></pre></td></tr></table></figure>
+
+<h3 id="Pintool-代码："><a href="#Pintool-代码：" class="headerlink" title="Pintool 代码："></a>Pintool 代码：</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fstream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"pin.H"</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">cerr</span>;</span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::ofstream;</span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::ios;</span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">string</span>;</span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 该函数在每条指令被执行前调用</span></span><br><span class="line"><span class="function">VOID <span class="title">track_mov</span><span class="params">(ADDRINT insAddr, <span class="built_in">std</span>::<span class="built_in">string</span> ins, CONTEXT* ctxt)</span></span>&#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="built_in">std</span>::hex &lt;&lt; insAddr &lt;&lt; <span class="string">" ins: "</span> &lt;&lt; ins.c_str() &lt;&lt; <span class="string">" eax: "</span> &lt;&lt;  PIN_GetContextReg(ctxt, LEVEL_BASE::REG_EAX) &lt;&lt; <span class="string">"\n"</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Pin 每当遇见新的指令时候就会调用该函数</span></span><br><span class="line"><span class="function">VOID <span class="title">Instruction</span><span class="params">(INS ins, VOID *v)</span></span>&#123;</span><br><span class="line">   PIN_LockClient();</span><br><span class="line">   IMG img = IMG_FindByAddress(INS_Address(ins));</span><br><span class="line">   PIN_UnlockClient();</span><br><span class="line">   <span class="keyword">if</span> (IMG_Valid(img))&#123;</span><br><span class="line">       <span class="keyword">if</span> (IMG_IsMainExecutable(img))&#123;</span><br><span class="line">           <span class="keyword">if</span> (INS_IsMov(ins))&#123;</span><br><span class="line">                <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"image's name: "</span> &lt;&lt; IMG_Name(img).c_str() &lt;&lt; <span class="string">" ins_addr: "</span> &lt;&lt; <span class="built_in">std</span>::hex &lt;&lt; INS_Address(ins) &lt;&lt; <span class="string">" "</span> &lt;&lt; INS_Disassemble(ins) &lt;&lt; <span class="string">"\n"</span>;</span><br><span class="line">             		<span class="comment">// analysis code</span></span><br><span class="line">                INS_InsertCall(ins,</span><br><span class="line">                    IPOINT_BEFORE, (AFUNPTR)track_mov,</span><br><span class="line">                    IARG_ADDRINT, INS_Address(ins),</span><br><span class="line">                    IARG_PTR, <span class="keyword">new</span> <span class="built_in">string</span>(INS_Disassemble(ins)),</span><br><span class="line">                    IARG_CONTEXT,</span><br><span class="line">                    IARG_END);</span><br><span class="line">           &#125;</span><br><span class="line">       &#125;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line">    </span><br><span class="line"><span class="comment">// This function is called when the application exits</span></span><br><span class="line"><span class="function">VOID <span class="title">Fini</span><span class="params">(INT32 code, VOID *v)</span></span>&#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Print Help Message                                                    */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="function">INT32 <span class="title">Usage</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">cerr</span> &lt;&lt; <span class="string">"This tool counts the number of dynamic instructions executed"</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="built_in">cerr</span> &lt;&lt; <span class="built_in">endl</span> &lt;&lt; KNOB_BASE::StringKnobSummary() &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Main                                                                  */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/*   argc, argv are the entire command line: pin -t &lt;toolname&gt; -- ...    */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[])</span></span>&#123;</span><br><span class="line">    <span class="comment">// Initialize pin</span></span><br><span class="line">    <span class="keyword">if</span> (PIN_Init(argc, argv)) <span class="keyword">return</span> Usage();</span><br><span class="line">    OutFile.<span class="built_in">open</span>(KnobOutputFile.Value().c_str());</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// Register Instruction to be called to instrument instructions</span></span><br><span class="line">  	<span class="comment">// instruction code</span></span><br><span class="line">    INS_AddInstrumentFunction(Instruction, <span class="number">0</span>);</span><br><span class="line">  </span><br><span class="line">    <span class="comment">// Register Fini to be called when the application exits</span></span><br><span class="line">    PIN_AddFiniFunction(Fini, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Start the program, never returns</span></span><br><span class="line">    PIN_StartProgram();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>注释掉 analysis code：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:test# /<span class="built_in">home</span>/hpfuzzer/pin/pin -t ../pintool/obj-ia32/inscounts.so -- ./getc_test | grep <span class="number">804851</span>d</span><br><span class="line"><span class="built_in">image</span><span class="number">'</span>s name: /<span class="built_in">home</span>/my_pintools/ins_count/test/getc_test ins_addr: <span class="number">804851</span>d mov <span class="keyword">byte</span> ptr [ebp<span class="number">-0xd</span>], al</span><br></pre></td></tr></table></figure>
+
+<p>由上可知，仅会输出一个 804851d。</p>
+<p><strong>使用 analysis code：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:test# /<span class="built_in">home</span>/hpfuzzer/pin/pin -t ../pintool/obj-ia32/inscounts.so -- ./getc_test | grep <span class="number">804851</span>d</span><br><span class="line"><span class="built_in">image</span><span class="number">'</span>s name: /<span class="built_in">home</span>/my_pintools/ins_count/test/getc_test ins_addr: <span class="number">804851</span>d mov <span class="keyword">byte</span> ptr [ebp<span class="number">-0xd</span>], al</span><br><span class="line"><span class="number">804851</span>d ins: mov <span class="keyword">byte</span> ptr [ebp<span class="number">-0xd</span>], al eax: <span class="number">41</span></span><br><span class="line"><span class="number">804851</span>d ins: mov <span class="keyword">byte</span> ptr [ebp<span class="number">-0xd</span>], al eax: <span class="number">42</span></span><br><span class="line"><span class="number">804851</span>d ins: mov <span class="keyword">byte</span> ptr [ebp<span class="number">-0xd</span>], al eax: <span class="number">43</span></span><br><span class="line"><span class="number">804851</span>d ins: mov <span class="keyword">byte</span> ptr [ebp<span class="number">-0xd</span>], al eax: <span class="number">44</span></span><br><span class="line"><span class="number">804851</span>d ins: mov <span class="keyword">byte</span> ptr [ebp<span class="number">-0xd</span>], al eax: a</span><br><span class="line"><span class="number">804851</span>d ins: mov <span class="keyword">byte</span> ptr [ebp<span class="number">-0xd</span>], al eax: ffffffff</span><br></pre></td></tr></table></figure>
+
+<p>由上可知，会截取到每一个 804851d，进而可以得到 getc() 函数读取的内容究竟是什么，进一步进行污点分析。</p>
+<h2 id="四、Instrumentation-vs-Analysis"><a href="#四、Instrumentation-vs-Analysis" class="headerlink" title="四、Instrumentation vs. Analysis"></a>四、Instrumentation vs. Analysis</h2><p>Pintool会在需要生成新代码的情况下调用Pin来注册 instrumentation 回调函数。它会检查生成的代码，提取其静态属性，并确定是否以及在何处插入 analysis 函数。analysis 函数会收集有关应用程序的数据。Pin 确保整数和浮点寄存器的状态在必要时得以保存和恢复，并允许将参数传递给函数。</p>
+<p>编写 Pintool 时，调整 analysis 代码比 instrumentation 代码更重要。 这是因为 instrumentation 仅执行一次，但是 analysis 代码却被多次调用。</p>
+<p>上述 Pintool 的代码中，instrumentation 函数 Instruction() 只是在遇到新的指令时候回被调用。但是 analysis 函数 track_mov 在每条指令被执行之前都会被调用。</p>
+<p><strong>总结：</strong></p>
+<p>使用 INS_AddInstrumentFunction()、TRACE_AddInstrumentFunction() 等进行插桩是类似的，都是遇见新的指令、trace才会调用插桩函数，但分析函数会在执行每一条指令、trace的时候调用。这样才能监控到每一条 mov 指令，从而得到 getc() 函数从文件中读取到的内容，方便进行下一步的分析。</p>
+<blockquote>
+<ol>
+<li><a href="https://www.cnblogs.com/long123king/p/3635408.html" target="_blank" rel="noopener">https://www.cnblogs.com/long123king/p/3635408.html</a></li>
+<li><a href="https://software.intel.com/sites/landingpage/pintool/docs/71313/Pin/html/" target="_blank" rel="noopener">https://software.intel.com/sites/landingpage/pintool/docs/71313/Pin/html/</a></li>
+<li><a href="https://reverseengineering.stackexchange.com/questions/19309/i-want-to-trace-all-instructions-with-pintool-strange-behaviour" target="_blank" rel="noopener">https://reverseengineering.stackexchange.com/questions/19309/i-want-to-trace-all-instructions-with-pintool-strange-behaviour</a></li>
+</ol>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/09/10/PIN-InitSymbolsAlt%E4%B8%8EPIN-InitSymbols/" rel="next" title="PIN_InitSymbolsAlt与PIN_InitSymbols">
+                <i class="fa fa-chevron-left"></i> PIN_InitSymbolsAlt与PIN_InitSymbols
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">zyt</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#监控重复执行特定的指令时所遇到的问题"><span class="nav-number">1.</span> <span class="nav-text">监控重复执行特定的指令时所遇到的问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、Instrumentation-Granularity（插桩的粒度）"><span class="nav-number">1.1.</span> <span class="nav-text">一、Instrumentation Granularity（插桩的粒度）</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、四种粒度的插桩"><span class="nav-number">1.2.</span> <span class="nav-text">二、四种粒度的插桩</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、例子"><span class="nav-number">1.3.</span> <span class="nav-text">三、例子</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#目标程序源代码："><span class="nav-number">1.3.1.</span> <span class="nav-text">目标程序源代码：</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Pintool-代码："><span class="nav-number">1.3.2.</span> <span class="nav-text">Pintool 代码：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、Instrumentation-vs-Analysis"><span class="nav-number">1.4.</span> <span class="nav-text">四、Instrumentation vs. Analysis</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zyt</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
