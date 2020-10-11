@@ -249,6 +249,170 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/10/11/Fuzzing%20&&%20Concolic%20Execution/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/10/11/Fuzzing%20&&%20Concolic%20Execution/" itemprop="url">Fuzzing && Concolic Execution</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-10-11T13:43:18+08:00">
+                2020-10-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Fuzzing/" itemprop="url" rel="index">
+                    <span itemprop="name">Fuzzing</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="Fuzzing"><a href="#Fuzzing" class="headerlink" title="Fuzzing"></a>Fuzzing</h3><p>研究人员每月发现的软件漏洞数量表明我们并没有对软件进行充分的测试。我们通常会进行回归测试，但不会以发现未知行为为目的。找到这类异常行为并非易事，所以许多开发人员尝试自动化实现。</p>
+<p>自动化测试的一种常见方法是模糊测试：将随机数据作为被测程序的输入。可以使用完全随机的数据作为输入，也可以获取有效的输入（例如有效的PDF文件）作为输入，然后对其中的某些部分进行变异（基于某种形式的规范（例如，上下文无关文法））生成结构化但仍具随机性的输入。</p>
+<p>模糊测试使用很广泛，但是并不总能够有效地测试程序。一方面，当以二进制文件为目标程序时，弄清楚程序所期望的输入是非常困难的。另外，随机输入可能无法到达程序深处的代码。</p>
+<h3 id="Concolic-Execution"><a href="#Concolic-Execution" class="headerlink" title="Concolic Execution"></a><strong>Concolic Execution</strong></h3><p>一种更好的方法是进行Conolic Execution，它结合了对程序的具体执行和符号执行，并使用SMT求解器来求解程序输入（命令行，文件，网络等）。</p>
+<p>例如：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">f</span><span class="params">(<span class="keyword">int</span> x, <span class="keyword">int</span> y)</span></span>&#123;</span><br><span class="line">		<span class="keyword">int</span> z = <span class="number">2</span>*y;</span><br><span class="line">		<span class="keyword">if</span> (x == <span class="number">100000</span>) &#123;</span><br><span class="line">				<span class="keyword">if</span> (x &lt; z) &#123;</span><br><span class="line">						assert(<span class="number">0</span>);</span><br><span class="line">				&#125;</span><br><span class="line">		&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果没有其他信息，则使用模糊测试来找到满足例子中两个<code>if</code>条件的x和y值将花费很多时间。</p>
+<p>Concolic Execution 首先以任意输入来具体执行程序，在运行时收集路径的符号化表示。路径的符号化表示本质上是对输入数据的所做一组逻辑约束。约束条件确保任何满足它们的输入都使得程序遵循特定的执行路径。</p>
+<img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201011122132.png" style="zoom:50%;">
+
+<p>在接下来的运行中，我们取反特定的分支条件相对应的约束，并将修改后的约束集合提供给SMT求解器，求解出执行新路径的输入。例如：对于初始输入，程序执行的分支是 $x\neq 100000$，我们想要求解器找到一个新输入，使其执行分支 $x = 100000$ 。再次运行该新输入将会执行所期望的路径。</p>
+<h3 id="High-Level-Picture"><a href="#High-Level-Picture" class="headerlink" title="High-Level Picture"></a>High-Level Picture</h3><img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201011133749.png" style="zoom:50%;">
+
+
+
+<img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201011133749.png" style="zoom:50%;">
+
+
+
+<img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201011133749.png" style="zoom: 50%;">
+
+<h3 id="Concolic-Covering-Middle-Ground"><a href="#Concolic-Covering-Middle-Ground" class="headerlink" title="Concolic Covering Middle Ground"></a>Concolic Covering Middle Ground</h3><p><img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201011135233.png" alt></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/09/30/%E7%9B%91%E6%8E%A7%E9%87%8D%E5%A4%8D%E6%89%A7%E8%A1%8C%E7%89%B9%E5%AE%9A%E7%9A%84%E6%8C%87%E4%BB%A4%E6%97%B6%E6%89%80%E9%81%87%E5%88%B0%E7%9A%84%E9%97%AE%E9%A2%98/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2003,163 +2167,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/14/Instruction-Address-Trace/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="zyt">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Matrix">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/07/14/Instruction-Address-Trace/" itemprop="url">二、Instruction Address Trace (Instruction Instrumentation)</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-07-14T16:59:23+08:00">
-                2020-07-14
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Pin/" itemprop="url" rel="index">
-                    <span itemprop="name">Pin</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="Instruction-Address-Trace-Instruction-Instrumentation"><a href="#Instruction-Address-Trace-Instruction-Instrumentation" class="headerlink" title="Instruction Address Trace (Instruction Instrumentation)"></a>Instruction Address Trace (Instruction Instrumentation)</h2><p>在上一个例子中，我们没有给分析函数<code>docount</code>传递任何参数。在本例中，将展示如何进行参数传递。当调用分析函数时候，Pin允许传入指令指针、当前寄存器的值、内存操作的有效地址、常量等。具体可见<a href="https://software.intel.com/sites/landingpage/pintool/docs/98223/Pin/html/group__INST__ARGS.html#ga089c27ca15e9ff139dd3a3f8a6f8451d" target="_blank" rel="noopener">IARG_TYPE</a>。</p>
-<p>在之前的例子上稍作改动，我们将指令计数的例子转化为打印每条执行过的指令地址的Pintool。这有助于调试时理解程序的控制流，或益于模拟指令缓存时的处理器设计中。</p>
-<p>我们改变函数<code>INS_InsertCall</code>的参数，将被执行过的指令的地址作为参数。将<code>docount</code>替换为<code>printip</code>，打印指令的地址。将输出写入文件<code>itrace.out</code>中。</p>
-<p>首先进行编译：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"># cd source&#x2F;tools&#x2F;ManualExamples</span><br><span class="line"></span><br><span class="line"># make obj-ia32&#x2F;itrace.so TARGET&#x3D;ia32</span><br><span class="line">g++ -DBIGARRAY_MULTIPLIER&#x3D;1 -Wall -Werror -Wno-unknown-pragmas -fno-stack-protector -DTARGET_IA32 -DHOST_IA32 -DTARGET_LINUX  -I..&#x2F;..&#x2F;..&#x2F;source&#x2F;include&#x2F;pin -I..&#x2F;..&#x2F;..&#x2F;source&#x2F;include&#x2F;pin&#x2F;gen -I..&#x2F;..&#x2F;..&#x2F;extras&#x2F;components&#x2F;include -I..&#x2F;..&#x2F;..&#x2F;extras&#x2F;xed2-ia32&#x2F;include -I..&#x2F;..&#x2F;..&#x2F;source&#x2F;tools&#x2F;InstLib -O3 -fomit-frame-pointer -fno-strict-aliasing   -c -o obj-ia32&#x2F;itrace.o itrace.cpp</span><br><span class="line">g++ -shared -Wl,--hash-style&#x3D;sysv -Wl,-Bsymbolic -Wl,--version-script&#x3D;..&#x2F;..&#x2F;..&#x2F;source&#x2F;include&#x2F;pin&#x2F;pintool.ver    -o obj-ia32&#x2F;itrace.so obj-ia32&#x2F;itrace.o  -L..&#x2F;..&#x2F;..&#x2F;ia32&#x2F;lib -L..&#x2F;..&#x2F;..&#x2F;ia32&#x2F;lib-ext -L..&#x2F;..&#x2F;..&#x2F;ia32&#x2F;runtime&#x2F;glibc -L..&#x2F;..&#x2F;..&#x2F;extras&#x2F;xed2-ia32&#x2F;lib -lpin -lxed -ldwarf -lelf -ldl</span><br></pre></td></tr></table></figure>
-
-<p>下面是如何运行它并显示它的输出：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># &#x2F;home&#x2F;vuzzer&#x2F;pin&#x2F;pin -t ..&#x2F;obj-ia32&#x2F;itrace.so -- &#x2F;bin&#x2F;ls</span><br><span class="line">2comp  hello.txt  inscount0.log  inscount.out  itrace.out  pinatrace.out  pin.log  tmp_res.out</span><br><span class="line"></span><br><span class="line">root@ubuntu:test# head -10 itrace.out </span><br><span class="line">0x804c041</span><br><span class="line">0x804c043</span><br><span class="line">0x804c044</span><br><span class="line">0x804c046</span><br><span class="line">0x804c049</span><br><span class="line">0x804c04a</span><br><span class="line">0x804c04b</span><br><span class="line">0x804c04c</span><br><span class="line">0x804c051</span><br><span class="line">0x804c056</span><br></pre></td></tr></table></figure>
-
-<p>Pintool 运行在 32 位系统上，发现打印出很多以 0xb 开头的指令地址，所以加了判断，限定仅分析二进制属于范围：0x8048000 - 0x8800000 中的指令，结果如上所示。</p>
-<p>本例的源码在<code>source/tools/ManualExamples/itrace.cpp</code></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"pin.H"</span></span></span><br><span class="line">FILE * trace;</span><br><span class="line"><span class="comment">// This function is called before every instruction is executed</span></span><br><span class="line"><span class="comment">// and prints the IP</span></span><br><span class="line"><span class="function">VOID <span class="title">printip</span><span class="params">(VOID *ip)</span> </span>&#123; <span class="built_in">fprintf</span>(trace, <span class="string">"%p\n"</span>, ip); &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Pin calls this function every time a new instruction is encountered</span></span><br><span class="line"><span class="function">VOID <span class="title">Instruction</span><span class="params">(INS ins, VOID *v)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Insert a call to printip before every instruction, and pass it the IP</span></span><br><span class="line">  	<span class="comment">// IARG_INST_PTR：被插桩指令的地址</span></span><br><span class="line">    <span class="comment">// INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)printip, IARG_INST_PTR, IARG_END);</span></span><br><span class="line">  </span><br><span class="line">  	<span class="keyword">if</span> (INS_Address(ins) &gt; <span class="number">0x8048000</span> &amp;&amp; INS_Address(ins) &lt; <span class="number">0x8800000</span>)&#123;</span><br><span class="line">        INS_InsertCall(ins, IPOINT_BEFORE, (AFUNPTR)printip, IARG_INST_PTR, IARG_END);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// This function is called when the application exits</span></span><br><span class="line"><span class="function">VOID <span class="title">Fini</span><span class="params">(INT32 code, VOID *v)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(trace, <span class="string">"#eof\n"</span>);</span><br><span class="line">    fclose(trace);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Print Help Message                                                    */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="function">INT32 <span class="title">Usage</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    PIN_ERROR(<span class="string">"This Pintool prints the IPs of every instruction executed\n"</span> </span><br><span class="line">              + KNOB_BASE::StringKnobSummary() + <span class="string">"\n"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Main                                                                  */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    trace = fopen(<span class="string">"itrace.out"</span>, <span class="string">"w"</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Initialize pin</span></span><br><span class="line">    <span class="keyword">if</span> (PIN_Init(argc, argv)) <span class="keyword">return</span> Usage();</span><br><span class="line">    <span class="comment">// Register Instruction to be called to instrument instructions</span></span><br><span class="line">    INS_AddInstrumentFunction(Instruction, <span class="number">0</span>);</span><br><span class="line">    <span class="comment">// Register Fini to be called when the application exits</span></span><br><span class="line">    PIN_AddFiniFunction(Fini, <span class="number">0</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Start the program, never returns</span></span><br><span class="line">    PIN_StartProgram();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>本例使用的API：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">INS_Address（INS ins）</span><br><span class="line">返回值：指令的地址</span><br></pre></td></tr></table></figure>
-
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2210,7 +2217,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">17</span>
+                  <span class="site-state-item-count">18</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -2221,7 +2228,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-count">7</span>
                   <span class="site-state-item-name">categories</span>
                 </a>
               </div>
