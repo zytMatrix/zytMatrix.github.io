@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="一、求解全局最优解遇到的问题  局部搜索方法，例如：梯度下降法在寻找局部最优解方面性能非常好。但当全局最优解与局部最优解不同时会出现问题，由于局部最优解附近所有直接相邻点的性能都比其差，因此一旦陷入局部最优，无法继续进行搜索。我们需要某种机制来帮助我们摆脱当前的局部最优，模拟退火算法是解决办法之一。 二、可能的解决方案1. 每当陷入局部最优状态时，随机选择一个新的起点（水平方向晃动图片）。  2.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Introduction to Simulated Annealing">
+<meta property="og:url" content="http://yoursite.com/2020/10/21/Introduction%20to%20Simulated%20Annealing/index.html">
+<meta property="og:site_name" content="Matrix">
+<meta property="og:description" content="一、求解全局最优解遇到的问题  局部搜索方法，例如：梯度下降法在寻找局部最优解方面性能非常好。但当全局最优解与局部最优解不同时会出现问题，由于局部最优解附近所有直接相邻点的性能都比其差，因此一旦陷入局部最优，无法继续进行搜索。我们需要某种机制来帮助我们摆脱当前的局部最优，模拟退火算法是解决办法之一。 二、可能的解决方案1. 每当陷入局部最优状态时，随机选择一个新的起点（水平方向晃动图片）。  2.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201021160838.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/image-20201021161347916.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201021161549.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201021162729.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201021170805.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201021171504.png">
+<meta property="article:published_time" content="2020-10-21T09:12:05.000Z">
+<meta property="article:modified_time" content="2020-10-21T09:17:09.950Z">
+<meta property="article:author" content="zyt">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201021160838.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"always","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/10/21/Introduction to Simulated Annealing/"/>
+
+
+
+
+
+  <title>Introduction to Simulated Annealing | Matrix</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Matrix</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/10/21/Introduction%20to%20Simulated%20Annealing/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Introduction to Simulated Annealing</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-10-21T17:12:05+08:00">
+                2020-10-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Algorithms/" itemprop="url" rel="index">
+                    <span itemprop="name">Algorithms</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="一、求解全局最优解遇到的问题"><a href="#一、求解全局最优解遇到的问题" class="headerlink" title="一、求解全局最优解遇到的问题"></a>一、求解全局最优解遇到的问题</h2><img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201021160838.png" style="zoom: 50%;">
+
+<p>局部搜索方法，例如：梯度下降法在寻找局部最优解方面性能非常好。但当全局最优解与局部最优解不同时会出现问题，由于局部最优解附近所有直接相邻点的性能都比其差，因此一旦陷入局部最优，无法继续进行搜索。我们需要某种机制来帮助我们摆脱当前的局部最优，模拟退火算法是解决办法之一。</p>
+<h2 id="二、可能的解决方案"><a href="#二、可能的解决方案" class="headerlink" title="二、可能的解决方案"></a>二、可能的解决方案</h2><h3 id="1-每当陷入局部最优状态时，随机选择一个新的起点（水平方向晃动图片）。"><a href="#1-每当陷入局部最优状态时，随机选择一个新的起点（水平方向晃动图片）。" class="headerlink" title="1. 每当陷入局部最优状态时，随机选择一个新的起点（水平方向晃动图片）。"></a>1. 每当陷入局部最优状态时，随机选择一个新的起点（水平方向晃动图片）。</h3><img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/image-20201021161347916.png" style="zoom:50%;">
+
+<h3 id="2-每当陷入局部最优状态时，偶尔沿上升方向进行搜索（垂直方向摇动图片）。"><a href="#2-每当陷入局部最优状态时，偶尔沿上升方向进行搜索（垂直方向摇动图片）。" class="headerlink" title="2. 每当陷入局部最优状态时，偶尔沿上升方向进行搜索（垂直方向摇动图片）。"></a>2. 每当陷入局部最优状态时，偶尔沿上升方向进行搜索（垂直方向摇动图片）。</h3><img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201021161549.png" style="zoom:50%;">
+
+<h2 id="三、模拟退火算法"><a href="#三、模拟退火算法" class="headerlink" title="三、模拟退火算法"></a>三、模拟退火算法</h2><p>模拟退火的名称来源于模拟加热固体的退火过程。“在凝聚态物理学中，退火是指一个物理过程，在该过程中，对固体加热并逐渐将温度提高到最大值，从而使所有固体内粒子随机地排列，然后缓慢降低温度来使其冷却。这样，所有粒子都以低能有序的排列。” </p>
+<p>在解决优化问题时，我们可以模拟上述过程。其基本思想是，允许搜索过程偶尔朝着不利的方向进行搜索，也许可以摆脱局部最优，而到达全局最优。</p>
+<img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201021162729.png" style="zoom:50%;">
+
+<p>但是，凡事具有两面性。从上图来看，偶尔”上坡“会有两种情况。一方面，它可以使得算法走出局部最优。另一方面，也可能越过全局最优。为了保持理想的效果并减少不利影响，我们需要一个复杂的方案来控制如何接受这种偶然性，这是模拟退火的核心。</p>
+<h2 id="四、模拟退火算法的控制"><a href="#四、模拟退火算法的控制" class="headerlink" title="四、模拟退火算法的控制"></a>四、模拟退火算法的控制</h2><p><strong>Acceptance of a search step (Metropolis Criterion):</strong></p>
+<ul>
+<li>假设在搜索方向上性能改变的差异为$\Delta$</li>
+<li>如果 $\Delta &lt;0$ ，那么我们永远接受此下降的步骤</li>
+<li>否则，将以概率 $exp^{(-\frac{\Delta}{T})}$ 来接受此上升的步骤，其中 T 是参数</li>
+</ul>
+<p><strong>Cooling Schedule:</strong></p>
+<ul>
+<li>T，即退火温度，是控制接受上升步骤的频率的参数</li>
+<li>我们需要逐渐降低温度 T(k)</li>
+<li>在每个温度值下，允许进行探索的步骤的次数是 L（k）</li>
+<li>参数 ${T(k),L(k)}$ 的选择称为 <code>colling schedule</code></li>
+</ul>
+<p>显然，参数 T 起着关键作用。T 越小，接受不利步骤的可能性就越小。为了获得理想的结果，随着算法的进行，需要将参数 T 逐渐减小。 因此，T 的初始值很大，搜索可以轻松摆脱局部最优。然后，通过减小 T 使得算法收敛。通常的做法是，在每次修改 T 值之后，我们都允许算法探索 L（k）步。</p>
+<h2 id="五、模拟退火的算法"><a href="#五、模拟退火的算法" class="headerlink" title="五、模拟退火的算法"></a>五、模拟退火的算法</h2><ol>
+<li>k = 0</li>
+<li>从状态 i 到达状态 j，性能差距为 $\Delta$</li>
+<li>如果 $\Delta &lt;0$ ，接受此步骤，否者若满足 $exp^{(-\frac{\Delta}{T})} &gt; random[0,1)$ 才接受此步骤</li>
+<li>对 2、3 重复 L（k）次</li>
+<li>k = k+1</li>
+<li>重复1-5，直到满足条件</li>
+</ol>
+<p>模拟退火算法的实现取决于具体问题。首先，必须选择适当的局部搜索策略。我们需要定义一个”邻域结构“，然后通常随机选择当前状态的一个邻居来执行搜索操作。</p>
+<h2 id="六、模拟退火算法的实现"><a href="#六、模拟退火算法的实现" class="headerlink" title="六、模拟退火算法的实现"></a>六、模拟退火算法的实现</h2><p><strong>Select a local search scheme：</strong></p>
+<ul>
+<li>Define a neighborhood structure</li>
+<li>Sample a new design from the neighboring designs of the current design.</li>
+<li>Accept the new design based on Metropolis Criterion.</li>
+</ul>
+<p><strong>Determine the cooling schedule：</strong></p>
+<p>例如：</p>
+<ul>
+<li>设置 <em>L</em> = <em>n</em> （n为问题的规模）</li>
+<li>设置 $T(0)$ 例如 $exp^{(-\frac{\Delta}{T(0)})} \approx 1$</li>
+<li>设置 $T(k+1) = \alpha \cdot T(k)$, 其中 $\alpha$ 是一个接近于1的常数</li>
+</ul>
+<p>需要注意的是，这里没有固定的 <code>colling schedule</code>公式。基本原则是：在每个温度下设置的搜索步骤数目应足够，通常与问题的规模大小相关；初始温度应足够高来提高接受不利状态的概率；温度的降低的速度不应太快。</p>
+<h2 id="七、备注"><a href="#七、备注" class="headerlink" title="七、备注"></a>七、备注</h2><p><img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201021170805.png" alt></p>
+<p><img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201021171504.png" alt></p>
+<h2 id="八、参考"><a href="#八、参考" class="headerlink" title="八、参考"></a>八、参考</h2><blockquote>
+<p><a href="http://umsl.edu/~adhikarib/cs4130-fall2017/slides/11%20-%20The%20Simulated%20Annealing%20Algorithm.pdf" target="_blank" rel="noopener">http://umsl.edu/~adhikarib/cs4130-fall2017/slides/11%20-%20The%20Simulated%20Annealing%20Algorithm.pdf</a></p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/10/11/Fuzzing%20&&%20Concolic%20Execution/" rel="next" title="Fuzzing && Concolic Execution">
+                <i class="fa fa-chevron-left"></i> Fuzzing && Concolic Execution
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/10/26/valgrind/" rel="prev" title="valgrind">
+                valgrind <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">zyt</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">20</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">9</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、求解全局最优解遇到的问题"><span class="nav-number">1.</span> <span class="nav-text">一、求解全局最优解遇到的问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、可能的解决方案"><span class="nav-number">2.</span> <span class="nav-text">二、可能的解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-每当陷入局部最优状态时，随机选择一个新的起点（水平方向晃动图片）。"><span class="nav-number">2.1.</span> <span class="nav-text">1. 每当陷入局部最优状态时，随机选择一个新的起点（水平方向晃动图片）。</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-每当陷入局部最优状态时，偶尔沿上升方向进行搜索（垂直方向摇动图片）。"><span class="nav-number">2.2.</span> <span class="nav-text">2. 每当陷入局部最优状态时，偶尔沿上升方向进行搜索（垂直方向摇动图片）。</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、模拟退火算法"><span class="nav-number">3.</span> <span class="nav-text">三、模拟退火算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、模拟退火算法的控制"><span class="nav-number">4.</span> <span class="nav-text">四、模拟退火算法的控制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、模拟退火的算法"><span class="nav-number">5.</span> <span class="nav-text">五、模拟退火的算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#六、模拟退火算法的实现"><span class="nav-number">6.</span> <span class="nav-text">六、模拟退火算法的实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#七、备注"><span class="nav-number">7.</span> <span class="nav-text">七、备注</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#八、参考"><span class="nav-number">8.</span> <span class="nav-text">八、参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zyt</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
