@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="Pintool 获取函数直接、间接调用一、 源码1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757677787980818283848586878889909192#">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Pintool 获取函数直接、间接调用">
+<meta property="og:url" content="http://yoursite.com/2020/11/04/%E8%8E%B7%E5%8F%96%E5%87%BD%E6%95%B0%E7%9B%B4%E6%8E%A5%E3%80%81%E9%97%B4%E6%8E%A5%E8%B0%83%E7%94%A8/index.html">
+<meta property="og:site_name" content="Matrix">
+<meta property="og:description" content="Pintool 获取函数直接、间接调用一、 源码1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757677787980818283848586878889909192#">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-11-04T02:40:52.000Z">
+<meta property="article:modified_time" content="2020-11-13T07:45:02.408Z">
+<meta property="article:author" content="zyt">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"always","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/11/04/获取函数直接、间接调用/"/>
+
+
+
+
+
+  <title>Pintool 获取函数直接、间接调用 | Matrix</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Matrix</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/11/04/%E8%8E%B7%E5%8F%96%E5%87%BD%E6%95%B0%E7%9B%B4%E6%8E%A5%E3%80%81%E9%97%B4%E6%8E%A5%E8%B0%83%E7%94%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Pintool 获取函数直接、间接调用</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-11-04T10:40:52+08:00">
+                2020-11-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Pin/" itemprop="url" rel="index">
+                    <span itemprop="name">Pin</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="Pintool-获取函数直接、间接调用"><a href="#Pintool-获取函数直接、间接调用" class="headerlink" title="Pintool 获取函数直接、间接调用"></a>Pintool 获取函数直接、间接调用</h1><h2 id="一、-源码"><a href="#一、-源码" class="headerlink" title="一、 源码"></a>一、 源码</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"pin.H"</span></span></span><br><span class="line"></span><br><span class="line">FILE * trace;</span><br><span class="line"></span><br><span class="line"><span class="function">VOID <span class="title">call_direct</span><span class="params">(ADDRINT target, ADDRINT ins_addr, <span class="built_in">std</span>::<span class="built_in">string</span> ins)</span></span>&#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"direct call: "</span> &lt;&lt; <span class="built_in">std</span>::hex &lt;&lt; ins_addr &lt;&lt; <span class="string">" "</span> &lt;&lt; ins &lt;&lt; <span class="string">"\n"</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">VOID <span class="title">call_indirect</span><span class="params">(ADDRINT target, BOOL taken, ADDRINT ins_addr, <span class="built_in">std</span>::<span class="built_in">string</span> ins)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!taken)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; <span class="string">"indirect call: "</span> &lt;&lt; <span class="built_in">std</span>::hex &lt;&lt; ins_addr &lt;&lt; <span class="string">" "</span> &lt;&lt; ins &lt;&lt; <span class="string">" "</span> &lt;&lt; target &lt;&lt; <span class="string">"\n"</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">// Pin calls this function every time a new instruction is encountered</span></span><br><span class="line"><span class="function">VOID <span class="title">Instruction</span><span class="params">(INS ins, VOID *v)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ADDRINT ins_addr = INS_Address(ins);</span><br><span class="line">    PIN_LockClient();</span><br><span class="line">    IMG img = IMG_FindByAddress(ins_addr);</span><br><span class="line">    PIN_UnlockClient();</span><br><span class="line">    <span class="keyword">if</span> (IMG_Valid(img))&#123;</span><br><span class="line">        <span class="keyword">if</span> (IMG_IsMainExecutable(img))&#123;</span><br><span class="line">            <span class="comment">// printf("IMG_Name: %s\n", IMG_Name(img).c_str());</span></span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span>(INS_IsCall(ins))&#123; <span class="comment">//该指令是否是call指令</span></span><br><span class="line">                <span class="comment">// tail 是 call,jmp,jz,jnz等等，目标是地址。可以直接通过INS_DirectBranchOrCallTargetAddress获取到目标地址</span></span><br><span class="line">                <span class="keyword">if</span>(INS_IsDirectBranchOrCall(ins))&#123;</span><br><span class="line">                    ADDRINT target = INS_DirectBranchOrCallTargetAddress(ins);</span><br><span class="line">                    INS_InsertPredicatedCall(ins, </span><br><span class="line">                            IPOINT_BEFORE, </span><br><span class="line">                            AFUNPTR(call_direct), </span><br><span class="line">                            IARG_ADDRINT, target, </span><br><span class="line">                            IARG_ADDRINT, INS_Address(ins),</span><br><span class="line">                            IARG_PTR, <span class="keyword">new</span> <span class="built_in">string</span>(INS_Disassemble(ins)),</span><br><span class="line">                            IARG_END);</span><br><span class="line">                &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">                    INS_InsertCall(ins, </span><br><span class="line">                            IPOINT_BEFORE, </span><br><span class="line">                            AFUNPTR(call_indirect), </span><br><span class="line">                            IARG_BRANCH_TARGET_ADDR, </span><br><span class="line">                            IARG_BRANCH_TAKEN,</span><br><span class="line">                            IARG_ADDRINT, INS_Address(ins),</span><br><span class="line">                            IARG_PTR, <span class="keyword">new</span> <span class="built_in">string</span>(INS_Disassemble(ins)),</span><br><span class="line">                            IARG_END);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// This function is called when the application exits</span></span><br><span class="line"><span class="function">VOID <span class="title">Fini</span><span class="params">(INT32 code, VOID *v)</span></span>&#123;</span><br><span class="line">    <span class="built_in">fprintf</span>(trace, <span class="string">"#eof\n"</span>);</span><br><span class="line">    fclose(trace);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Print Help Message                                                    */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"></span><br><span class="line"><span class="function">INT32 <span class="title">Usage</span><span class="params">()</span></span>&#123;</span><br><span class="line">    PIN_ERROR(<span class="string">"This Pintool prints the IPs of every instruction executed\n"</span> </span><br><span class="line">              + KNOB_BASE::StringKnobSummary() + <span class="string">"\n"</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Main                                                                  */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[])</span></span>&#123;</span><br><span class="line">    trace = fopen(<span class="string">"itrace.out"</span>, <span class="string">"w"</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Initialize pin</span></span><br><span class="line">    <span class="keyword">if</span> (PIN_Init(argc, argv)) <span class="keyword">return</span> Usage();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Register Instruction to be called to instrument instructions</span></span><br><span class="line">    INS_AddInstrumentFunction(Instruction, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Register Fini to be called when the application exits</span></span><br><span class="line">    PIN_AddFiniFunction(Fini, <span class="number">0</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Start the program, never returns</span></span><br><span class="line">    PIN_StartProgram();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="二、Makefile"><a href="#二、Makefile" class="headerlink" title="二、Makefile"></a>二、Makefile</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">##############################################################</span><br><span class="line">#</span><br><span class="line">#                   DO NOT EDIT THIS FILE!</span><br><span class="line">#</span><br><span class="line">##############################################################</span><br><span class="line"></span><br><span class="line"># If the tool is built out of the kit, PIN_ROOT must be specified in the make invocation <span class="keyword">and</span> <span class="built_in">point</span> to the kit root.</span><br><span class="line">ifdef PIN_ROOT</span><br><span class="line">CONFIG_ROOT := $(PIN_ROOT)/source/tools/Config</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">CONFIG_ROOT := ../Config</span><br><span class="line">endif</span><br><span class="line">include $(CONFIG_ROOT)/makefile.<span class="built_in">config</span></span><br><span class="line">include makefile.rules</span><br><span class="line">include $(TOOLS_ROOT)/Config/makefile.<span class="keyword">default</span>.rules</span><br><span class="line"></span><br><span class="line">##############################################################</span><br><span class="line">#</span><br><span class="line">#                   DO NOT EDIT THIS FILE!</span><br><span class="line">#</span><br><span class="line">##############################################################</span><br></pre></td></tr></table></figure>
+
+<h2 id="三、Makefile-rules"><a href="#三、Makefile-rules" class="headerlink" title="三、Makefile.rules"></a>三、Makefile.rules</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br></pre></td><td class="code"><pre><span class="line">##############################################################</span><br><span class="line">#</span><br><span class="line"># This file includes all the test targets as well as all the</span><br><span class="line"><span class="meta"># non-default build rules and test recipes.</span></span><br><span class="line">#</span><br><span class="line">##############################################################</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">##############################################################</span><br><span class="line">#</span><br><span class="line"># Test targets</span><br><span class="line">#</span><br><span class="line">##############################################################</span><br><span class="line"></span><br><span class="line">###### Place all generic definitions here ######</span><br><span class="line"></span><br><span class="line"># This defines tests which <span class="built_in">run</span> tools of the same name.  This is simply <span class="keyword">for</span> convenience to avoid</span><br><span class="line"><span class="meta"># defining the test name twice (once in TOOL_ROOTS and again in TEST_ROOTS).</span></span><br><span class="line"># Tests defined here should <span class="keyword">not</span> be defined in TOOL_ROOTS <span class="keyword">and</span> TEST_ROOTS.</span><br><span class="line"></span><br><span class="line">TEST_TOOL_ROOTS := callstack</span><br><span class="line"></span><br><span class="line"># This defines the tests to be <span class="built_in">run</span> that were <span class="keyword">not</span> already defined in TEST_TOOL_ROOTS.</span><br><span class="line">TEST_ROOTS :=</span><br><span class="line"></span><br><span class="line"># This defines a <span class="built_in">list</span> of tests that should <span class="built_in">run</span> in the <span class="string">"short"</span> sanity. Tests in <span class="keyword">this</span> <span class="built_in">list</span> must also</span><br><span class="line"># appear either in the TEST_TOOL_ROOTS <span class="keyword">or</span> the TEST_ROOTS <span class="built_in">list</span>.</span><br><span class="line"># If the entire directory should be tested in sanity, assign TEST_TOOL_ROOTS <span class="keyword">and</span> TEST_ROOTS to the</span><br><span class="line"># SANITY_SUBSET variable in the tests section below (see example in makefile.rules.tmpl).</span><br><span class="line">SANITY_SUBSET :=</span><br><span class="line"></span><br><span class="line"># This defines the tools which will be <span class="built_in">run</span> during the the tests, <span class="keyword">and</span> were <span class="keyword">not</span> already defined in</span><br><span class="line"># TEST_TOOL_ROOTS.</span><br><span class="line">TOOL_ROOTS :=</span><br><span class="line"></span><br><span class="line"># This defines the <span class="keyword">static</span> analysis tools which will be <span class="built_in">run</span> during the the tests. They should <span class="keyword">not</span></span><br><span class="line"># be defined in TEST_TOOL_ROOTS. If a test with the same name <span class="built_in">exists</span>, it should be defined in</span><br><span class="line"># TEST_ROOTS.</span><br><span class="line"># Note: Static analysis tools are in fact executables linked with the Pin Static Analysis Library.</span><br><span class="line"># This library provides a subset of the Pin APIs which allows the tool to perform <span class="keyword">static</span> analysis</span><br><span class="line"># of an application <span class="keyword">or</span> dll. Pin itself is <span class="keyword">not</span> used when <span class="keyword">this</span> tool runs.</span><br><span class="line">SA_TOOL_ROOTS :=</span><br><span class="line"></span><br><span class="line"># This defines all the applications that will be <span class="built_in">run</span> during the tests.</span><br><span class="line">APP_ROOTS := fibonacci little_malloc thread_app</span><br><span class="line"></span><br><span class="line"># This defines any additional object files that need to be compiled.</span><br><span class="line">OBJECT_ROOTS :=</span><br><span class="line"></span><br><span class="line"># This defines any additional dlls (shared objects), other than the pintools, that need to be compiled.</span><br><span class="line">DLL_ROOTS :=</span><br><span class="line"></span><br><span class="line"># This defines any <span class="keyword">static</span> libraries (archives), that need to be built.</span><br><span class="line">LIB_ROOTS :=</span><br><span class="line"></span><br><span class="line">###### Place probe mode tests here ######</span><br><span class="line">ifeq ($(PROBE),<span class="number">1</span>)</span><br><span class="line">    TEST_TOOL_ROOTS += replacesigprobed</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line">###### Place OS-specific definitions here ######</span><br><span class="line"></span><br><span class="line"># Linux</span><br><span class="line">ifeq ($(TARGET_OS),linux)</span><br><span class="line">    TEST_TOOL_ROOTS += buffer_linux fork_jit_tool follow_child_tool strace emudiv</span><br><span class="line">    TEST_ROOTS += statica</span><br><span class="line">    SA_TOOL_ROOTS += statica</span><br><span class="line">    APP_ROOTS += fork_app follow_child_app1 follow_child_app2 divide_by_zero</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line"># Mac</span><br><span class="line">ifeq ($(TARGET_OS),mac)</span><br><span class="line">    TEST_TOOL_ROOTS += fork_jit_tool follow_child_tool strace</span><br><span class="line">    TEST_ROOTS += statica</span><br><span class="line">    SA_TOOL_ROOTS += statica</span><br><span class="line">    APP_ROOTS += fork_app follow_child_app1 follow_child_app2</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line"># Windows</span><br><span class="line">ifeq ($(TARGET_OS),windows)</span><br><span class="line">    TEST_TOOL_ROOTS += w_malloctrace buffer_windows emudiv</span><br><span class="line">    APP_ROOTS += divide_by_zero</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line">###### Handle exceptions here ######</span><br><span class="line"></span><br><span class="line"># TODO: These tests fail - fix <span class="keyword">and</span> <span class="built_in">remove</span> the following:</span><br><span class="line"># See mantis <span class="number">2963</span></span><br><span class="line">ifeq ($(TARGET),mic)</span><br><span class="line">    TEST_TOOL_ROOTS := $(filter-out nonstatica emudiv, $(TEST_TOOL_ROOTS))</span><br><span class="line">    TEST_ROOTS := $(filter-out statica, $(TEST_ROOTS))</span><br><span class="line">    SA_TOOL_ROOTS := $(filter-out statica, $(SA_TOOL_ROOTS))</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line"># TODO: These tests fail - fix <span class="keyword">and</span> <span class="built_in">remove</span> the following:</span><br><span class="line">ifeq ($(TARGET_OS),mac)</span><br><span class="line">    TEST_TOOL_ROOTS := $(filter-out follow_child_tool fork_jit_tool inscount_tls invocation malloc_mt <span class="built_in">stack</span>-debugger, \</span><br><span class="line">                                    $(TEST_TOOL_ROOTS))</span><br><span class="line">    TEST_ROOTS := $(filter-out statica, $(TEST_ROOTS))</span><br><span class="line">    SA_TOOL_ROOTS := $(filter-out statica, $(SA_TOOL_ROOTS))</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">##############################################################</span><br><span class="line">#</span><br><span class="line"># Test recipes</span><br><span class="line">#</span><br><span class="line">##############################################################</span><br><span class="line"></span><br><span class="line"># This section contains recipes <span class="keyword">for</span> tests other than the <span class="keyword">default</span>.</span><br><span class="line"># See makefile.<span class="keyword">default</span>.rules <span class="keyword">for</span> the <span class="keyword">default</span> test rules.</span><br><span class="line"># All tests in <span class="keyword">this</span> section should adhere to the naming convention: &lt;testname&gt;.test</span><br><span class="line"></span><br><span class="line">inscount_tls.test: $(OBJDIR)inscount_tls$(PINTOOL_SUFFIX) $(OBJDIR)thread_app$(EXE_SUFFIX)</span><br><span class="line">	$(PIN) -t $(OBJDIR)inscount_tls$(PINTOOL_SUFFIX) -- $(OBJDIR)thread_app$(EXE_SUFFIX) &gt; $(OBJDIR)inscount_tls.out <span class="number">2</span>&gt;&amp;<span class="number">1</span></span><br><span class="line">	$(RM) $(OBJDIR)inscount_tls.out</span><br><span class="line"></span><br><span class="line">malloc_mt.test: $(OBJDIR)malloc_mt$(PINTOOL_SUFFIX) $(OBJDIR)thread_app$(EXE_SUFFIX)</span><br><span class="line">	$(PIN) -t $(OBJDIR)malloc_mt$(PINTOOL_SUFFIX) -- $(OBJDIR)thread_app$(EXE_SUFFIX) &gt; $(OBJDIR)malloc_mt.out <span class="number">2</span>&gt;&amp;<span class="number">1</span></span><br><span class="line">	$(RM) $(OBJDIR)malloc_mt.out</span><br><span class="line"></span><br><span class="line">buffer_linux.test: $(OBJDIR)buffer_linux$(PINTOOL_SUFFIX) $(OBJDIR)thread_app$(EXE_SUFFIX)</span><br><span class="line">	$(PIN) -t $(OBJDIR)buffer_linux$(PINTOOL_SUFFIX) -- $(OBJDIR)thread_app$(EXE_SUFFIX) &gt; $(OBJDIR)buffer_linux.out <span class="number">2</span>&gt;&amp;<span class="number">1</span></span><br><span class="line">	$(RM) $(OBJDIR)buffer_linux.out</span><br><span class="line"></span><br><span class="line">buffer_windows.test: $(OBJDIR)buffer_windows$(PINTOOL_SUFFIX) $(OBJDIR)thread_app$(EXE_SUFFIX)</span><br><span class="line">	$(PIN) -t $(OBJDIR)buffer_windows$(PINTOOL_SUFFIX) -emit <span class="number">0</span> \</span><br><span class="line">	  -- $(OBJDIR)thread_app$(EXE_SUFFIX) &gt; $(OBJDIR)buffer_windows.out <span class="number">2</span>&gt;&amp;<span class="number">1</span></span><br><span class="line">	$(RM) $(OBJDIR)buffer_windows.out</span><br><span class="line"></span><br><span class="line">invocation.test: $(OBJDIR)invocation$(PINTOOL_SUFFIX) $(OBJDIR)little_malloc$(EXE_SUFFIX)</span><br><span class="line">	$(PIN) -t $(OBJDIR)invocation$(PINTOOL_SUFFIX) -- $(OBJDIR)little_malloc$(EXE_SUFFIX) &gt; $(OBJDIR)invocation.out <span class="number">2</span>&gt;&amp;<span class="number">1</span></span><br><span class="line">	$(RM) $(OBJDIR)invocation.out</span><br><span class="line"></span><br><span class="line"># This tool is tested in <span class="string">"Debugger/makefile"</span>. However, leave <span class="keyword">this</span> <span class="built_in">line</span> because it is referenced in the user manual.</span><br><span class="line"># The user may invoke make <span class="built_in">stack</span>-debugger.test to build the tool <span class="keyword">and</span> app shown in the manual.</span><br><span class="line"># There is an intentional <span class="string">"empty"</span> <span class="built_in">line</span> which contains a tab character so <span class="keyword">this</span> <span class="string">"test"</span> will have an empty recipe.</span><br><span class="line"><span class="built_in">stack</span>-debugger.test: $(OBJDIR)<span class="built_in">stack</span>-debugger$(PINTOOL_SUFFIX) $(OBJDIR)fibonacci$(EXE_SUFFIX)</span><br><span class="line">	</span><br><span class="line"></span><br><span class="line"># stand alone pin tool</span><br><span class="line">statica.test: $(OBJDIR)statica$(SATOOL_SUFFIX)</span><br><span class="line">	$(OBJDIR)statica$(SATOOL_SUFFIX) -i $(OBJDIR)statica$(SATOOL_SUFFIX) &gt; $(OBJDIR)statica.dmp</span><br><span class="line">	$(RM) $(OBJDIR)statica.dmp</span><br><span class="line"></span><br><span class="line">nonstatica.test: $(OBJDIR)nonstatica$(PINTOOL_SUFFIX) $(TESTAPP)</span><br><span class="line">	$(PIN) -t $(OBJDIR)nonstatica$(PINTOOL_SUFFIX) \</span><br><span class="line">	  -- $(TESTAPP) makefile $(OBJDIR)nonstatica.makefile.copy &gt; $(OBJDIR)nonstatica.dmp</span><br><span class="line">	$(DIFF) makefile $(OBJDIR)nonstatica.makefile.copy</span><br><span class="line">	$(RM) $(OBJDIR)nonstatica.makefile.copy $(OBJDIR)nonstatica.dmp</span><br><span class="line"></span><br><span class="line">emudiv.test: $(OBJDIR)emudiv$(PINTOOL_SUFFIX) $(OBJDIR)divide_by_zero$(EXE_SUFFIX)</span><br><span class="line">	$(PIN) -t $(OBJDIR)emudiv$(PINTOOL_SUFFIX) -- $(OBJDIR)divide_by_zero$(EXE_SUFFIX) &gt; $(OBJDIR)emudiv.out <span class="number">2</span>&gt;&amp;<span class="number">1</span></span><br><span class="line">	$(QGREP) <span class="string">"Caught divide by zero exception"</span> $(OBJDIR)emudiv.out</span><br><span class="line">	$(RM) $(OBJDIR)emudiv.out</span><br><span class="line"></span><br><span class="line">fork_jit_tool.test: $(OBJDIR)fork_jit_tool$(PINTOOL_SUFFIX) $(OBJDIR)fork_app$(EXE_SUFFIX)</span><br><span class="line">	$(PIN) -t $(OBJDIR)fork_jit_tool$(PINTOOL_SUFFIX) -- $(OBJDIR)fork_app$(EXE_SUFFIX)</span><br><span class="line"></span><br><span class="line">follow_child_tool.test: $(OBJDIR)follow_child_tool$(PINTOOL_SUFFIX) $(OBJDIR)follow_child_app1$(EXE_SUFFIX) $(OBJDIR)follow_child_app2$(EXE_SUFFIX)</span><br><span class="line">	$(PIN) -follow_execv <span class="number">1</span> -t $(OBJDIR)follow_child_tool$(PINTOOL_SUFFIX) \</span><br><span class="line">	  -- $(OBJDIR)follow_child_app1$(EXE_SUFFIX) $(OBJDIR)follow_child_app2$(EXE_SUFFIX)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">##############################################################</span><br><span class="line">#</span><br><span class="line"># Build rules</span><br><span class="line">#</span><br><span class="line">##############################################################</span><br><span class="line"></span><br><span class="line"># This section contains the build rules <span class="keyword">for</span> all binaries that have special build rules.</span><br><span class="line"># See makefile.<span class="keyword">default</span>.rules <span class="keyword">for</span> the <span class="keyword">default</span> build rules.</span><br><span class="line"></span><br><span class="line">###### Special applications<span class="number">'</span> build rules ######</span><br><span class="line"></span><br><span class="line">$(OBJDIR)divide_by_zero$(EXE_SUFFIX): divide_by_zero_$(TARGET_OS).c</span><br><span class="line">	$(APP_CC) $(APP_CXXFLAGS_NOOPT) $(COMP_EXE)$@ $&lt; $(APP_LDFLAGS_NOOPT) $(APP_LIBS)</span><br><span class="line"></span><br><span class="line">$(OBJDIR)thread_app$(EXE_SUFFIX): thread_$(OS_TYPE).c</span><br><span class="line">	$(APP_CC) $(APP_CXXFLAGS) $(COMP_EXE)$@ $&lt; $(APP_LDFLAGS) $(APP_LIBS)</span><br></pre></td></tr></table></figure>
+
+<h2 id="四、运行结果"><a href="#四、运行结果" class="headerlink" title="四、运行结果"></a>四、运行结果</h2><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:ManualExamples# /<span class="built_in">home</span>/hpfuzzer/pin/pin -t ./obj-ia32/callstack.so -- /<span class="built_in">home</span>/hpfuzzer/swftophp /<span class="built_in">home</span>/hpfuzzer/input.txt</span><br><span class="line">direct call: <span class="number">8048e9</span>c call <span class="number">0x8048d70</span></span><br><span class="line">direct call: <span class="number">8066</span>ec6 call <span class="number">0x8048eb0</span></span><br><span class="line">direct call: <span class="number">8066</span>ede call <span class="number">0x8048ba8</span></span><br><span class="line">direct call: <span class="number">8048b</span>ac call <span class="number">0x8048eb0</span></span><br><span class="line">indirect call: <span class="number">8066f</span>0b call dword ptr [ebx+edi*<span class="number">4</span><span class="number">-0x11c</span>] <span class="number">8048f</span>50</span><br><span class="line">direct call: <span class="number">804e1</span>e4 call <span class="number">0x8048be0</span></span><br><span class="line">......</span><br><span class="line">direct call: <span class="number">8066f</span>96 call <span class="number">0x8048d10</span></span><br><span class="line">indirect call: <span class="number">804</span>df32 call eax b673e9f1</span><br><span class="line">header indicates a filesize of <span class="number">543449459</span> but filesize is <span class="number">22</span></span><br><span class="line">direct call: <span class="number">804</span>df4a call <span class="number">0x8064942</span></span><br><span class="line">......</span><br></pre></td></tr></table></figure>
+
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/10/26/valgrind/" rel="next" title="valgrind">
+                <i class="fa fa-chevron-left"></i> valgrind
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/11/13/AddressSanitizer%E4%BD%BF%E7%94%A8%E4%BB%8B%E7%BB%8D/" rel="prev" title="AddressSanitizer使用介绍">
+                AddressSanitizer使用介绍 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">zyt</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">22</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Pintool-获取函数直接、间接调用"><span class="nav-number">1.</span> <span class="nav-text">Pintool 获取函数直接、间接调用</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、-源码"><span class="nav-number">1.1.</span> <span class="nav-text">一、 源码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、Makefile"><span class="nav-number">1.2.</span> <span class="nav-text">二、Makefile</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、Makefile-rules"><span class="nav-number">1.3.</span> <span class="nav-text">三、Makefile.rules</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、运行结果"><span class="nav-number">1.4.</span> <span class="nav-text">四、运行结果</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zyt</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
