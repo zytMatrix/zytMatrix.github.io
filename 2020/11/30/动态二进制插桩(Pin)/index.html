@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="DBI（dynamic binary instrumentation）会监控程序的执行，并对指令流插桩，不会像 SBI（static binary instrumentation）那样反汇编、重写二进制，容错率更高。 下图展现了现代 DBI 系统（如：Pin、 DynamoRIO）的架构：   一、Architecture of a DBI SystemDBI 引擎通过监控、控制执行的指令来动态对">
+<meta property="og:type" content="article">
+<meta property="og:title" content="动态二进制插桩 (Pin)">
+<meta property="og:url" content="http://yoursite.com/2020/11/30/%E5%8A%A8%E6%80%81%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%8F%92%E6%A1%A9(Pin)/index.html">
+<meta property="og:site_name" content="Matrix">
+<meta property="og:description" content="DBI（dynamic binary instrumentation）会监控程序的执行，并对指令流插桩，不会像 SBI（static binary instrumentation）那样反汇编、重写二进制，容错率更高。 下图展现了现代 DBI 系统（如：Pin、 DynamoRIO）的架构：   一、Architecture of a DBI SystemDBI 引擎通过监控、控制执行的指令来动态对">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201126195918.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201127212101.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201127212209.png">
+<meta property="article:published_time" content="2020-11-30T07:20:13.000Z">
+<meta property="article:modified_time" content="2020-11-30T07:21:49.591Z">
+<meta property="article:author" content="zyt">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201126195918.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"always","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/11/30/动态二进制插桩(Pin)/"/>
+
+
+
+
+
+  <title>动态二进制插桩 (Pin) | Matrix</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Matrix</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/11/30/%E5%8A%A8%E6%80%81%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%8F%92%E6%A1%A9(Pin)/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">动态二进制插桩 (Pin)</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-11-30T15:20:13+08:00">
+                2020-11-30
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Pin/" itemprop="url" rel="index">
+                    <span itemprop="name">Pin</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p><strong>DBI</strong>（dynamic binary instrumentation）会监控程序的执行，并对指令流插桩，不会像 <strong>SBI</strong>（static binary instrumentation）那样反汇编、重写二进制，容错率更高。</p>
+<p>下图展现了现代 <strong>DBI</strong> 系统（如：Pin、 DynamoRIO）的架构：</p>
+<img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201126195918.png" style="zoom: 50%;">
+
+<h2 id="一、Architecture-of-a-DBI-System"><a href="#一、Architecture-of-a-DBI-System" class="headerlink" title="一、Architecture of a DBI System"></a>一、Architecture of a DBI System</h2><p><strong>DBI</strong> 引擎通过监控、控制执行的指令来动态对程序插桩。<strong>DBI</strong> 引擎会提供一些API，可以用来实现用户自己的 <strong>DBI</strong> 工具，实现动态插桩。通常这些工具以共享库的形式被 <strong>DBI</strong> 引擎加载。如上图右侧所示，它利用 <strong>DBI</strong> 的API实现了一个简单的 DBI tool，对每个基本块的最后一条指令插桩，注册了一个回调函数来递增指令计数器。</p>
+<p>在 <strong>DBI</strong> 引擎开始其主要工作之前，允许 DBI tool 来初始化它自己。比如上图的 <code>1</code>，DBI tool 的初始化函数<code>init()</code>注册了一个函数 <code>instrument_bb()</code>，告诉 <strong>DBI</strong> 引擎如何对每一个基本块进行插桩：每当基本块最后一条指令执行后会调用回调函数<code>bb_callback()</code>。然后，初始化函数<code>init()</code>告诉 <strong>DBI</strong> 引擎已完成初始化操作，可以开始执行目标程序。</p>
+<p><strong>DBI</strong> 引擎不会直接运行目标程序，而是运行<code>code cache</code>中所包含的已经插桩后的代码。初始时，<code>code cache</code>是空的，<strong>DBI</strong> 引擎会从进程中截取基本块<code>3</code>，然后使用 DBI tool 对其插桩 <code>4</code>。<strong>DBI</strong> 引擎并不会在基本块粒度截取代码并对其插桩，而是在<code>Trace</code>粒度进行。为了方便，此处的例子通过调用函数<code>instrument_bb()</code>，在基本块粒度进行插桩。</p>
+<p>插桩后，<strong>DBI</strong> 引擎使用JIT编译器来对插桩后的代码重新编译并优化<code>6</code>，然后将其保存在<code>code cache</code>中<code>7</code>。JIT编译器还会重写控制流指令，以确保 <strong>DBI</strong> 引擎保留控制权，从而防止控制流转换在未插桩的目标程序中继续执行。<strong>DBI</strong> 中的JIT编译器不会把代码编译为其他的语言形式，它仅是将机器码编译为机器码。同时，仅需要对第一次执行的代码进行插桩和使用JIT编译。之后，会将其保存到<code>code cache</code>中并重用。</p>
+<p>接下来开始执行经过插桩和JIT编译后的放在<code>code cache</code>中的代码，直到遇见一个控制流指令，需要截取新的代码或者需要<code>cache</code>中的下一个代码块<code>8</code>。<strong>DBI</strong> 引擎通过尽量重写控制流指令来减少运行时的开销，比如，不经过 <strong>DBI</strong> 引擎的参与就直接跳转到<code>code cache</code>中的下一个基本块。当遇到间接调用时候，重写后的指令将控制权返回给 <strong>DBI</strong> 引擎，便于获取新的<code>code chunk</code>。</p>
+<p>尽管在<code>code cache</code>中的大多数指令会直接被执行，但是 <strong>DBI</strong> 引擎也会模拟执行一些指令而不是直接执行他们。例如，Pin引擎会模拟执行类似于<code>execve</code>的指令，对其进行特殊处理。</p>
+<p>插桩后的代码包含 DBI tool 中指定的回调函数，它会改变代码的行为<code>9</code>。当执行流到达 DBI tool 中的回调函数或从回调函数返回的时候，<strong>DBI</strong> 引擎会自动存取寄存器的状态。</p>
+<h2 id="二、Introduction-to-Pin"><a href="#二、Introduction-to-Pin" class="headerlink" title="二、Introduction to Pin"></a>二、Introduction to Pin</h2><h3 id="1-PIN-INTERNALS"><a href="#1-PIN-INTERNALS" class="headerlink" title="1. PIN INTERNALS"></a>1. PIN INTERNALS</h3><p>Pin目前支持 Intel CPU 架构，包括x86、x64，支持Linux、Windows、macOS。Pin的架构和上图类似。Pin在<code>Trace</code>粒度上截取代码并使用JIT编译器来编译。<code>Trace</code>的定义类似于标准基本块的定义，仅包含一个入口，但它包含多个出口。也即一个<code>trace</code>是一个指令序列，当它命中一个非条件控制转换指令、到达指定的最大长度、命中一定数目的条件控制转换指令终止。</p>
+<p>尽管Pin在<code>trace</code>粒度上进行JIT即时编译，但是它允许基于不同的粒度进行插桩，包括：指令、基本块、trace、函数、image。Pin的 <strong>DBI</strong> 引擎和Pintool均运行在用户态，所以仅仅可以对用户态的程序进行插桩。</p>
+<h3 id="2-IMPLEMENTING-PINTOOLS"><a href="#2-IMPLEMENTING-PINTOOLS" class="headerlink" title="2. IMPLEMENTING PINTOOLS"></a>2. IMPLEMENTING PINTOOLS</h3><p>用Pin实现的DBI工具称为Pintools，它们是使用Pin API以C / C ++中编写的共享库。Pin API尽可能独立于体系结构，仅在需要时才使用特定于体系结构的组件。这样可以编写可在两种体系结构之间移植的Pintools，或者只需要进行最小的更改即可支持另一种体系结构。</p>
+<p>一个Pintool包含两部分不同的函数：插桩函数和分析函数。插桩函数用来告诉Pin插桩的代码是什么以及在哪里插入，这些代码仅当Pin首次遇见那些未被插桩的特定的代码片段时会被调用。为了插入代码，插桩函数注册了可以调用分析函数的回调函数，它包含了实际的插桩代码，并且每次在被插桩的特定代码序列执行时都会执行插桩代码。</p>
+<ul>
+<li><strong>instrumentation routines：</strong>注册调用<code>analysis routines</code>的回调函数</li>
+<li><strong>analysis routines：</strong>实际执行的插桩代码</li>
+</ul>
+<h2 id="三、PROFILING-WITH-PIN"><a href="#三、PROFILING-WITH-PIN" class="headerlink" title="三、PROFILING WITH PIN"></a>三、PROFILING WITH PIN</h2><p>该Pintool记录有关程序执行的统计信息，以帮助优化程序。它统计已执行指令、基本块，函数和syscall的次数。</p>
+<h3 id="1-The-Profiler’s-Data-Structures-and-Setup-Code"><a href="#1-The-Profiler’s-Data-Structures-and-Setup-Code" class="headerlink" title="1. The Profiler’s Data Structures and Setup Code"></a>1. The Profiler’s Data Structures and Setup Code</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"pin.H"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">KNOB&lt;<span class="keyword">bool</span>&gt; <span class="title">ProfileCalls</span><span class="params">(KNOB_MODE_WRITEONCE, <span class="string">"pintool"</span>, <span class="string">"c"</span>, <span class="string">"0"</span>, <span class="string">"Profile function calls"</span>)</span></span>;</span><br><span class="line"><span class="function">KNOB&lt;<span class="keyword">bool</span>&gt; <span class="title">ProfileSyscalls</span><span class="params">(KNOB_MODE_WRITEONCE, <span class="string">"pintool"</span>, <span class="string">"s"</span>, <span class="string">"0"</span>, <span class="string">"Profile syscalls"</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="keyword">unsigned</span> <span class="keyword">long</span>&gt; &gt; cflows;</span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="keyword">unsigned</span> <span class="keyword">long</span>&gt; &gt; calls;</span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="keyword">unsigned</span> <span class="keyword">long</span>&gt; syscalls;</span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="built_in">std</span>::<span class="built_in">string</span>&gt; funcnames;</span><br><span class="line"></span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> insn_count    = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> cflow_count   = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> call_count    = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> syscall_count = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">... ...</span><br><span class="line">  </span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> *argv[])</span></span>&#123;</span><br><span class="line">    PIN_InitSymbols();</span><br><span class="line">    <span class="keyword">if</span>(PIN_Init(argc,argv)) &#123;</span><br><span class="line">        print_usage();</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    IMG_AddInstrumentFunction(parse_funcsyms, <span class="literal">NULL</span>);</span><br><span class="line">    INS_AddInstrumentFunction(instrument_insn, <span class="literal">NULL</span>);</span><br><span class="line">    TRACE_AddInstrumentFunction(instrument_trace, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(ProfileSyscalls.Value()) &#123;</span><br><span class="line">        PIN_AddSyscallEntryFunction(log_syscall, <span class="literal">NULL</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    PIN_AddFiniFunction(print_results, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Never returns */</span></span><br><span class="line">    PIN_StartProgram();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>每一个Pintool都得包含头文件 pin.H来访问 PIn 的API，它包含了所有的API line1。</p>
+<p>Pin从程序开始的第一条指令就开始监控，这意味着Pintool不仅会看到应用程的代码，还包括被执行过的动态加载器、共享库的指令。</p>
+<p><strong>COMMAND LINE OPTIONS AND DATA STRUCTURES</strong></p>
+<p>Pintool使用<code>knob</code>来设置特定的命令行参数。此处使用<code>KNOB&lt;bool&gt;</code>设置了两个参数：<code>ProfileCalls、ProfileSyscalls line3</code>。选项使用的<code>mode</code>为<code>KNOB_MODE_WRITEONCE</code>，这是因为他们是<code>bool</code>类型的<code>flag</code>，当使用这些<code>flag</code>时候仅需要设置一次。若是不传递参数，两者默认为<code>o</code>，也就是<code>false</code>。</p>
+<p>Pintool使用<code>std::map</code>的结构来存储程序运行时的信息<code>line6、line7</code>：</p>
+<ul>
+<li><strong>cflows：</strong>跳转指令相关信息<code>&lt;destination &lt;source, times&gt; &gt;</code></li>
+<li><strong>call：</strong>函数调用指令相关信息<code>&lt;destination &lt;source, times&gt; &gt;</code></li>
+<li><strong>insn_count：</strong>执行的指令数目</li>
+<li><strong>cflow_count：</strong>执行的控制流指令数目</li>
+<li><strong>call_count：</strong>执行的call指令的数目</li>
+<li><strong>syscall_count：</strong>执行的syscall的数目</li>
+</ul>
+<p><strong>INITIALIZING PIN</strong></p>
+<p>如果要在Pintool中使用符号，Pin要求在任何其他的API函数调用之前来调用<code>PIN_InitSymbols() line19</code>。</p>
+<p><code>PIN_Init()</code>在<code>PIN_InitSymbols()</code>之后，在任何其他的API函数之前被调用<code>line20</code>。主要完成初始化Pin的工作，处理Pin本身的命令行参数和Pintool中使用<code>Knob</code>指定的参数。</p>
+<p><strong>REGISTERING INSTRUMENTATION FUNCTIONS</strong></p>
+<p>Pin被初始化之后，现在需要初始化Pintool。其中最重要的事情是注册插桩函数来对插入需要执行的分析代码。</p>
+<p>Pintool一共注册了3个插桩函数：</p>
+<ul>
+<li><strong>parse_funcsyms：</strong>使用函数<code>IMG_AddInstrumentFunction()</code>来实现<code>image</code>粒度的插桩，<code>line25</code></li>
+<li><strong>instrument_trace：</strong>使用函数<code>TRACE_AddInstrumentFunction()</code>来实现<code>trace</code>粒度的插桩，<code>line26</code></li>
+<li><strong>instrument_insn：</strong>使用函数<code>INS_AddInstrumentFunction()</code>来实现<code>instruction</code>粒度的插桩，<code>line27</code></li>
+</ul>
+<p>上述三个插桩函数分别使用<code>IMG、TRACE、INS</code>作为其第一个参数。并且都使用<code>void*</code>作为第二个参数，当使用<code>*_AddInstrumentFunction</code>来注册插桩函数时，<code>void *</code>允许传一个Pintool特定的数据结构，此处的Pintool不使用这种方法，将<code>NULL</code>传给<code>void*</code>。</p>
+<p><strong>REGISTERING A SYSCALL ENTRY FUNCTION</strong></p>
+<p>Pin允许我们在<code>syscall</code>调用前、后注册回调函数。仅有少数一些<code>syscall</code>我们不能注册回调函数，并且只能在回调函数内部来区分系统调用之间的不同。</p>
+<p>Pintool使用函数<code>PIN_AddSyscallEntryFunction()</code>来注册了名为<code>log_syscall()</code> 的函数，当程序执行进入到<code>syscall</code>中的时候会被执行<code>line30</code>。可以使用函数<code>PIN_AddSyscallExitFunction()</code>注册一个回调函数，在<code>syscall</code>执行完的时候调用。在此处仅当 <code>ProfileSyscalls</code>为<code>true</code>的时候才会注册回调函数<code>log_syscall()</code>。</p>
+<p><strong>REGISTERING A FINI FUNCTION</strong></p>
+<p>最后注册的回调函数是<code>fini()</code>，当应用程序退出的时候或将Pin从应用程序<code>detach</code>的时候会调用该函数<code>line32</code>。它接受一个退出码作为第一个参数，以及<code>void*</code>作为第二个参数。取决于程序退出的实际情况，<code>fini()</code>函数可能被程序以不合理的方式调用。此处的<code>fini()</code>函数调用函数<code>print_results()</code>来打印输出信息。</p>
+<p><strong>STARTING THE APPLICATION</strong></p>
+<p>每一个Pintool初始化的最后一步是调用函数<code>PIN_StartProgram() line35</code>，然后开始执行应用程序。在这之后，不能再注册任何新的回调函数，仅当插桩函数、分析函数被调用的时候，Pintool才会再次获得控制权。并且，<code>PIN_StartProgram()</code>永远不会返回，也即<code>main</code>函数中的<code>return 0</code>永远不会被执行。</p>
+<h3 id="2-Parsing-Function-Symbols"><a href="#2-Parsing-Function-Symbols" class="headerlink" title="2. Parsing Function Symbols"></a>2. Parsing Function Symbols</h3><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">parse_funcsyms</span><span class="params">(IMG img, <span class="keyword">void</span> *v)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(!IMG_Valid(img)) </span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec)) &#123;</span><br><span class="line">        <span class="keyword">for</span>(RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn)) &#123;</span><br><span class="line">            funcnames[RTN_Address(rtn)] = RTN_Name(rtn); </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>parse_funcsyms()</code>是一个在<code>image</code>粒度上插桩的函数，它以<code>IMG</code>为其第一个参数。每当一个新的<code>image</code>（可执行文件或共享库）被加载的时候，<code>Image</code>插桩函数可以对整个<code>image</code>进行插桩。这样可以遍历<code>image</code>中所有的函数，同时在每个函数运行前、后注册分析函数。但是，对函数插桩仅当二进制有符号表的时候才可以做到，并且二进制有一些优化的时候，如：尾调用，函数插桩不能工作。</p>
+<p>此处的<code>parse_funcsyms()</code>没有注册任何回调函数，它利用了<code>image</code>插桩函数的另一个特性：可以遍历<code>image</code>的所有函数符号。在使用参数 ING 之前，<code>parse_funcsyms()</code>调用<code>IMG_Valid</code>来判断<code>image</code>的有效性<code>line2</code>。<code>img</code>有效的话，<code>parse_funcsyms()</code>函数会遍历所有的 <code>SEC</code> 对象，也即<code>sections</code>。<code>IMG_SecHead()</code>返回<code>image</code>的第一个<code>section</code>，<code>SEC_Next()</code>返回下一个<code>section</code>，直到下一个<code>section</code>不存在。</p>
+<p>对于每一个<code>section</code>，函数<code>parse_funcsyms()</code>会以<code>RTNobjects</code>的形式来循环遍历所有的函数<code>line6</code>，然后使用函数<code>RTN_Address()</code> 来获取每一个函数的地址，使用<code>RTN_Name()</code>来获取函数的名字，最后将他们保存到 map 数据结构中。如果二进制没有符号表，<code>RTN_Name()</code>返回一个空字符串。</p>
+<h3 id="3-Instrumenting-Basic-Blocks"><a href="#3-Instrumenting-Basic-Blocks" class="headerlink" title="3. Instrumenting Basic Blocks"></a>3. Instrumenting Basic Blocks</h3><p><strong>A FEW NOTES ON BASIC BLOCKS IN PIN</strong></p>
+<p>由于Pin是动态的发现基本块，这可能与静态分析得到的基本块有差别。例如，Pin最初可能发现了一个很大的基本块，然后发现一条跳转指令指向该基本块的中间，那么Pin会将该基本块分为两部分，并且对这两部分重新插桩。</p>
+<p>另外，作为一种替代实现，可以在指令粒度上增加<code>insn_counton</code>。但是，这种实现比基本的粒度慢得多，因为它需要对每条指令都执行一次回调的分析函数来增加<code>insn_count</code>。相反，基本块粒度的实现使得每个基本块仅需要执行一次回调。编写Pintool时，尽可能优化分析函数非常重要，因为在执行过程中会反复调用分析函数，而不同于插桩函数（仅在第一次遇到特定的代码段时才会调用）</p>
+<p><strong>IMPLEMENTING BASIC BLOCK INSTRUMENTATION</strong></p>
+<p>由于Pin没有API直接对基本块插桩，所以先使用trace 粒度的插桩函数，然后遍历其中的每一个基本块</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">instrument_bb</span><span class="params">(BBL bb)</span></span>&#123;</span><br><span class="line">    BBL_InsertCall(</span><br><span class="line">        bb, IPOINT_ANYWHERE, (AFUNPTR)count_bb_insns, </span><br><span class="line">        IARG_UINT32, BBL_NumIns(bb), </span><br><span class="line">        IARG_END  </span><br><span class="line">    );</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">instrument_trace</span><span class="params">(TRACE trace, <span class="keyword">void</span> *v)</span></span>&#123;</span><br><span class="line">    IMG img = IMG_FindByAddress(TRACE_Address(trace)); </span><br><span class="line">    <span class="keyword">if</span>(!IMG_Valid(img) || !IMG_IsMainExecutable(img)) </span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    <span class="keyword">for</span>(BBL bb = TRACE_BblHead(trace); BBL_Valid(bb); bb = BBL_Next(bb)) &#123;</span><br><span class="line">        instrument_bb(bb); </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>函数<code>instrument_trace()</code>是一个<code>trace</code>粒度的插桩函数，它以<code>TRACE</code>为其第一个参数。在<code>line 10</code>，它首先调用函数 <code>IMG_FindByAddress()</code>来找到该<code>trace</code>所属于的<code>image</code>。在<code>line11</code>，调用函数<code>IMG_IsMainExecutable()</code>判断该<code>image</code>是否是主要的可执行程序，也即main。我们仅提取主要执行程序的信息，忽略共享库或动态加载器。如果<code>trace</code>是有效的并且是主要的可执行程序，在<code>line14</code>，函数<code>instrument_trace()</code>遍历所有的基本块对象<code>BBL</code>，调用<code>line 1</code>的函数<code>instrument_bb()</code> 来对每个基本块执行真正的插桩代码。</p>
+<p>为了插桩一个给定的<code>BBL</code>，<code>instrument_bb()</code>调用<code>BBL_InsertCall()</code>来注册一个进行分析的回调函数。它接收的参数为：</p>
+<ul>
+<li><strong>bb：</strong>被插桩基本块</li>
+<li><strong>insertion point：</strong>插入点，它确定 Pin 在基本块中的哪个位置插入回调的分析函数。此处，插入点为<code>IPOINT_ANYWHERE</code>，因为在基本块中的哪个点更新指令计数器都没有关系。可能的插入点如下图所示。</li>
+<li><strong>function pointer：</strong>指向分析函数的函数指针</li>
+<li><strong>（AFUNPTR）count_bb_insns：</strong>AFUNPTR的作用是将函数指针传递给Pin的API时使用<code>AFUNPTR</code>做一个类型转换，分析函数的名字是<code>count_bb_insns</code></li>
+<li><strong>IARG_UINT32, BBL_NumIns(bb)：</strong>可选参数，基本块中指令的数目，为<code>IARG_UINT32</code>类型</li>
+<li><strong>IARG_END：</strong>告诉Pin参数列表结束</li>
+</ul>
+<p>其中前三个参数是<code>BBL_InsertCall()</code>指定的，后面的参数是传递给分析函数<code>count_bb_insns()</code>的可选参数。</p>
+<img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201127212101.png" style="zoom:50%;">
+
+<h3 id="4-Instrumenting-Control-Flow-Instructions"><a href="#4-Instrumenting-Control-Flow-Instructions" class="headerlink" title="4. Instrumenting Control Flow Instructions"></a>4. Instrumenting Control Flow Instructions</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">instrument_insn</span><span class="params">(INS ins, <span class="keyword">void</span> *v)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(!INS_IsBranchOrCall(ins))  </span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    IMG img = IMG_FindByAddress(INS_Address(ins));  </span><br><span class="line">    <span class="keyword">if</span>(!IMG_Valid(img) || !IMG_IsMainExecutable(img)) </span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"> </span><br><span class="line">    INS_InsertPredicatedCall(</span><br><span class="line">        ins, IPOINT_TAKEN_BRANCH, (AFUNPTR)count_cflow, </span><br><span class="line">        IARG_INST_PTR,  <span class="comment">//特殊的参数类型，他的数据类型和值是在一起的。一个指针，指向回调函数执行时候的指令</span></span><br><span class="line">        IARG_BRANCH_TARGET_ADDR,  <span class="comment">//特殊的参数类型，他的数据类型和值是在一起的。分支taken edge的目标地址</span></span><br><span class="line">        IARG_END</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="comment">//2. 对分支指令的fallthrough edge插桩。一些非条件跳转指令，没有fallthrough edge，因此在对指令的fallthrough插桩之前使用INS_HasFallthrough()检查其是否有fallthrough的边</span></span><br><span class="line">    <span class="keyword">if</span>(INS_HasFallThrough(ins)) &#123;</span><br><span class="line">        INS_InsertPredicatedCall(</span><br><span class="line">            ins, IPOINT_AFTER, (AFUNPTR)count_cflow, </span><br><span class="line">            IARG_INST_PTR, </span><br><span class="line">            IARG_FALLTHROUGH_ADDR,  <span class="comment">//分支fallthrough edge的目标地址</span></span><br><span class="line">            IARG_END</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line">  </span><br><span class="line">    <span class="comment">//3. 对call指令进行插桩。因为call指令不会内置判断条件，此处可以不使用INS_InsertPredicatedCall()</span></span><br><span class="line">    <span class="keyword">if</span>(INS_IsCall(ins)) &#123;</span><br><span class="line">        <span class="keyword">if</span>(ProfileCalls.Value()) &#123;</span><br><span class="line">            INS_InsertCall(</span><br><span class="line">                ins, IPOINT_BEFORE, (AFUNPTR)count_call, </span><br><span class="line">                IARG_INST_PTR,  <span class="comment">//指向call指令的指针</span></span><br><span class="line">                IARG_BRANCH_TARGET_ADDR,  <span class="comment">//call指令的目标地址</span></span><br><span class="line">                IARG_END</span><br><span class="line">            );</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>函数<code>instrument_insn</code>接收一个<code>INSobject</code>作为其第一个参数，表示要检测的指令。 首先，调用函数<code>instrument_insncalls</code>来判断指令是否是<code>control-flow</code>指令，也即是否是call指令、条件判断指令。然后调用<code>IMG_FindByAddress()</code>检查该指令是否属于主要可执行程序。</p>
+<img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20201127212209.png" style="zoom:50%;">
+
+<p>为了记录控制流转换指令和call指令，<code>instrument_insn</code> 注册了三个不同的回调分析函数：</p>
+<p><strong>INSTRUMENTING THE TAKEN EDGE</strong></p>
+<p>对分支指令的<code>taken edge</code>注册回调函数<code>count_cflow()</code>，当分支执行<code>taken edge</code>时它会增加<code>control-flow counter</code>：<code>cflow_count</code>。同时记录该分支的源、目标地址。该分析函数<code>cflow_count()</code>接受两个特殊的参数：</p>
+<ul>
+<li><strong>IARG_INST_PTR：</strong>特殊的参数类型，数据类型和值在一起。是一个指针，指向回调函数执行时候的指令</li>
+<li><strong>IARG_BRANCH_TARGET_ADDR：</strong>特殊的参数类型，数据类型和值在一起。分支<code>taken edge</code>的目标地址</li>
+</ul>
+<p>如表 9-2 所示，仅当指令是控制流指令或call指令的时候，<code>taken edge</code> 才是一个有效的插入点（INS_IsBranchOrCall为true）。</p>
+<p>一些X86指令，如条件移动指令(cmov)和以rep为前缀的字符串操作指令，内置了条件判断，当满足条件时会执行该指令。使用<code>INS_InsertPredicatedCall()</code>作为回调分析函数，它仅当条件满足指令被执行的时候才会被执行。相反，要是使用<code>INS_InsertCall()</code>作为回调分析函数，即使条件不满足也会被执行，导致指令的数目增加很多。</p>
+<p><strong>INSTRUMENTING THE FALLTHROUGH EDGE</strong></p>
+<p>一些非条件跳转指令，没有<code>fallthrough edge</code>，因此在对指令的<code>fallthrough</code>插桩之前使用<code>INS_HasFallthrough()</code>检查其是否有fallthrough的边</p>
+<p>如果给定的指令具有<code>fallthrough edge</code>，则<code>instrument_insn</code>在该edge上插入回调分析函数 count_cflow。此回调函数使用的插入点是IPOINT_AFTER，并将 fallthrough 地址（目标地址） IARG_FALLTHROUGH_ADDR 作为参数传给分析函数以记录。</p>
+<p><strong>INSTRUMENTING CALLS</strong></p>
+<p>instrument_insn 首先使用函数 INS_IsCall 来找出 call 指令。如果当前正在执行的指令确实是一个call指令，并且可选参数 -c 传递给了Pintool，Pintool 在 call 指令执行之前（在IPOINT_BEFORE）插入回调分析函数 count_call ，并传入调用的源（IARG_INST_PTR）和目标地址（IARG_BRANCH_TARGET_ADDR）。在这种情况下，使用INS_InsertCall代替INS_InsertPredicatedCall是安全的，因为没有带有内置条件的调用指令。</p>
+<h3 id="5-Counting-Instructions-Control-Transfers-and-Syscalls"><a href="#5-Counting-Instructions-Control-Transfers-and-Syscalls" class="headerlink" title="5. Counting Instructions, Control Transfers, and Syscalls"></a>5. Counting Instructions, Control Transfers, and Syscalls</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">count_bb_insns</span><span class="params">(UINT32 n)</span></span>&#123;</span><br><span class="line">    insn_count += n;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">count_cflow</span><span class="params">(ADDRINT ip, ADDRINT target)</span></span>&#123;</span><br><span class="line">    cflows[target][ip]++;</span><br><span class="line">    cflow_count++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">count_call</span><span class="params">(ADDRINT ip, ADDRINT target)</span></span>&#123;</span><br><span class="line">    calls[target][ip]++;</span><br><span class="line">    call_count++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">log_syscall</span><span class="params">(THREADID tid, CONTEXT *ctxt, SYSCALL_STANDARD <span class="built_in">std</span>, VOID *v)</span></span>&#123;</span><br><span class="line">    syscalls[PIN_GetSyscallNumber(ctxt, <span class="built_in">std</span>)]++;</span><br><span class="line">    syscall_count++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如上所见，分析函数很简单，用最少的代码即可记录所需的统计信息。在应用程序执行时经常会调用分析函数，因此会对Pintool的性能产生重大影响。当执行基本块时，将调用第一个分析函数count_bb_insns，简单地用基本块中的指令数来递增 insn_count。同样，当执行控制流指令时，函数 count_cflow 会递增 cflow_count。另外，在man cflows 中记录分支的源地址和目标地址，并为源地址和目标的这种特定组合增加计数器。在Pin中，使用 ADDRINT 类型来存储地址。记录call 指令信息的分析函数 count_call 与count_cflow类似。</p>
+<p>最后一个函数 log_syscall 并不是一个标准的分析函数，他仅是开始执行 syscall 时候的一个回调函数。在Pin中，处理 syscall 的函数接受4个参数：</p>
+<ul>
+<li>THREADID，指明哪个线程调了该syscall</li>
+<li>CONTEXT*，包含如系统调用号、参数、返回值(syscall exit handlers)等</li>
+<li>SYSCALL_STANDARD，指明系统调用的标准信息</li>
+<li>void*，用户定义的数据结构</li>
+</ul>
+<p>log_syscall 的目的是记录每个系统调用的调用频率。为此，它调用 PIN_GetSyscallNumber 以获取当前syscall的编号，并将执行次数记录在map数据结构中。</p>
+<h3 id="6-Testing-the-Profiler"><a href="#6-Testing-the-Profiler" class="headerlink" title="6. Testing the Profiler"></a>6. Testing the Profiler</h3><p><strong>PROFILING AN APPLICATION FROM THE START</strong></p>
+<p>编译Pintool：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">binary@binary-VirtualBox:profiler$ <span class="built_in">export</span> PIN_ROOT=/home/pin</span><br><span class="line">binary@binary-VirtualBox:profiler$ make obj-intel64/profiler.so TARGET=intel64</span><br><span class="line"></span><br><span class="line">mkdir -p obj-intel64/</span><br><span class="line">g++ -Wall -Werror -Wno-unknown-pragmas -D__PIN__=1 -DPIN_CRT=1 -fno-stack-protector -fno-exceptions -funwind-tables -fasynchronous-unwind-tables -fno-rtti -DTARGET_IA32E -DHOST_IA32E -fPIC -DTARGET_LINUX -fabi-version=2  -I/home/pin/<span class="built_in">source</span>/include/pin -I/home/pin/<span class="built_in">source</span>/include/pin/gen -isystem /home/binary/pin/pin-3.6-97554-g31f0a167d-gcc-linux/extras/stlport/include -isystem /home/binary/pin/pin-3.6-97554-g31f0a167d-gcc-linux/extras/libstdc++/include -isystem /home/binary/pin/pin-3.6-97554-g31f0a167d-gcc-linux/extras/crt/include -isystem /home/binary/pin/pin-3.6-97554-g31f0a167d-gcc-linux/extras/crt/include/arch-x86_64 -isystem /home/binary/pin/pin-3.6-97554-g31f0a167d-gcc-linux/extras/crt/include/kernel/uapi -isystem /home/binary/pin/pin-3.6-97554-g31f0a167d-gcc-linux/extras/crt/include/kernel/uapi/asm-x86 -I/home/pin/extras/components/include -I/home/pin/extras/xed-intel64/include/xed -I/home/pin/<span class="built_in">source</span>/tools/InstLib -O3 -fomit-frame-pointer -fno-strict-aliasing   -c -o obj-intel64/profiler.o profiler.cpp</span><br><span class="line">g++ -shared -Wl,--<span class="built_in">hash</span>-style=sysv /home/pin/intel64/runtime/pincrt/crtbeginS.o -Wl,-Bsymbolic -Wl,--version-script=/home/pin/<span class="built_in">source</span>/include/pin/pintool.ver -fabi-version=2    -o obj-intel64/profiler.so obj-intel64/profiler.o /home/pin/<span class="built_in">source</span>/tools/InstLib/obj-intel64/controller.a  -L/home/pin/intel64/runtime/pincrt -L/home/pin/intel64/lib -L/home/pin/intel64/lib-ext -L/home/pin/extras/xed-intel64/lib -lpin -lxed /home/pin/intel64/runtime/pincrt/crtendS.o -lpin3dwarf  -ldl-dynamic -nostdlib -lstlport-dynamic -lm-dynamic -lc-dynamic -lunwind-dynamic</span><br></pre></td></tr></table></figure>
+
+<p>运行结果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">binary@binary-VirtualBox:profiler$ /home/pin/pin -t ./obj-intel64/profiler.so -c -s -- /bin/<span class="literal">true</span> </span><br><span class="line">executed 95 instructions</span><br><span class="line"></span><br><span class="line">******* CONTROL TRANSFERS *******</span><br><span class="line">0x00401000 &lt;- 0x00403f7c:   1 (4.35%)</span><br><span class="line">0x00401015 &lt;- 0x0040100e:   1 (4.35%)</span><br><span class="line">0x00401020 &lt;- 0x0040118b:   1 (4.35%)</span><br><span class="line">0x00401180 &lt;- 0x004013f4:   1 (4.35%)</span><br><span class="line">0x00401186 &lt;- 0x00401180:   1 (4.35%)</span><br><span class="line">0x00401335 &lt;- 0x00401333:   1 (4.35%)</span><br><span class="line">0x00401400 &lt;- 0x0040148d:   1 (4.35%)</span><br><span class="line">0x00401430 &lt;- 0x00401413:   1 (4.35%)</span><br><span class="line">0x00401440 &lt;- 0x004014ab:   1 (4.35%)</span><br><span class="line">0x00401478 &lt;- 0x00401461:   1 (4.35%)</span><br><span class="line">0x00401489 &lt;- 0x00401487:   1 (4.35%)</span><br><span class="line">0x00401492 &lt;- 0x00401431:   1 (4.35%)</span><br><span class="line">0x004014a0 &lt;- 0x00403f99:   1 (4.35%)</span><br><span class="line">0x004014ab &lt;- 0x004014a9:   1 (4.35%)</span><br><span class="line">0x00403f81 &lt;- 0x00401019:   1 (4.35%)</span><br><span class="line">0x00403f86 &lt;- 0x00403f84:   1 (4.35%)</span><br><span class="line">0x00403f9d &lt;- 0x00401479:   1 (4.35%)</span><br><span class="line">0x00403fa6 &lt;- 0x00403fa4:   1 (4.35%)</span><br><span class="line">0x7fa74fc647bf &lt;- 0x00403fb4:   1 (4.35%)</span><br><span class="line">0x7fa74fc64830 &lt;- 0x00401337:   1 (4.35%)</span><br><span class="line">0x7fa763658de7 &lt;- 0x0040149a:   1 (4.35%)</span><br><span class="line">0x7fa763658e05 &lt;- 0x00404004:   1 (4.35%)</span><br><span class="line">0x7fa76365f870 &lt;- 0x00401026:   1 (4.35%)</span><br><span class="line"></span><br><span class="line">******* FUNCTION CALLS *******</span><br><span class="line">[_init                         ] 0x00401000 &lt;- 0x00403f7c:   1 (25.00%)</span><br><span class="line">[__libc_start_main@plt         ] 0x00401180 &lt;- 0x004013f4:   1 (25.00%)</span><br><span class="line">[                              ] 0x00401400 &lt;- 0x0040148d:   1 (25.00%)</span><br><span class="line">[                              ] 0x004014a0 &lt;- 0x00403f99:   1 (25.00%)</span><br><span class="line"></span><br><span class="line">******* SYSCALLS *******</span><br><span class="line">  0:   1 (4.00%)</span><br><span class="line">  2:   2 (8.00%)</span><br><span class="line">  3:   2 (8.00%)</span><br><span class="line">  5:   2 (8.00%)</span><br><span class="line">  9:   7 (28.00%)</span><br><span class="line"> 10:   4 (16.00%)</span><br><span class="line"> 11:   1 (4.00%)</span><br><span class="line"> 12:   1 (4.00%)</span><br><span class="line"> 21:   3 (12.00%)</span><br><span class="line">158:   1 (4.00%)</span><br><span class="line">231:   1 (4.00%)</span><br><span class="line">binary@binary-VirtualBox:profiler$</span><br></pre></td></tr></table></figure>
+
+<p>首先指定Pin目录下的可执行文件pin，来开启PIN引擎，然后使用pin选择相应的Pintool来执行应用程序。参数解释：</p>
+<ul>
+<li><strong>-t：</strong>指明使用的Pintool的路径，后面跟着传给Pintool的参数。</li>
+<li><strong>-c：</strong>收集calls</li>
+<li><strong>-s：</strong>收集syscalls</li>
+<li><strong>–：</strong>表示Pintool的可选参数结束，后面跟着Pin所执行的应用程序的名字和参数</li>
+</ul>
+<p><strong>ATTACHING THE PROFILER TO A RUNNING APPLICATION</strong></p>
+<p>由于一些安全机制，Pin不能attach到运行中的程序：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">E: Attach to pid 6210 failed. </span><br><span class="line">E:   The Operating System configuration prevents Pin from using the default (parent) injection mode.</span><br><span class="line">E:   To resolve this, either execute the following (as root):</span><br><span class="line">E:   $ <span class="built_in">echo</span> 0 &gt; /proc/sys/kernel/yama/ptrace_scope</span><br><span class="line">E:   Or use the <span class="string">"-injection child"</span> option.</span><br><span class="line">E:   For more information, regarding child injection, see Injection section <span class="keyword">in</span> the Pin User Manual.</span><br></pre></td></tr></table></figure>
+
+<p>需要临时关闭安全机制(重启后恢复)，首先运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> 0 | sudo tee/proc/sys/kernel/yama/ptrace_scope</span><br></pre></td></tr></table></figure>
+
+<p>启动一个后台进程 netcat 来监听 local-host 的UDP的端口9999：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">root@binary-VirtualBox:profiler<span class="comment"># nc -l -u 127.0.0.1 9999 &amp;</span></span><br><span class="line">[1] 6272</span><br></pre></td></tr></table></figure>
+
+<p>&amp; 放在命令后面表示设置此进程为后台进程。默认情况下，进程是前台进程，这时此进程（命令执行相当于本质是开启一个进程）就把Shell给占据了，我们无法进行其他操作，对于那些没有交互的进程，很多时候，我们希望将其在后台启动，可以在启动参数的时候加一个’&amp;’实现这个目的。</p>
+<p>使用<code>-pid</code>来讲pin attach 到运行中的进程：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">root@binary-VirtualBox:profiler<span class="comment"># /home/pin/pin -pid 6272 -t ./obj-intel64/profiler.so -c -s</span></span><br></pre></td></tr></table></figure>
+
+<p>为了使正在监听的 netcat 进程执行一些指令，而不是阻塞等待网络输入，使用了另一个netcat 进程向其发送消息“ Testing the profiler”。 </p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">root@binary-VirtualBox:profiler<span class="comment"># echo ¨Testing the profiler¨ | nc -u 127.0.0.1 9999</span></span><br><span class="line">¨Testing the profiler¨</span><br><span class="line">^C</span><br></pre></td></tr></table></figure>
+
+<p>然后，它将监听的那个进程 netcat 带到前台并终止它。当应用程序终止时，Pintool 将调用其fini函数并打印统计信息。可以看到与网络相关的函数调用（例如connect）以及netcat 用来接收以测试消息的sys_recvfrom 系统调用。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line">root@binary-VirtualBox:profiler<span class="comment"># fg</span></span><br><span class="line">nc -l -u 127.0.0.1 9999</span><br><span class="line">^Cexecuted 164 instructions</span><br><span class="line"></span><br><span class="line">******* CONTROL TRANSFERS *******</span><br><span class="line">0x00401380 &lt;- 0x0040140b:   1 (2.04%)</span><br><span class="line">0x00401380 &lt;- 0x0040144b:   1 (2.04%)</span><br><span class="line">0x00401380 &lt;- 0x004014db:   1 (2.04%)</span><br><span class="line">0x00401380 &lt;- 0x004015eb:   1 (2.04%)</span><br><span class="line">0x00401380 &lt;- 0x004016ab:   1 (2.04%)</span><br><span class="line">0x00401400 &lt;- 0x00402dc7:   1 (2.04%)</span><br><span class="line">0x00401406 &lt;- 0x00401400:   1 (2.04%)</span><br><span class="line">0x00401440 &lt;- 0x00403c06:   1 (2.04%)</span><br><span class="line">0x00401446 &lt;- 0x00401440:   1 (2.04%)</span><br><span class="line">0x004014d0 &lt;- 0x00402eba:   2 (4.08%)</span><br><span class="line">0x004014d6 &lt;- 0x004014d0:   1 (2.04%)</span><br><span class="line">0x004015e0 &lt;- 0x00402d62:   1 (2.04%)</span><br><span class="line">0x004015e0 &lt;- 0x00402d71:   1 (2.04%)</span><br><span class="line">0x004015e6 &lt;- 0x004015e0:   1 (2.04%)</span><br><span class="line">0x004016a0 &lt;- 0x00401e80:   1 (2.04%)</span><br><span class="line">0x004016a6 &lt;- 0x004016a0:   1 (2.04%)</span><br><span class="line">0x00401e73 &lt;- 0x00401e6d:   1 (2.04%)</span><br><span class="line">0x00401e8d &lt;- 0x00401e87:   1 (2.04%)</span><br><span class="line">0x00402d30 &lt;- 0x00401e90:   1 (2.04%)</span><br><span class="line">0x00402db8 &lt;- 0x00402ed6:   1 (2.04%)</span><br><span class="line">0x00402dd5 &lt;- 0x00402dcf:   1 (2.04%)</span><br><span class="line">0x00402ddb &lt;- 0x00402dd5:   1 (2.04%)</span><br><span class="line">0x00402de9 &lt;- 0x00402de3:   1 (2.04%)</span><br><span class="line">0x00402e01 &lt;- 0x00403c3e:   1 (2.04%)</span><br><span class="line">0x00402e0a &lt;- 0x00402e04:   1 (2.04%)</span><br><span class="line">0x00402e14 &lt;- 0x00402e12:   1 (2.04%)</span><br><span class="line">0x00402e88 &lt;- 0x00402f12:   1 (2.04%)</span><br><span class="line">0x00402e8c &lt;- 0x00402dad:   1 (2.04%)</span><br><span class="line">0x00402e95 &lt;- 0x00402e8f:   2 (4.08%)</span><br><span class="line">0x00402e9f &lt;- 0x00402e9d:   2 (4.08%)</span><br><span class="line">0x00402ec8 &lt;- 0x00402ec2:   1 (2.04%)</span><br><span class="line">0x00402ece &lt;- 0x00402ec8:   1 (2.04%)</span><br><span class="line">0x00402f10 &lt;- 0x00402e1b:   1 (2.04%)</span><br><span class="line">0x00403bb0 &lt;- 0x00402dfc:   1 (2.04%)</span><br><span class="line">0x00403bf8 &lt;- 0x00403bf6:   1 (2.04%)</span><br><span class="line">0x00403c0e &lt;- 0x00403c0c:   1 (2.04%)</span><br><span class="line">0x00403c1e &lt;- 0x00403c68:   1 (2.04%)</span><br><span class="line">0x00403c60 &lt;- 0x00403c11:   1 (2.04%)</span><br><span class="line">0x00403c68 &lt;- 0x00403c66:   1 (2.04%)</span><br><span class="line">0x7ff1e4c13ad0 &lt;- 0x004015e0:   1 (2.04%)</span><br><span class="line">0x7ff1e4cb70b0 &lt;- 0x004014d0:   1 (2.04%)</span><br><span class="line">0x7ff1e53af870 &lt;- 0x00401386:   5 (10.20%)</span><br><span class="line"></span><br><span class="line">******* FUNCTION CALLS *******</span><br><span class="line">[__read_chk@plt                ] 0x00401400 &lt;- 0x00402dc7:   1 (11.11%)</span><br><span class="line">[write@plt                     ] 0x00401440 &lt;- 0x00403c06:   1 (11.11%)</span><br><span class="line">[__poll_chk@plt                ] 0x004014d0 &lt;- 0x00402eba:   2 (22.22%)</span><br><span class="line">[fileno@plt                    ] 0x004015e0 &lt;- 0x00402d62:   1 (11.11%)</span><br><span class="line">[fileno@plt                    ] 0x004015e0 &lt;- 0x00402d71:   1 (11.11%)</span><br><span class="line">[connect@plt                   ] 0x004016a0 &lt;- 0x00401e80:   1 (11.11%)</span><br><span class="line">[                              ] 0x00402d30 &lt;- 0x00401e90:   1 (11.11%)</span><br><span class="line">[                              ] 0x00403bb0 &lt;- 0x00402dfc:   1 (11.11%)</span><br><span class="line"></span><br><span class="line">******* SYSCALLS *******</span><br><span class="line">  0:   1 (16.67%)</span><br><span class="line">  1:   1 (16.67%)</span><br><span class="line">  7:   2 (33.33%)</span><br><span class="line"> 42:   1 (16.67%)</span><br><span class="line"> 45:   1 (16.67%)</span><br></pre></td></tr></table></figure>
+
+<p>一旦将Pin attach到一个运行中的程序，他会一直持续，直到程序退出或在Pintool中调用PIN_Detach。这意味着要是对一个永远不会终止的系统程序插桩，必须在Pintool中写好退出条件。</p>
+<h2 id="四、代码"><a href="#四、代码" class="headerlink" title="四、代码"></a>四、代码</h2><p><strong>Makefile：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">##############################################################</span><br><span class="line">#</span><br><span class="line">#                   DO NOT EDIT THIS FILE!</span><br><span class="line">#</span><br><span class="line">##############################################################</span><br><span class="line"></span><br><span class="line"># If the tool is built out of the kit, PIN_ROOT must be specified in the make invocation <span class="keyword">and</span> <span class="built_in">point</span> to the kit root.</span><br><span class="line">ifdef PIN_ROOT</span><br><span class="line">CONFIG_ROOT := $(PIN_ROOT)/source/tools/Config</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">CONFIG_ROOT := ../Config</span><br><span class="line">endif</span><br><span class="line">include $(CONFIG_ROOT)/makefile.<span class="built_in">config</span></span><br><span class="line">include makefile.rules</span><br><span class="line">include $(TOOLS_ROOT)/Config/makefile.<span class="keyword">default</span>.rules</span><br><span class="line"></span><br><span class="line">##############################################################</span><br><span class="line">#</span><br><span class="line">#                   DO NOT EDIT THIS FILE!</span><br><span class="line">#</span><br><span class="line">##############################################################</span><br></pre></td></tr></table></figure>
+
+<p><strong>Makefile.rules：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line">##############################################################</span><br><span class="line">#</span><br><span class="line"># This file includes all the test targets as well as all the</span><br><span class="line"><span class="meta"># non-default build rules and test recipes.</span></span><br><span class="line">#</span><br><span class="line">##############################################################</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">##############################################################</span><br><span class="line">#</span><br><span class="line"># Test targets</span><br><span class="line">#</span><br><span class="line">##############################################################</span><br><span class="line"></span><br><span class="line">###### Place all generic definitions here ######</span><br><span class="line"></span><br><span class="line"># This defines tests which <span class="built_in">run</span> tools of the same name.  This is simply <span class="keyword">for</span> convenience to avoid</span><br><span class="line"><span class="meta"># defining the test name twice (once in TOOL_ROOTS and again in TEST_ROOTS).</span></span><br><span class="line"># Tests defined here should <span class="keyword">not</span> be defined in TOOL_ROOTS <span class="keyword">and</span> TEST_ROOTS.</span><br><span class="line">TEST_TOOL_ROOTS := profiler</span><br><span class="line"></span><br><span class="line"># This defines the tests to be <span class="built_in">run</span> that were <span class="keyword">not</span> already defined in TEST_TOOL_ROOTS.</span><br><span class="line">TEST_ROOTS :=</span><br><span class="line"></span><br><span class="line"># This defines the tools which will be <span class="built_in">run</span> during the the tests, <span class="keyword">and</span> were <span class="keyword">not</span> already defined in</span><br><span class="line"># TEST_TOOL_ROOTS.</span><br><span class="line">TOOL_ROOTS :=</span><br><span class="line"></span><br><span class="line"># This defines the <span class="keyword">static</span> analysis tools which will be <span class="built_in">run</span> during the the tests. They should <span class="keyword">not</span></span><br><span class="line"># be defined in TEST_TOOL_ROOTS. If a test with the same name <span class="built_in">exists</span>, it should be defined in</span><br><span class="line"># TEST_ROOTS.</span><br><span class="line"># Note: Static analysis tools are in fact executables linked with the Pin Static Analysis Library.</span><br><span class="line"># This library provides a subset of the Pin APIs which allows the tool to perform <span class="keyword">static</span> analysis</span><br><span class="line"># of an application <span class="keyword">or</span> dll. Pin itself is <span class="keyword">not</span> used when <span class="keyword">this</span> tool runs.</span><br><span class="line">SA_TOOL_ROOTS :=</span><br><span class="line"></span><br><span class="line"># This defines all the applications that will be <span class="built_in">run</span> during the tests.</span><br><span class="line">APP_ROOTS :=</span><br><span class="line"></span><br><span class="line"># This defines any additional object files that need to be compiled.</span><br><span class="line">OBJECT_ROOTS :=</span><br><span class="line"></span><br><span class="line"># This defines any additional dlls (shared objects), other than the pintools, that need to be compiled.</span><br><span class="line">DLL_ROOTS :=</span><br><span class="line"></span><br><span class="line"># This defines any <span class="keyword">static</span> libraries (archives), that need to be built.</span><br><span class="line">LIB_ROOTS :=</span><br><span class="line"></span><br><span class="line">###### Define the sanity subset ######</span><br><span class="line"></span><br><span class="line"># This defines the <span class="built_in">list</span> of tests that should <span class="built_in">run</span> in sanity. It should include all the tests listed in</span><br><span class="line"># TEST_TOOL_ROOTS <span class="keyword">and</span> TEST_ROOTS excluding only unstable tests.</span><br><span class="line">SANITY_SUBSET := $(TEST_TOOL_ROOTS) $(TEST_ROOTS)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">##############################################################</span><br><span class="line">#</span><br><span class="line"># Test recipes</span><br><span class="line">#</span><br><span class="line">##############################################################</span><br><span class="line"></span><br><span class="line"># This section contains recipes <span class="keyword">for</span> tests other than the <span class="keyword">default</span>.</span><br><span class="line"># See makefile.<span class="keyword">default</span>.rules <span class="keyword">for</span> the <span class="keyword">default</span> test rules.</span><br><span class="line"># All tests in <span class="keyword">this</span> section should adhere to the naming convention: &lt;testname&gt;.test</span><br><span class="line"></span><br><span class="line">profiler.test: $(OBJDIR)profiler$(PINTOOL_SUFFIX) $(TESTAPP)</span><br><span class="line">	$(RM) -f $(OBJDIR)profiler.makefile.copy</span><br><span class="line">	$(PIN) -t $(OBJDIR)profiler$(PINTOOL_SUFFIX) -silent -instruction -memory \</span><br><span class="line">	  -- $(TESTAPP) makefile $(OBJDIR)profiler.makefile.copy</span><br><span class="line">	$(CMP) makefile $(OBJDIR)profiler.makefile.copy</span><br><span class="line">	$(RM) $(OBJDIR)profiler.makefile.copy</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">##############################################################</span><br><span class="line">#</span><br><span class="line"># Build rules</span><br><span class="line">#</span><br><span class="line">##############################################################</span><br><span class="line"></span><br><span class="line"># This section contains the build rules <span class="keyword">for</span> all binaries that have special build rules.</span><br><span class="line"># See makefile.<span class="keyword">default</span>.rules <span class="keyword">for</span> the <span class="keyword">default</span> build rules.</span><br><span class="line"></span><br><span class="line">###### Special tool<span class="number">'</span>s build rules ######</span><br><span class="line"></span><br><span class="line">$(OBJDIR)profiler$(PINTOOL_SUFFIX): $(OBJDIR)profiler$(OBJ_SUFFIX) $(CONTROLLERLIB)</span><br><span class="line">	$(LINKER) $(TOOL_LDFLAGS) $(LINK_EXE)$@ $^ $(TOOL_LPATHS) $(TOOL_LIBS)</span><br></pre></td></tr></table></figure>
+
+<p><strong>Pintool：</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;map&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;asm-generic/unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"pin.H"</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">KNOB&lt;<span class="keyword">bool</span>&gt; <span class="title">ProfileCalls</span><span class="params">(KNOB_MODE_WRITEONCE, <span class="string">"pintool"</span>, <span class="string">"c"</span>, <span class="string">"0"</span>, <span class="string">"Profile function calls"</span>)</span></span>;</span><br><span class="line"><span class="function">KNOB&lt;<span class="keyword">bool</span>&gt; <span class="title">ProfileSyscalls</span><span class="params">(KNOB_MODE_WRITEONCE, <span class="string">"pintool"</span>, <span class="string">"s"</span>, <span class="string">"0"</span>, <span class="string">"Profile syscalls"</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="keyword">unsigned</span> <span class="keyword">long</span>&gt; &gt; cflows;</span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="keyword">unsigned</span> <span class="keyword">long</span>&gt; &gt; calls;</span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="keyword">unsigned</span> <span class="keyword">long</span>&gt; syscalls;</span><br><span class="line"><span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="built_in">std</span>::<span class="built_in">string</span>&gt; funcnames;</span><br><span class="line"></span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> insn_count    = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> cflow_count   = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> call_count    = <span class="number">0</span>;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">long</span> syscall_count = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*****************************************************************************</span></span><br><span class="line"><span class="comment"> *                             Analysis functions                            *</span></span><br><span class="line"><span class="comment"> *****************************************************************************/</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">count_bb_insns</span><span class="params">(UINT32 n)</span></span>&#123;</span><br><span class="line">    insn_count += n;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">count_cflow</span><span class="params">(ADDRINT ip, ADDRINT target)</span></span>&#123;</span><br><span class="line">    cflows[target][ip]++;</span><br><span class="line">    cflow_count++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">count_call</span><span class="params">(ADDRINT ip, ADDRINT target)</span></span>&#123;</span><br><span class="line">    calls[target][ip]++;</span><br><span class="line">    call_count++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">log_syscall</span><span class="params">(THREADID tid, CONTEXT *ctxt, SYSCALL_STANDARD <span class="built_in">std</span>, VOID *v)</span></span>&#123;</span><br><span class="line">    syscalls[PIN_GetSyscallNumber(ctxt, <span class="built_in">std</span>)]++;</span><br><span class="line">    syscall_count++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/*****************************************************************************</span></span><br><span class="line"><span class="comment"> *                         Instrumentation functions                         *</span></span><br><span class="line"><span class="comment"> *****************************************************************************/</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">instrument_bb</span><span class="params">(BBL bb)</span></span>&#123;</span><br><span class="line">    BBL_InsertCall(</span><br><span class="line">        bb, IPOINT_ANYWHERE, (AFUNPTR)count_bb_insns, </span><br><span class="line">        IARG_UINT32, BBL_NumIns(bb), </span><br><span class="line">        IARG_END  </span><br><span class="line">    );</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">instrument_trace</span><span class="params">(TRACE trace, <span class="keyword">void</span> *v)</span></span>&#123;</span><br><span class="line">    IMG img = IMG_FindByAddress(TRACE_Address(trace)); </span><br><span class="line">    <span class="keyword">if</span>(!IMG_Valid(img) || !IMG_IsMainExecutable(img)) </span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    <span class="keyword">for</span>(BBL bb = TRACE_BblHead(trace); BBL_Valid(bb); bb = BBL_Next(bb)) &#123;</span><br><span class="line">        instrument_bb(bb); </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">instrument_insn</span><span class="params">(INS ins, <span class="keyword">void</span> *v)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(!INS_IsBranchOrCall(ins))  </span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    IMG img = IMG_FindByAddress(INS_Address(ins));  </span><br><span class="line">    <span class="keyword">if</span>(!IMG_Valid(img) || !IMG_IsMainExecutable(img)) </span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    </span><br><span class="line">    INS_InsertPredicatedCall(</span><br><span class="line">        ins, IPOINT_TAKEN_BRANCH, (AFUNPTR)count_cflow, </span><br><span class="line">        IARG_INST_PTR,  </span><br><span class="line">        IARG_BRANCH_TARGET_ADDR,  </span><br><span class="line">        IARG_END</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(INS_HasFallThrough(ins)) &#123;</span><br><span class="line">        INS_InsertPredicatedCall(</span><br><span class="line">            ins, IPOINT_AFTER, (AFUNPTR)count_cflow, </span><br><span class="line">            IARG_INST_PTR, </span><br><span class="line">            IARG_FALLTHROUGH_ADDR, </span><br><span class="line">            IARG_END</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line">  </span><br><span class="line">    <span class="keyword">if</span>(INS_IsCall(ins)) &#123;</span><br><span class="line">        <span class="keyword">if</span>(ProfileCalls.Value()) &#123;</span><br><span class="line">            INS_InsertCall(</span><br><span class="line">                ins, IPOINT_BEFORE, (AFUNPTR)count_call, </span><br><span class="line">                IARG_INST_PTR,  </span><br><span class="line">                IARG_BRANCH_TARGET_ADDR,  </span><br><span class="line">                IARG_END</span><br><span class="line">            );</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">parse_funcsyms</span><span class="params">(IMG img, <span class="keyword">void</span> *v)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(!IMG_Valid(img)) </span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span>(SEC sec = IMG_SecHead(img); SEC_Valid(sec); sec = SEC_Next(sec)) &#123;</span><br><span class="line">        <span class="keyword">for</span>(RTN rtn = SEC_RtnHead(sec); RTN_Valid(rtn); rtn = RTN_Next(rtn)) &#123;</span><br><span class="line">            funcnames[RTN_Address(rtn)] = RTN_Name(rtn); </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="comment">/*****************************************************************************</span></span><br><span class="line"><span class="comment"> *                               Other functions                             *</span></span><br><span class="line"><span class="comment"> *****************************************************************************/</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">print_results</span><span class="params">(INT32 code, <span class="keyword">void</span> *v)</span></span>&#123;</span><br><span class="line">    ADDRINT ip, target;</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> count;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="keyword">unsigned</span> <span class="keyword">long</span>&gt; &gt;::iterator i;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">map</span>&lt;ADDRINT, <span class="keyword">unsigned</span> <span class="keyword">long</span>&gt;::iterator j;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"executed %lu instructions\n\n"</span>, insn_count);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"******* CONTROL TRANSFERS *******\n"</span>);</span><br><span class="line">    <span class="keyword">for</span>(i = cflows.<span class="built_in">begin</span>(); i != cflows.<span class="built_in">end</span>(); i++) &#123;</span><br><span class="line">        target = i-&gt;first;</span><br><span class="line">        <span class="keyword">for</span>(j = i-&gt;second.<span class="built_in">begin</span>(); j != i-&gt;second.<span class="built_in">end</span>(); j++) &#123;</span><br><span class="line">            ip = j-&gt;first;</span><br><span class="line">            count = j-&gt;second;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"0x%08jx &lt;- 0x%08jx: %3lu (%0.2f%%)\n"</span>, </span><br><span class="line">                    target, ip, count, (<span class="keyword">double</span>)count/cflow_count*<span class="number">100.0</span>);</span><br><span class="line">        &#125; </span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(!calls.empty()) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"\n******* FUNCTION CALLS *******\n"</span>);</span><br><span class="line">        <span class="keyword">for</span>(i = calls.<span class="built_in">begin</span>(); i != calls.<span class="built_in">end</span>(); i++) &#123;</span><br><span class="line">            target = i-&gt;first;</span><br><span class="line">            <span class="keyword">for</span>(j = i-&gt;second.<span class="built_in">begin</span>(); j != i-&gt;second.<span class="built_in">end</span>(); j++) &#123;</span><br><span class="line">                ip = j-&gt;first;</span><br><span class="line">                count = j-&gt;second;</span><br><span class="line">                <span class="built_in">printf</span>(<span class="string">"[%-30s] 0x%08jx &lt;- 0x%08jx: %3lu (%0.2f%%)\n"</span>, </span><br><span class="line">                        funcnames[target].c_str(), target, ip, count, (<span class="keyword">double</span>)count/call_count*<span class="number">100.0</span>);</span><br><span class="line">            &#125; </span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(!syscalls.empty()) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">"\n******* SYSCALLS *******\n"</span>);</span><br><span class="line">        <span class="keyword">for</span>(j = syscalls.<span class="built_in">begin</span>(); j != syscalls.<span class="built_in">end</span>(); j++) &#123;</span><br><span class="line">            count = j-&gt;second;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">"%3ju: %3lu (%0.2f%%)\n"</span>, j-&gt;first, count, (<span class="keyword">double</span>)count/syscall_count*<span class="number">100.0</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">print_usage</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> help = KNOB_BASE::StringKnobSummary();</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"\nProfile call and jump targets\n"</span>);</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"%s\n"</span>, help.c_str());</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> *argv[])</span></span>&#123;</span><br><span class="line">    PIN_InitSymbols();</span><br><span class="line">    <span class="keyword">if</span>(PIN_Init(argc,argv)) &#123;</span><br><span class="line">        print_usage();</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    IMG_AddInstrumentFunction(parse_funcsyms, <span class="literal">NULL</span>);</span><br><span class="line">    INS_AddInstrumentFunction(instrument_insn, <span class="literal">NULL</span>);</span><br><span class="line">    TRACE_AddInstrumentFunction(instrument_trace, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(ProfileSyscalls.Value()) &#123;</span><br><span class="line">        PIN_AddSyscallEntryFunction(log_syscall, <span class="literal">NULL</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    PIN_AddFiniFunction(print_results, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* Never returns */</span></span><br><span class="line">    PIN_StartProgram();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><blockquote>
+<p>1.<a href="https://practicalbinaryanalysis.com/" target="_blank" rel="noopener">https://practicalbinaryanalysis.com/</a></p>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2020/11/13/AddressSanitizer%E4%BD%BF%E7%94%A8%E4%BB%8B%E7%BB%8D/" rel="next" title="AddressSanitizer使用介绍">
+                <i class="fa fa-chevron-left"></i> AddressSanitizer使用介绍
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">zyt</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">23</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一、Architecture-of-a-DBI-System"><span class="nav-number">1.</span> <span class="nav-text">一、Architecture of a DBI System</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、Introduction-to-Pin"><span class="nav-number">2.</span> <span class="nav-text">二、Introduction to Pin</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-PIN-INTERNALS"><span class="nav-number">2.1.</span> <span class="nav-text">1. PIN INTERNALS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-IMPLEMENTING-PINTOOLS"><span class="nav-number">2.2.</span> <span class="nav-text">2. IMPLEMENTING PINTOOLS</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、PROFILING-WITH-PIN"><span class="nav-number">3.</span> <span class="nav-text">三、PROFILING WITH PIN</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-The-Profiler’s-Data-Structures-and-Setup-Code"><span class="nav-number">3.1.</span> <span class="nav-text">1. The Profiler’s Data Structures and Setup Code</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Parsing-Function-Symbols"><span class="nav-number">3.2.</span> <span class="nav-text">2. Parsing Function Symbols</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-Instrumenting-Basic-Blocks"><span class="nav-number">3.3.</span> <span class="nav-text">3. Instrumenting Basic Blocks</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-Instrumenting-Control-Flow-Instructions"><span class="nav-number">3.4.</span> <span class="nav-text">4. Instrumenting Control Flow Instructions</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-Counting-Instructions-Control-Transfers-and-Syscalls"><span class="nav-number">3.5.</span> <span class="nav-text">5. Counting Instructions, Control Transfers, and Syscalls</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-Testing-the-Profiler"><span class="nav-number">3.6.</span> <span class="nav-text">6. Testing the Profiler</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、代码"><span class="nav-number">4.</span> <span class="nav-text">四、代码</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考文献"><span class="nav-number">5.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zyt</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
