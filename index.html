@@ -249,6 +249,189 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/12/18/GCC%20%E5%92%8C%20Address%20Sanitizer/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/12/18/GCC%20%E5%92%8C%20Address%20Sanitizer/" itemprop="url">GCC 和 Address Sanitizer</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-12-18T12:11:09+08:00">
+                2020-12-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/AddressSanitizer/" itemprop="url" rel="index">
+                    <span itemprop="name">AddressSanitizer</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h1 id="GCC-和-Address-Sanitizer"><a href="#GCC-和-Address-Sanitizer" class="headerlink" title="GCC 和 Address Sanitizer"></a>GCC 和 Address Sanitizer</h1><h2 id="GCC"><a href="#GCC" class="headerlink" title="GCC"></a>GCC</h2><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ wget -c http:&#x2F;&#x2F;www.mirrorservice.org&#x2F;sites&#x2F;sourceware.org&#x2F;pub&#x2F;gcc&#x2F;releases&#x2F;gcc-4.4.0&#x2F;gcc-4.4.0.tar.bz2</span><br><span class="line">$ tar -xjvf gcc-4.4.0.tar.bz2</span><br><span class="line">$ .&#x2F;configure</span><br><span class="line">$ make &amp;&amp; sudo make install</span><br></pre></td></tr></table></figure>
+
+<h2 id="常用选项"><a href="#常用选项" class="headerlink" title="常用选项"></a>常用选项</h2><p>使用 <code>gcc -v</code> 可以查看默认开启的选项：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ gcc -v</span><br><span class="line">Using built-in specs.</span><br><span class="line">COLLECT_GCC&#x3D;gcc</span><br><span class="line">COLLECT_LTO_WRAPPER&#x3D;&#x2F;usr&#x2F;lib&#x2F;gcc&#x2F;x86_64-linux-gnu&#x2F;5&#x2F;lto-wrapper</span><br><span class="line">Target: x86_64-linux-gnu</span><br><span class="line">Configured with: ..&#x2F;src&#x2F;configure -v --with-pkgversion&#x3D;&#39;Ubuntu 5.4.0-6ubuntu1~16.04.9&#39; --with-bugurl&#x3D;file:&#x2F;&#x2F;&#x2F;usr&#x2F;share&#x2F;doc&#x2F;gcc-5&#x2F;README.Bugs --enable-languages&#x3D;c,ada,c++,java,go,d,fortran,objc,obj-c++ --prefix&#x3D;&#x2F;usr --program-suffix&#x3D;-5 --enable-shared --enable-linker-build-id --libexecdir&#x3D;&#x2F;usr&#x2F;lib --without-included-gettext --enable-threads&#x3D;posix --libdir&#x3D;&#x2F;usr&#x2F;lib --enable-nls --with-sysroot&#x3D;&#x2F; --enable-clocale&#x3D;gnu --enable-libstdcxx-debug --enable-libstdcxx-time&#x3D;yes --with-default-libstdcxx-abi&#x3D;new --enable-gnu-unique-object --disable-vtable-verify --enable-libmpx --enable-plugin --with-system-zlib --disable-browser-plugin --enable-java-awt&#x3D;gtk --enable-gtk-cairo --with-java-home&#x3D;&#x2F;usr&#x2F;lib&#x2F;jvm&#x2F;java-1.5.0-gcj-5-amd64&#x2F;jre --enable-java-home --with-jvm-root-dir&#x3D;&#x2F;usr&#x2F;lib&#x2F;jvm&#x2F;java-1.5.0-gcj-5-amd64 --with-jvm-jar-dir&#x3D;&#x2F;usr&#x2F;lib&#x2F;jvm-exports&#x2F;java-1.5.0-gcj-5-amd64 --with-arch-directory&#x3D;amd64 --with-ecj-jar&#x3D;&#x2F;usr&#x2F;share&#x2F;java&#x2F;eclipse-ecj.jar --enable-objc-gc --enable-multiarch --disable-werror --with-arch-32&#x3D;i686 --with-abi&#x3D;m64 --with-multilib-list&#x3D;m32,m64,mx32 --enable-multilib --with-tune&#x3D;generic --enable-checking&#x3D;release --build&#x3D;x86_64-linux-gnu --host&#x3D;x86_64-linux-gnu --target&#x3D;x86_64-linux-gnu</span><br><span class="line">Thread model: posix</span><br><span class="line">gcc version 5.4.0 20160609 (Ubuntu 5.4.0-6ubuntu1~16.04.9)</span><br></pre></td></tr></table></figure>
+
+<h3 id="控制标准版本的编译选项"><a href="#控制标准版本的编译选项" class="headerlink" title="控制标准版本的编译选项"></a>控制标准版本的编译选项</h3><ul>
+<li><p><code>-ansi</code>：告诉编译器遵守 C 语言的 ISO C90 标准。</p>
+</li>
+<li><pre><code>-std=
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">  ：通过使用一个参数来设置需要的标准。</span><br><span class="line"></span><br><span class="line">  - &#96;c89&#96;：支持 C89 标准。</span><br><span class="line">  - &#96;iso9899:1999&#96;：支持 ISO C90 标准。</span><br><span class="line">  - &#96;gnu89&#96;：支持 C89 标准。</span><br><span class="line"></span><br><span class="line">### 控制标准版本的常量</span><br><span class="line"></span><br><span class="line">这些常量（#define）可以通过编译器的命令行选项来设置，或者通过源代码总的 &#96;#define&#96; 语句来定义。</span><br><span class="line"></span><br><span class="line">- &#96;__STRICT_ANSI__&#96;：强制使用 C 语言的 ISO 标准。这个常量通过命令行选项 &#96;-ansi&#96; 来定义。</span><br><span class="line">- &#96;_POSIX_C_SOURCE&#x3D;2&#96;：启用由 IEEE Std1003.1 和 1003.2 标准定义的特性。</span><br><span class="line">- &#96;_BSD_SOURCE&#96;：启用 BSD 类型的特性。</span><br><span class="line">- &#96;_GNU_SOURCE&#96;：启用大量特性，其中包括 GNU 扩展。</span><br><span class="line"></span><br><span class="line">### 编译器的警告选项</span><br><span class="line"></span><br><span class="line">- &#96;-pedantic&#96;：除了启用用于检查代码是否遵守 C 语言标准的选项外，还关闭了一些不被标准允许的传统 C 语言结构，并且禁用所有的 GNU 扩展。</span><br><span class="line">- &#96;-Wformat&#96;：检查 printf 系列函数所使用的参数类型是否正确。</span><br><span class="line">- &#96;Wparentheses&#96;：检查是否总是提供了需要的圆括号。当想要检查一个复杂结构的初始化是否按照预期进行时，这个选项就很有用。</span><br><span class="line">- &#96;Wswitch-default&#96;：检查是否所有的 switch 语句都包含一个 default case。</span><br><span class="line">- &#96;Wunused&#96;：检查诸如声明静态函数但没有定义、未使用的参数和丢弃返回结果等情况。</span><br><span class="line">- &#96;Wall&#96;：启用绝大多数 gcc 的警告选项，包括所有以 -W 为前缀的选项。</span><br><span class="line"></span><br><span class="line">## Address sanitizer</span><br><span class="line"></span><br><span class="line">Address sanitizer 是一种用于检测内存错误的技术，GCC 从 4.8 版本开始支持了这一技术。ASan 在编译时插入额外指令到内存访问操作中，同时通过 Shadow memory 来记录和检测内存的有效性。ASan 其实只是 Sanitizer 一系列工具中的一员，其他工具比如 memory leak 检测在 LeakSanitizer 中，uninitialized memory read 检测在 MemorySanitizer 中等等。</span><br><span class="line"></span><br><span class="line">举个例子，很明显下面这个程序存在栈溢出：</span><br><span class="line"></span><br><span class="line">&#96;&#96;&#96;C</span><br><span class="line">#include&lt;stdio.h&gt;</span><br><span class="line">void main() &#123;</span><br><span class="line">    int a[10] &#x3D; &#123;0&#125;;</span><br><span class="line">    int b &#x3D; a[11];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</code></pre></li>
+</ul>
+<p>编译时加上参数 <code>-fsanitize=address</code>，如果使用 Makefile，则将参数加入到 CFLAGS 中：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ gcc -fsanitize&#x3D;address santest.c</span><br></pre></td></tr></table></figure>
+
+<p>然后运行：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line">$ .&#x2F;a.out</span><br><span class="line">&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;&#x3D;</span><br><span class="line">&#x3D;&#x3D;9399&#x3D;&#x3D;ERROR: AddressSanitizer: stack-buffer-overflow on address 0x7ffc03f4d64c at pc 0x565515082ad6 bp 0x7ffc03f4d5e0 sp 0x7ffc03f4d5d0</span><br><span class="line">READ of size 4 at 0x7ffc03f4d64c thread T0</span><br><span class="line">    #0 0x565515082ad5 in main (&#x2F;home&#x2F;firmy&#x2F;a.out+0xad5)</span><br><span class="line">    #1 0x7fb4c04c0f69 in __libc_start_main (&#x2F;usr&#x2F;lib&#x2F;libc.so.6+0x20f69)</span><br><span class="line">    #2 0x565515082899 in _start (&#x2F;home&#x2F;firmy&#x2F;a.out+0x899)</span><br><span class="line"></span><br><span class="line">Address 0x7ffc03f4d64c is located in stack of thread T0 at offset 76 in frame</span><br><span class="line">    #0 0x565515082989 in main (&#x2F;home&#x2F;firmy&#x2F;a.out+0x989)</span><br><span class="line"></span><br><span class="line">  This frame has 1 object(s):</span><br><span class="line">    [32, 72) &#39;a&#39; &lt;&#x3D;&#x3D; Memory access at offset 76 overflows this variable</span><br><span class="line">HINT: this may be a false positive if your program uses some custom stack unwind mechanism or swapcontext</span><br><span class="line">      (longjmp and C++ exceptions *are* supported)</span><br><span class="line">SUMMARY: AddressSanitizer: stack-buffer-overflow (&#x2F;home&#x2F;firmy&#x2F;a.out+0xad5) in main</span><br><span class="line">Shadow bytes around the buggy address:</span><br><span class="line">  0x1000007e1a70: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span><br><span class="line">  0x1000007e1a80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span><br><span class="line">  0x1000007e1a90: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span><br><span class="line">  0x1000007e1aa0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span><br><span class="line">  0x1000007e1ab0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span><br><span class="line">&#x3D;&gt;0x1000007e1ac0: f1 f1 f1 f1 00 00 00 00 00[f2]f2 f2 00 00 00 00</span><br><span class="line">  0x1000007e1ad0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span><br><span class="line">  0x1000007e1ae0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span><br><span class="line">  0x1000007e1af0: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span><br><span class="line">  0x1000007e1b00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span><br><span class="line">  0x1000007e1b10: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00</span><br><span class="line">Shadow byte legend (one shadow byte represents 8 application bytes):</span><br><span class="line">  Addressable:           00</span><br><span class="line">  Partially addressable: 01 02 03 04 05 06 07</span><br><span class="line">  Heap left redzone:       fa</span><br><span class="line">  Freed heap region:       fd</span><br><span class="line">  Stack left redzone:      f1</span><br><span class="line">  Stack mid redzone:       f2</span><br><span class="line">  Stack right redzone:     f3</span><br><span class="line">  Stack after return:      f5</span><br><span class="line">  Stack use after scope:   f8</span><br><span class="line">  Global redzone:          f9</span><br><span class="line">  Global init order:       f6</span><br><span class="line">  Poisoned by user:        f7</span><br><span class="line">  Container overflow:      fc</span><br><span class="line">  Array cookie:            ac</span><br><span class="line">  Intra object redzone:    bb</span><br><span class="line">  ASan internal:           fe</span><br><span class="line">  Left alloca redzone:     ca</span><br><span class="line">  Right alloca redzone:    cb</span><br><span class="line">&#x3D;&#x3D;9399&#x3D;&#x3D;ABORTING</span><br></pre></td></tr></table></figure>
+
+<p>确实检测出了问题。在实战篇中，为了更好地分析软件漏洞，我们可能会经常用到这个选项。</p>
+<p>参考：<a href="https://en.wikipedia.org/wiki/AddressSanitizer" target="_blank" rel="noopener">https://en.wikipedia.org/wiki/AddressSanitizer</a></p>
+<h2 id="mcheck"><a href="#mcheck" class="headerlink" title="mcheck"></a>mcheck</h2><p>利用 mcheck 可以实现堆内存的一致性状态检查。其定义在 <code>/usr/include/mcheck.h</code>，是一个 GNU 扩展函数，原型如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;mcheck.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">mcheck</span><span class="params">(<span class="keyword">void</span> (*abortfunc)(<span class="keyword">enum</span> mcheck_status mstatus))</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到参数是一个函数指针，但检查到堆内存异常时，通过该指针调用 abortfunc 函数，同时传入一个 mcheck_status 类型的参数。</p>
+<p>举个例子，下面的程序存在 double-free 的问题：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">char</span> *p;</span><br><span class="line">    p = <span class="built_in">malloc</span>(<span class="number">1000</span>);</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"About to free\n"</span>);</span><br><span class="line">    <span class="built_in">free</span>(p);</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"About to free a second time\n"</span>);</span><br><span class="line">    <span class="built_in">free</span>(p);</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Finish\n"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过设置参数 <code>-lmcheck</code> 来链接 mcheck 函数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ gcc -lmcheck t_mcheck.c</span><br><span class="line">$ .&#x2F;a.out</span><br><span class="line">About to free</span><br><span class="line">About to free a second time</span><br><span class="line">block freed twice</span><br><span class="line">Aborted (core dumped)</span><br></pre></td></tr></table></figure>
+
+<p>还可以通过设置环境变量 <code>MALLOC_CHECK_</code> 来实现，这样就不需要重新编译程序。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">$ gcc mcheck.c</span><br><span class="line">$ #检查到错误时不作任何提示</span><br><span class="line">$ MALLOC_CHECK_&#x3D;0 .&#x2F;a.out</span><br><span class="line">About to free</span><br><span class="line">About to free a second time</span><br><span class="line">Finish</span><br><span class="line">$ #检查到错误时打印一条信息到标准输出</span><br><span class="line">$ MALLOC_CHECK_&#x3D;1 .&#x2F;a.out</span><br><span class="line">About to free</span><br><span class="line">About to free a second time</span><br><span class="line">*** Error in &#96;.&#x2F;a.out&#39;: free(): invalid pointer: 0x0000000001fb9010 ***</span><br><span class="line">Finish</span><br><span class="line">$ #检查到错误时直接中止程序</span><br><span class="line">$ MALLOC_CHECK_&#x3D;2 .&#x2F;a.out</span><br><span class="line">About to free</span><br><span class="line">About to free a second time</span><br><span class="line">Aborted (core dumped)</span><br></pre></td></tr></table></figure>
+
+<p>具体参考 <code>man 3 mcheck</code> 和 <code>man 3 mallopt</code>。</p>
+<p>glibc 还提供了 <code>mtrace()</code> 和 <code>muntrace()</code> 函数分别在程序中打开和关闭对内存分配调用进行跟踪的功能。这些函数需要与环境变量 <code>MALLOC_TRACE</code> 配合使用，该变量定义了写入跟踪信息的文件名。在被调用时，<code>mtrace()</code> 会检查是否定义了该文件，又是否可以读写该文件。如果一切正常，那么会在文件里跟踪和记录所有对 malloc 系列函数的调用。由于生成的文件不易于理解，还提供了脚本（<code>mtrace</code>）用于分析文件，并生成易于理解的汇总报告。</p>
+<p>将上面的例子修改一下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;mcheck.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">char</span> *p;</span><br><span class="line"></span><br><span class="line">    mtrace();</span><br><span class="line"></span><br><span class="line">    <span class="built_in">calloc</span>(<span class="number">16</span>, <span class="number">16</span>);</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"calloc some chunks that will not be freed\n"</span>);</span><br><span class="line"></span><br><span class="line">    p = <span class="built_in">malloc</span>(<span class="number">1000</span>);</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"About to free\n"</span>);</span><br><span class="line">    <span class="built_in">free</span>(p);</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"About to free a second time\n"</span>);</span><br><span class="line">    <span class="built_in">free</span>(p);</span><br><span class="line">    <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Finish\n"</span>);</span><br><span class="line"></span><br><span class="line">    muntrace();</span><br><span class="line">&#125;</span><br><span class="line">$ gcc t_mtrace.c</span><br><span class="line">$ <span class="keyword">export</span> MALLOC_TRACE=/tmp/t</span><br><span class="line">$ ./a.out</span><br><span class="line"><span class="built_in">calloc</span> some chunks that will <span class="keyword">not</span> be freed</span><br><span class="line">About to <span class="built_in">free</span></span><br><span class="line">About to <span class="built_in">free</span> a second time</span><br><span class="line">Finish</span><br><span class="line">$ mtrace /tmp/t</span><br><span class="line">- <span class="number">0x000055e427cde7b0</span> Free <span class="number">5</span> was never alloc<span class="number">'</span>d <span class="number">0x55e425da287c</span></span><br><span class="line"></span><br><span class="line">Memory <span class="keyword">not</span> freed:</span><br><span class="line">-----------------</span><br><span class="line">           Address     Size     Caller</span><br><span class="line"><span class="number">0x000055e427cde6a0</span>    <span class="number">0x100</span>  at <span class="number">0x55e425da27f6</span></span><br></pre></td></tr></table></figure>
+
+<p>于是 double-free 和内存泄漏被检测出来了。</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ul>
+<li>[GCC online documentation](</li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/11/30/%E5%8A%A8%E6%80%81%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%8F%92%E6%A1%A9(Pin)/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2035,306 +2218,6 @@
 
 
     
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/08/%E6%89%93%E5%BC%80%E3%80%81%E5%85%B3%E9%97%AD%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6%E7%9A%84%20NX%20%E4%BF%9D%E6%8A%A4%E6%8E%AA%E6%96%BD/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="zyt">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Matrix">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2020/08/08/%E6%89%93%E5%BC%80%E3%80%81%E5%85%B3%E9%97%AD%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6%E7%9A%84%20NX%20%E4%BF%9D%E6%8A%A4%E6%8E%AA%E6%96%BD/" itemprop="url">打开、关闭二进制文件的 NX 保护措施</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-08-08T19:29:05+08:00">
-                2020-08-08
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ELF/" itemprop="url" rel="index">
-                    <span itemprop="name">ELF</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="打开、关闭二进制文件的-NX-保护措施"><a href="#打开、关闭二进制文件的-NX-保护措施" class="headerlink" title="打开、关闭二进制文件的 NX 保护措施"></a>打开、关闭二进制文件的 NX 保护措施</h2><h3 id="一、-checksec中检查-NX-的代码部分"><a href="#一、-checksec中检查-NX-的代码部分" class="headerlink" title="一、 checksec中检查 NX 的代码部分"></a>一、 checksec中检查 NX 的代码部分</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># check for NX support</span></span><br><span class="line"><span class="variable">$&#123;debug&#125;</span> &amp;&amp; <span class="built_in">echo</span> -e <span class="string">"\n***function filecheck-&gt;nx"</span></span><br><span class="line"><span class="keyword">if</span> <span class="variable">$&#123;readelf&#125;</span> -l <span class="string">"<span class="variable">$&#123;1&#125;</span>"</span> 2&gt;/dev/null | grep -q <span class="string">'GNU_STACK'</span>; <span class="keyword">then</span></span><br><span class="line">	<span class="keyword">if</span> <span class="variable">$&#123;readelf&#125;</span> -l <span class="string">"<span class="variable">$&#123;1&#125;</span>"</span> 2&gt;/dev/null | grep <span class="string">'GNU_STACK'</span> | grep -q <span class="string">'RWE'</span>; <span class="keyword">then</span></span><br><span class="line">		echo_message <span class="string">'\033[31mNX disabled\033[m   '</span> <span class="string">'NX disabled,'</span> <span class="string">' nx="no"'</span> <span class="string">'"nx":"no",'</span></span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">		echo_message <span class="string">'\033[32mNX enabled \033[m   '</span> <span class="string">'NX enabled,'</span> <span class="string">' nx="yes"'</span> <span class="string">'"nx":"yes",'</span></span><br><span class="line">	<span class="keyword">fi</span></span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">	echo_message <span class="string">'\033[31mNX disabled\033[m   '</span> <span class="string">'NX disabled,'</span> <span class="string">' nx="no"'</span> <span class="string">'"nx":"no",'</span></span><br><span class="line"><span class="keyword">fi</span></span><br></pre></td></tr></table></figure>
-
-<p>本质上调用了<code>readelf -l</code>来进行判断的：</p>
-<ul>
-<li>不开启栈执行</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:~ <span class="meta"># gcc -w -z noexecstack -o test test.c -m32</span></span><br><span class="line">root@ubuntu:~ <span class="meta"># readelf -l test</span></span><br><span class="line"></span><br><span class="line"><span class="function">Elf file type is <span class="title">EXEC</span> <span class="params">(Executable file)</span></span></span><br><span class="line"><span class="function">Entry <span class="built_in">point</span> 0x80482e0</span></span><br><span class="line">There are 9 program headers, starting at offset 52</span><br><span class="line"></span><br><span class="line">Program Headers:</span><br><span class="line">  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align</span><br><span class="line">  PHDR           <span class="number">0x000034</span> <span class="number">0x08048034</span> <span class="number">0x08048034</span> <span class="number">0x00120</span> <span class="number">0x00120</span> R E <span class="number">0x4</span></span><br><span class="line">  INTERP         <span class="number">0x000154</span> <span class="number">0x08048154</span> <span class="number">0x08048154</span> <span class="number">0x00013</span> <span class="number">0x00013</span> R   <span class="number">0x1</span></span><br><span class="line">      [Requesting program interpreter: /lib/ld-linux.so<span class="number">.2</span>]</span><br><span class="line">  LOAD           <span class="number">0x000000</span> <span class="number">0x08048000</span> <span class="number">0x08048000</span> <span class="number">0x00588</span> <span class="number">0x00588</span> R E <span class="number">0x1000</span></span><br><span class="line">  LOAD           <span class="number">0x000f08</span> <span class="number">0x08049f08</span> <span class="number">0x08049f08</span> <span class="number">0x00169</span> <span class="number">0x0016c</span> RW  <span class="number">0x1000</span></span><br><span class="line">  DYNAMIC        <span class="number">0x000f14</span> <span class="number">0x08049f14</span> <span class="number">0x08049f14</span> <span class="number">0x000e8</span> <span class="number">0x000e8</span> RW  <span class="number">0x4</span></span><br><span class="line">  NOTE           <span class="number">0x000168</span> <span class="number">0x08048168</span> <span class="number">0x08048168</span> <span class="number">0x00044</span> <span class="number">0x00044</span> R   <span class="number">0x4</span></span><br><span class="line">  GNU_EH_FRAME   <span class="number">0x000490</span> <span class="number">0x08048490</span> <span class="number">0x08048490</span> <span class="number">0x0002c</span> <span class="number">0x0002c</span> R   <span class="number">0x4</span></span><br><span class="line">  GNU_STACK      <span class="number">0x000000</span> <span class="number">0x00000000</span> <span class="number">0x00000000</span> <span class="number">0x00000</span> <span class="number">0x00000</span> RW  <span class="number">0x10</span></span><br><span class="line">  GNU_RELRO      <span class="number">0x000f08</span> <span class="number">0x08049f08</span> <span class="number">0x08049f08</span> <span class="number">0x000f8</span> <span class="number">0x000f8</span> R   <span class="number">0x1</span></span><br><span class="line"></span><br><span class="line"> Section to Segment mapping:</span><br><span class="line">  Segment Sections...</span><br><span class="line">   <span class="number">00</span>     </span><br><span class="line">   <span class="number">01</span>     .interp </span><br><span class="line">   <span class="number">02</span>     .interp .note.ABI-tag .note.gnu.build-id .gnu.hash .dynsym .dynstr .gnu.version .gnu.version_r .rel.dyn .rel.plt .init .plt .plt.got .<span class="built_in">text</span> .fini .rodata .eh_frame_hdr .eh_frame </span><br><span class="line">   <span class="number">03</span>     .init_array .fini_array .jcr .dynamic .got .got.plt .data .bss </span><br><span class="line">   <span class="number">04</span>     .dynamic </span><br><span class="line">   <span class="number">05</span>     .note.ABI-tag .note.gnu.build-id </span><br><span class="line">   <span class="number">06</span>     .eh_frame_hdr </span><br><span class="line">   <span class="number">07</span>     </span><br><span class="line">   <span class="number">08</span>     .init_array .fini_array .jcr .dynamic .got</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>开启栈执行</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:~ <span class="meta"># gcc -w -z execstack -o test test.c -m32</span></span><br><span class="line">root@ubuntu:~ <span class="meta"># readelf -l test</span></span><br><span class="line"></span><br><span class="line"><span class="function">Elf file type is <span class="title">EXEC</span> <span class="params">(Executable file)</span></span></span><br><span class="line"><span class="function">Entry <span class="built_in">point</span> 0x80482e0</span></span><br><span class="line">There are 9 program headers, starting at offset 52</span><br><span class="line"></span><br><span class="line">Program Headers:</span><br><span class="line">  Type           Offset   VirtAddr   PhysAddr   FileSiz MemSiz  Flg Align</span><br><span class="line">  PHDR           <span class="number">0x000034</span> <span class="number">0x08048034</span> <span class="number">0x08048034</span> <span class="number">0x00120</span> <span class="number">0x00120</span> R E <span class="number">0x4</span></span><br><span class="line">  INTERP         <span class="number">0x000154</span> <span class="number">0x08048154</span> <span class="number">0x08048154</span> <span class="number">0x00013</span> <span class="number">0x00013</span> R   <span class="number">0x1</span></span><br><span class="line">      [Requesting program interpreter: /lib/ld-linux.so<span class="number">.2</span>]</span><br><span class="line">  LOAD           <span class="number">0x000000</span> <span class="number">0x08048000</span> <span class="number">0x08048000</span> <span class="number">0x00588</span> <span class="number">0x00588</span> R E <span class="number">0x1000</span></span><br><span class="line">  LOAD           <span class="number">0x000f08</span> <span class="number">0x08049f08</span> <span class="number">0x08049f08</span> <span class="number">0x00169</span> <span class="number">0x0016c</span> RW  <span class="number">0x1000</span></span><br><span class="line">  DYNAMIC        <span class="number">0x000f14</span> <span class="number">0x08049f14</span> <span class="number">0x08049f14</span> <span class="number">0x000e8</span> <span class="number">0x000e8</span> RW  <span class="number">0x4</span></span><br><span class="line">  NOTE           <span class="number">0x000168</span> <span class="number">0x08048168</span> <span class="number">0x08048168</span> <span class="number">0x00044</span> <span class="number">0x00044</span> R   <span class="number">0x4</span></span><br><span class="line">  GNU_EH_FRAME   <span class="number">0x000490</span> <span class="number">0x08048490</span> <span class="number">0x08048490</span> <span class="number">0x0002c</span> <span class="number">0x0002c</span> R   <span class="number">0x4</span></span><br><span class="line">  GNU_STACK      <span class="number">0x000000</span> <span class="number">0x00000000</span> <span class="number">0x00000000</span> <span class="number">0x00000</span> <span class="number">0x00000</span> RWE <span class="number">0x10</span></span><br><span class="line">  GNU_RELRO      <span class="number">0x000f08</span> <span class="number">0x08049f08</span> <span class="number">0x08049f08</span> <span class="number">0x000f8</span> <span class="number">0x000f8</span> R   <span class="number">0x1</span></span><br><span class="line"></span><br><span class="line"> Section to Segment mapping:</span><br><span class="line">  Segment Sections...</span><br><span class="line">   <span class="number">00</span>     </span><br><span class="line">   <span class="number">01</span>     .interp </span><br><span class="line">   <span class="number">02</span>     .interp .note.ABI-tag .note.gnu.build-id .gnu.hash .dynsym .dynstr .gnu.version .gnu.version_r .rel.dyn .rel.plt .init .plt .plt.got .<span class="built_in">text</span> .fini .rodata .eh_frame_hdr .eh_frame </span><br><span class="line">   <span class="number">03</span>     .init_array .fini_array .jcr .dynamic .got .got.plt .data .bss </span><br><span class="line">   <span class="number">04</span>     .dynamic </span><br><span class="line">   <span class="number">05</span>     .note.ABI-tag .note.gnu.build-id </span><br><span class="line">   <span class="number">06</span>     .eh_frame_hdr </span><br><span class="line">   <span class="number">07</span>     </span><br><span class="line">   <span class="number">08</span>     .init_array .fini_array .jcr .dynamic .got</span><br></pre></td></tr></table></figure>
-
-<h3 id="二、Program-header"><a href="#二、Program-header" class="headerlink" title="二、Program header"></a>二、Program header</h3><img src="/2020/08/08/%E6%89%93%E5%BC%80%E3%80%81%E5%85%B3%E9%97%AD%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6%E7%9A%84%20NX%20%E4%BF%9D%E6%8A%A4%E6%8E%AA%E6%96%BD/program header && section header.png" alt="image-20200808192343332" style="zoom:50%;">
-
-<p><code>program header</code>表告诉系统如何创建一个进程镜像。他在文件中的偏移由字段<code>e_phoff</code>指定，包含<code>e_phnum</code>个实体，每一个的大小为<code>e_phentsize</code>。32位和64位的数据结构略有不同，由于对齐的原因，字段<code>p_flags</code>在结构体中的位置不同，每一个实体的结构为：</p>
-<table>
-<thead>
-<tr>
-<th align="center">Offset</th>
-<th align="center">Offset</th>
-<th align="center">Size (bytes)</th>
-<th align="center">Size (bytes)</th>
-<th>Field</th>
-<th>Purpose</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">32-bit</td>
-<td align="center">64-bit</td>
-<td align="center">32-bit</td>
-<td align="center">64-bit</td>
-<td></td>
-<td></td>
-</tr>
-<tr>
-<td align="center">0x00</td>
-<td align="center">0x00</td>
-<td align="center">4</td>
-<td align="center">4</td>
-<td><code>p_type</code></td>
-<td>Identifies the type of the segment. <br>Value            Name            Meaning<br>0x00000000<code>PT_NULL</code>Program header table entry unused<br>0x00000001<code>PT_LOAD</code>Loadable segment<br>0x00000002<code>PT_DYNAMIC</code>Dynamic linking information<br>0x00000003<code>PT_INTERP</code>Interpreter information<br>0x00000004<code>PT_NOTE</code>Auxiliary information<br>0x00000005<code>PT_SHLIB</code>reserved<br>0x00000006<code>PT_PHDR</code>segment containing program header table itself<br>0x00000007<code>PT_TLS</code>Thread-Local Storage template<br>0x60000000<code>PT_LOOS</code>see below<br>0x6FFFFFFF<code>PT_HIOS</code><br>0x70000000<code>PT_LOPROC</code><br>0x7FFFFFFF<code>PT_HIPROC</code><br><code>PT_LOOS</code> to <code>PT_HIOS</code> (<code>PT_LOPROC</code> to <code>PT_HIPROC</code>) is an inclusive reserved ranges for operating system (processor) specific semantics.</td>
-</tr>
-<tr>
-<td align="center"></td>
-<td align="center">0x04</td>
-<td align="center"></td>
-<td align="center">4</td>
-<td><code>p_flags</code></td>
-<td>Segment-dependent flags (position for 64-bit structure).</td>
-</tr>
-<tr>
-<td align="center">0x04</td>
-<td align="center">0x08</td>
-<td align="center">4</td>
-<td align="center">8</td>
-<td><code>p_offset</code></td>
-<td>Offset of the segment in the file image.</td>
-</tr>
-<tr>
-<td align="center">0x08</td>
-<td align="center">0x10</td>
-<td align="center">4</td>
-<td align="center">8</td>
-<td><code>p_vaddr</code></td>
-<td>Virtual address of the segment in memory.</td>
-</tr>
-<tr>
-<td align="center">0x0C</td>
-<td align="center">0x18</td>
-<td align="center">4</td>
-<td align="center">8</td>
-<td><code>p_paddr</code></td>
-<td>On systems where physical address is relevant, reserved for segment’s physical address.</td>
-</tr>
-<tr>
-<td align="center">0x10</td>
-<td align="center">0x20</td>
-<td align="center">4</td>
-<td align="center">8</td>
-<td><code>p_filesz</code></td>
-<td>Size in bytes of the segment in the file image. May be 0.</td>
-</tr>
-<tr>
-<td align="center">0x14</td>
-<td align="center">0x28</td>
-<td align="center">4</td>
-<td align="center">8</td>
-<td><code>p_memsz</code></td>
-<td>Size in bytes of the segment in memory. May be 0.</td>
-</tr>
-<tr>
-<td align="center">0x18</td>
-<td align="center"></td>
-<td align="center">4</td>
-<td align="center"></td>
-<td><code>p_flags</code></td>
-<td>Segment-dependent flags (position for 32-bit structure).</td>
-</tr>
-<tr>
-<td align="center">0x1C</td>
-<td align="center">0x30</td>
-<td align="center">4</td>
-<td align="center">8</td>
-<td><code>p_align</code></td>
-<td><code>0</code> and <code>1</code> specify no alignment. Otherwise should be a positive, integral power of 2, with <code>p_vaddr</code> equating <code>p_offset</code> modulus <code>p_align</code>.</td>
-</tr>
-<tr>
-<td align="center">0x20</td>
-<td align="center">0x38</td>
-<td align="center"></td>
-<td align="center">End of Program Header (size)</td>
-<td></td>
-<td></td>
-</tr>
-</tbody></table>
-<p>由上可知：</p>
-<table>
-<thead>
-<tr>
-<th align="center"></th>
-<th align="left">32位</th>
-<th>64位</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="center">size of entry</td>
-<td align="left">32B</td>
-<td>64B</td>
-</tr>
-<tr>
-<td align="center">offset of p_flags</td>
-<td align="left">0x18</td>
-<td>0x4</td>
-</tr>
-</tbody></table>
-<p>在 program header 表中有一项 GNU_STACK，他的 flag 是 RWE，那么只要把它的 flag 改为 RW 就行了。 由上图可知 program header 的偏移是64，表中每一项的大小为0x20(32位）或0x38(64位）， p_flags字段的偏移是0x18（32位），0x4(64位）用 hexedit 手动把把那里的 7(RWX) 改为6 (RW) 就可以了。</p>
-<h3 id="三、修改实例"><a href="#三、修改实例" class="headerlink" title="三、修改实例"></a>三、修改实例</h3><ul>
-<li>开启的保护信息</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:~ <span class="meta"># checksec test</span></span><br><span class="line">[*] '/root/test'</span><br><span class="line">    Arch:     i386<span class="number">-32</span>-little</span><br><span class="line">    RELRO:    Partial RELRO</span><br><span class="line">    Stack:    No canary found</span><br><span class="line">    NX:       NX disabled</span><br><span class="line">    PIE:      <span class="function">No <span class="title">PIE</span> <span class="params">(<span class="number">0x8048000</span>)</span></span></span><br><span class="line"><span class="function">    RWX:      Has RWX segments</span></span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><p>ELF header 和 Program header</p>
-<p>32位下，ELF header的大小为52B，后面是 Program header，</p>
-</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">00000000</span>: <span class="number">7f</span>45 <span class="number">4</span>c46 <span class="number">0101</span> <span class="number">0100</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span>  .ELF............</span><br><span class="line"><span class="number">00000010</span>: <span class="number">0200</span> <span class="number">0300</span> <span class="number">0100</span> <span class="number">0000</span> e082 <span class="number">0408</span> <span class="number">3400</span> <span class="number">0000</span>  ...........<span class="number">.4</span>...</span><br><span class="line"><span class="number">00000020</span>: <span class="number">2818</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">3400</span> <span class="number">2000</span> <span class="number">0900</span> <span class="number">2800</span>  (......<span class="number">.4</span>. ...(.</span><br><span class="line"><span class="number">00000030</span>: <span class="number">1f</span>00 <span class="number">1</span>c00                                                   </span><br><span class="line">                   	<span class="number">0600</span> <span class="number">0000</span> <span class="number">3400</span> <span class="number">0000</span> <span class="number">3480</span> <span class="number">0408</span>  .......<span class="number">.4</span>..<span class="number">.4</span>...</span><br><span class="line"><span class="number">00000040</span>: <span class="number">3480</span> <span class="number">0408</span> <span class="number">2001</span> <span class="number">0000</span> <span class="number">2001</span> <span class="number">0000</span> <span class="number">0500</span> <span class="number">0000</span>  <span class="number">4.</span>.. ... .......</span><br><span class="line"><span class="number">00000050</span>: <span class="number">0400</span> <span class="number">0000</span> </span><br><span class="line">                    <span class="number">0300</span> <span class="number">0000</span> <span class="number">5401</span> <span class="number">0000</span> <span class="number">5481</span> <span class="number">0408</span>  ........T...T...</span><br><span class="line"><span class="number">00000060</span>: <span class="number">5481</span> <span class="number">0408</span> <span class="number">1300</span> <span class="number">0000</span> <span class="number">1300</span> <span class="number">0000</span> <span class="number">0400</span> <span class="number">0000</span>  T...............</span><br><span class="line"><span class="number">00000070</span>: <span class="number">0100</span> <span class="number">0000</span> </span><br><span class="line">                    <span class="number">0100</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0080</span> <span class="number">0408</span>  ................</span><br><span class="line"><span class="number">00000080</span>: <span class="number">0080</span> <span class="number">0408</span> <span class="number">8805</span> <span class="number">0000</span> <span class="number">8805</span> <span class="number">0000</span> <span class="number">0500</span> <span class="number">0000</span>  ................</span><br><span class="line"><span class="number">00000090</span>: <span class="number">0010</span> <span class="number">0000</span> </span><br><span class="line">                    <span class="number">0100</span> <span class="number">0000</span> <span class="number">080f</span> <span class="number">0000</span> <span class="number">089f</span> <span class="number">0408</span>  ................</span><br><span class="line"><span class="number">000000</span>a0: <span class="number">089f</span> <span class="number">0408</span> <span class="number">6901</span> <span class="number">0000</span> <span class="number">6</span>c01 <span class="number">0000</span> <span class="number">0600</span> <span class="number">0000</span>  ....i...l.......</span><br><span class="line"><span class="number">000000b</span>0: <span class="number">0010</span> <span class="number">0000</span> </span><br><span class="line">                    <span class="number">0200</span> <span class="number">0000</span> <span class="number">140f</span> <span class="number">0000</span> <span class="number">149f</span> <span class="number">0408</span>  ................</span><br><span class="line"><span class="number">000000</span>c0: <span class="number">149f</span> <span class="number">0408</span> e800 <span class="number">0000</span> e800 <span class="number">0000</span> <span class="number">0600</span> <span class="number">0000</span>  ................</span><br><span class="line"><span class="number">000000</span>d0: <span class="number">0400</span> <span class="number">0000</span> </span><br><span class="line">                    <span class="number">0400</span> <span class="number">0000</span> <span class="number">6801</span> <span class="number">0000</span> <span class="number">6881</span> <span class="number">0408</span>  ........h...h...</span><br><span class="line"><span class="number">000000e0</span>: <span class="number">6881</span> <span class="number">0408</span> <span class="number">4400</span> <span class="number">0000</span> <span class="number">4400</span> <span class="number">0000</span> <span class="number">0400</span> <span class="number">0000</span>  h...D...D.......</span><br><span class="line"><span class="number">000000f</span>0: <span class="number">0400</span> <span class="number">0000</span> </span><br><span class="line">                    <span class="number">50e5</span> <span class="number">7464</span> <span class="number">9004</span> <span class="number">0000</span> <span class="number">9084</span> <span class="number">0408</span>  ....P.td........</span><br><span class="line"><span class="number">00000100</span>: <span class="number">9084</span> <span class="number">0408</span> <span class="number">2</span>c00 <span class="number">0000</span> <span class="number">2</span>c00 <span class="number">0000</span> <span class="number">0400</span> <span class="number">0000</span>  ....,...,.......</span><br><span class="line"><span class="number">00000110</span>: <span class="number">0400</span> <span class="number">0000</span> </span><br><span class="line">                    <span class="number">51e5</span> <span class="number">7464</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span>  ....Q.td........		<span class="comment">//GNU_STACK，将对应的0700改为0600后，程序</span></span><br><span class="line"><span class="number">00000120</span>: <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0700</span> <span class="number">0000</span>  ................		<span class="comment">//打开NX保护，栈不可执行</span></span><br><span class="line"><span class="number">00000130</span>: <span class="number">1000</span> <span class="number">0000</span> </span><br><span class="line">                    <span class="number">52e5</span> <span class="number">7464</span> <span class="number">080f</span> <span class="number">0000</span> <span class="number">089f</span> <span class="number">0408</span>  ....R.td........</span><br><span class="line"><span class="number">00000140</span>: <span class="number">089f</span> <span class="number">0408</span> f800 <span class="number">0000</span> f800 <span class="number">0000</span> <span class="number">0400</span> <span class="number">0000</span>  ................</span><br><span class="line"><span class="number">00000150</span>: <span class="number">0100</span> <span class="number">0000</span> </span><br><span class="line">                    <span class="number">2f</span>6c <span class="number">6962</span> <span class="number">2f</span>6c <span class="number">642</span>d <span class="number">6</span>c69 <span class="number">6e75</span>  ..../lib/ld-linu</span><br><span class="line"><span class="number">00000160</span>: <span class="number">782</span>e <span class="number">736f</span> <span class="number">2e32</span> <span class="number">0000</span> <span class="number">0400</span> <span class="number">0000</span> <span class="number">1000</span> <span class="number">0000</span>  x.so<span class="number">.2</span>..........</span><br><span class="line"><span class="number">00000170</span>: <span class="number">0100</span> <span class="number">0000</span> <span class="number">474</span>e <span class="number">5500</span> <span class="number">0000</span> <span class="number">0000</span> <span class="number">0200</span> <span class="number">0000</span>  ....GNU.........</span><br><span class="line"><span class="number">00000180</span>: <span class="number">0600</span> <span class="number">0000</span> <span class="number">2000</span> <span class="number">0000</span> <span class="number">0400</span> <span class="number">0000</span> <span class="number">1400</span> <span class="number">0000</span>  .... ...........</span><br><span class="line"><span class="number">00000190</span>: <span class="number">0300</span> <span class="number">0000</span> <span class="number">474</span>e <span class="number">5500</span> <span class="number">5915</span> <span class="number">9255</span> <span class="number">2338</span> <span class="number">74b</span>2  ....GNU.Y..U#<span class="number">8</span>t.</span><br><span class="line"><span class="number">000001</span>a0: <span class="number">8b</span>23 <span class="number">9</span>ecd <span class="number">43</span>ea <span class="number">0e25</span> <span class="number">0498</span> cc46 <span class="number">0200</span> <span class="number">0000</span>  .#..C..%...F....</span><br><span class="line"><span class="number">000001b</span>0: <span class="number">0300</span> <span class="number">0000</span> <span class="number">0100</span> <span class="number">0000</span> <span class="number">0500</span> <span class="number">0000</span> <span class="number">0020</span> <span class="number">0020</span>  ............. . </span><br><span class="line"><span class="number">000001</span>c0: <span class="number">0000</span> <span class="number">0000</span> <span class="number">0300</span> <span class="number">0000</span> ad4b e3c0 <span class="number">0000</span> <span class="number">0000</span>  .........K......</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>修改后</li>
-</ul>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:~ <span class="meta"># checksec test</span></span><br><span class="line">[*] '/root/test'</span><br><span class="line">    Arch:     i386<span class="number">-32</span>-little</span><br><span class="line">    RELRO:    Partial RELRO</span><br><span class="line">    Stack:    No canary found</span><br><span class="line">    NX:       NX enabled</span><br><span class="line">    PIE:      <span class="function">No <span class="title">PIE</span> <span class="params">(<span class="number">0x8048000</span>)</span></span></span><br></pre></td></tr></table></figure>
-
-<h3 id="四、ELF文件格式简图"><a href="#四、ELF文件格式简图" class="headerlink" title="四、ELF文件格式简图"></a>四、ELF文件格式简图</h3><p><img src="https://raw.githubusercontent.com/corkami/pics/28cb0226093ed57b348723bc473cea0162dad366/binary/elf101/elf101.svg" alt="ELF文件格式简图"></p>
-<p><img src="/2020/08/08/%E6%89%93%E5%BC%80%E3%80%81%E5%85%B3%E9%97%AD%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6%E7%9A%84%20NX%20%E4%BF%9D%E6%8A%A4%E6%8E%AA%E6%96%BD/elf32_bit.svg" alt="ELF文件格式简图"></p>
-<h3 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h3><ol>
-<li><a href="https://github.com/corkami/pics/tree/28cb0226093ed57b348723bc473cea0162dad366/binary/elf101" target="_blank" rel="noopener">https://github.com/corkami/pics/tree/28cb0226093ed57b348723bc473cea0162dad366/binary/elf101</a></li>
-</ol>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
   </section>
 
   
@@ -2385,7 +2268,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">23</span>
+                  <span class="site-state-item-count">24</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
