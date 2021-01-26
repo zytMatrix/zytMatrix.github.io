@@ -249,162 +249,6 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/01/26/IDAPython%E6%8F%90%E5%8F%96%E7%A8%8B%E5%BA%8F%E4%B8%ADCompare%E5%AD%97%E7%AC%A6%E4%BF%A1%E6%81%AF/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="zyt">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/avatar.gif">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Matrix">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2021/01/26/IDAPython%E6%8F%90%E5%8F%96%E7%A8%8B%E5%BA%8F%E4%B8%ADCompare%E5%AD%97%E7%AC%A6%E4%BF%A1%E6%81%AF/" itemprop="url">IDAPython提取程序中Compare字符信息</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">Posted on</span>
-              
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2021-01-26T17:00:38+08:00">
-                2021-01-26
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">In</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/IDAPython/" itemprop="url" rel="index">
-                    <span itemprop="name">IDAPython</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h1 id="IDAPython提取程序中Compare字符信息"><a href="#IDAPython提取程序中Compare字符信息" class="headerlink" title="IDAPython提取程序中Compare字符信息"></a>IDAPython提取程序中Compare字符信息</h1><h2 id="一、脚本"><a href="#一、脚本" class="headerlink" title="一、脚本"></a>一、脚本</h2><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#! -*- coding:utf-8 -*-</span></span><br><span class="line"><span class="keyword">import</span> idaapi</span><br><span class="line"><span class="keyword">import</span> idautils</span><br><span class="line"><span class="keyword">import</span> idc</span><br><span class="line"><span class="keyword">from</span> collections <span class="keyword">import</span> deque</span><br><span class="line"><span class="keyword">import</span> timeit</span><br><span class="line"><span class="keyword">import</span> pickle</span><br><span class="line"><span class="keyword">import</span> string</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">get_string</span><span class="params">(para,index)</span>:</span></span><br><span class="line">    out = <span class="string">""</span></span><br><span class="line">    <span class="keyword">if</span> GetOpType(para, <span class="number">0</span>) == <span class="number">5</span>:</span><br><span class="line">        addr = GetOperandValue(para,<span class="number">0</span>)</span><br><span class="line">        <span class="keyword">if</span> addr &gt; <span class="number">0x8048000</span>:</span><br><span class="line">            <span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">                <span class="keyword">if</span> Byte(addr) != <span class="number">0</span>:</span><br><span class="line">                    out += chr(Byte(addr))</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    <span class="keyword">break</span></span><br><span class="line">                addr += <span class="number">1</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            out = GetOpnd(para,index)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> out</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">findCMPopnds</span><span class="params">()</span>:</span></span><br><span class="line">    cmpl=[<span class="string">'cmp'</span>,<span class="string">'CMP'</span>]</span><br><span class="line">    strcmp_func = [<span class="string">'strcmp'</span>, <span class="string">'strncmp'</span>]</span><br><span class="line">    names=set()</span><br><span class="line">    result1=set()<span class="comment">#contains full strings as they appear in the instruction </span></span><br><span class="line">    result2=set()<span class="comment">#contains bytes of strings in instruction</span></span><br><span class="line">    <span class="comment"># For each of the segments</span></span><br><span class="line">    <span class="keyword">for</span> seg_ea <span class="keyword">in</span> Segments(): <span class="comment">##获取程序的段信息</span></span><br><span class="line">        <span class="keyword">for</span> head <span class="keyword">in</span> Heads(seg_ea, SegEnd(seg_ea)): <span class="comment">##获取seg_ea和SegEnd(seg_ea)之间所有的地址</span></span><br><span class="line">            <span class="keyword">if</span> isCode(GetFlags(head)):</span><br><span class="line">                mnem = GetMnem(head) <span class="comment">##获取汇编语句的操作码</span></span><br><span class="line">                <span class="comment">#print mnem</span></span><br><span class="line">                <span class="keyword">if</span> mnem <span class="keyword">in</span> cmpl:</span><br><span class="line">                    <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">2</span>):</span><br><span class="line">                        <span class="keyword">if</span> GetOpType(head,i)==<span class="number">5</span>: <span class="comment">##操作数是确定的一个立即数，类型为5，o_imm</span></span><br><span class="line">                            names.add(GetOpnd(head,i))</span><br><span class="line"></span><br><span class="line">                <span class="keyword">if</span> mnem <span class="keyword">in</span> <span class="string">"call"</span>:</span><br><span class="line">                    call_string = GetOpnd(head, <span class="number">0</span>)</span><br><span class="line">                    <span class="comment"># print "mnem: ", mnem, " call: ", call_string </span></span><br><span class="line">                    <span class="keyword">for</span> item <span class="keyword">in</span> strcmp_func:</span><br><span class="line">                        <span class="keyword">if</span> item <span class="keyword">in</span> call_string:</span><br><span class="line">                            <span class="keyword">for</span> para <span class="keyword">in</span> idaapi.get_arg_addrs(head):</span><br><span class="line">                                <span class="keyword">print</span> idc.GetDisasm(para)</span><br><span class="line">                                <span class="keyword">if</span> <span class="string">'push'</span> <span class="keyword">in</span> GetMnem(para):</span><br><span class="line">                                    oper_string = get_string(para,<span class="number">0</span>)</span><br><span class="line">                                    <span class="keyword">print</span> oper_string</span><br><span class="line">                                    result1.add(oper_string)</span><br><span class="line"></span><br><span class="line">                                <span class="keyword">if</span> <span class="string">'mov'</span> <span class="keyword">in</span> GetMnem(para):</span><br><span class="line">                                    <span class="keyword">for</span> i <span class="keyword">in</span> range(<span class="number">2</span>):</span><br><span class="line">                                        <span class="keyword">if</span> GetOpType(para, i) == <span class="number">5</span>:</span><br><span class="line">                                            oper_string = get_string(para,i)</span><br><span class="line">                                            result1.add(oper_string)</span><br><span class="line">    <span class="keyword">for</span> el <span class="keyword">in</span> names:</span><br><span class="line">        tm=el.rstrip(<span class="string">'h'</span>)</span><br><span class="line">        <span class="keyword">print</span> tm</span><br><span class="line">        <span class="keyword">if</span> <span class="keyword">not</span> all(c <span class="keyword">in</span> string.hexdigits <span class="keyword">for</span> c <span class="keyword">in</span> tm): <span class="comment"># string.hexdigits will give the hexadecimal letters ‘0123456789abcdefABCDEF’.</span></span><br><span class="line">            <span class="keyword">continue</span> <span class="comment"># strange case: sometimes ida returns not immediate!!</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> len(tm)%<span class="number">2</span> !=<span class="number">0</span>:</span><br><span class="line">            tm=<span class="string">"0"</span>+tm</span><br><span class="line">        whx=<span class="string">''</span></span><br><span class="line">        <span class="keyword">print</span> tm</span><br><span class="line">        <span class="keyword">for</span> i <span class="keyword">in</span> xrange(<span class="number">0</span>,len(tm),<span class="number">2</span>):</span><br><span class="line">            <span class="comment"># hx=chr(int(tm[i:i+2],16))</span></span><br><span class="line">            hx = <span class="string">"\\x"</span>+str(tm[i:i+<span class="number">2</span>])</span><br><span class="line">            result2.add(hx)</span><br><span class="line">            whx=whx+hx</span><br><span class="line">        result1.add(whx)</span><br><span class="line"></span><br><span class="line">    result1.difference_update(result2)</span><br><span class="line">    <span class="keyword">print</span> result1, result2</span><br><span class="line">    <span class="keyword">return</span> result1,result2</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">main</span><span class="params">()</span>:</span></span><br><span class="line">    result1, result2=findCMPopnds()</span><br><span class="line">    outFile=GetInputFile() <span class="comment"># name of the that is being analysed</span></span><br><span class="line">    strFile=outFile+<span class="string">".txt"</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">with</span> open(strFile, <span class="string">"w"</span>) <span class="keyword">as</span> fp:</span><br><span class="line">        <span class="keyword">for</span> item <span class="keyword">in</span> result1:</span><br><span class="line">            <span class="keyword">if</span> len(item) &gt; <span class="number">0</span>:</span><br><span class="line">                fp.write(<span class="string">"String=\""</span>+item+<span class="string">"\"\n"</span>)</span><br><span class="line">        <span class="keyword">for</span> item <span class="keyword">in</span> result2:</span><br><span class="line">            <span class="keyword">if</span> len(item) &gt; <span class="number">0</span>:</span><br><span class="line">                fp.write(<span class="string">"String=\""</span>+item+<span class="string">"\"\n"</span>)      </span><br><span class="line">    <span class="keyword">print</span> <span class="string">"[*] Saved results in files: %s"</span>%(strFile)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</span><br><span class="line">    main()</span><br></pre></td></tr></table></figure>
-
-<h2 id="二、API"><a href="#二、API" class="headerlink" title="二、API"></a>二、API</h2><h3 id="获取指令操作数的值"><a href="#获取指令操作数的值" class="headerlink" title="获取指令操作数的值"></a>获取指令操作数的值</h3><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GetOperandValue(addr, index) <span class="comment">## 获取地址对应指令中操作数的值。例如:push offset s2; cond。index为0代表得到 s2 的地址</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="获取函数参数"><a href="#获取函数参数" class="headerlink" title="获取函数参数"></a>获取函数参数</h2><p>使用<code>API：daapi.get_arg_addrs()</code>。例如：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">LOAD:FFFFFFFF82491188                 mov     rdi, offset unk_FFFFFFFF832EF148 ; a1</span><br><span class="line">LOAD:FFFFFFFF8249118F                 mov     rsi, rbx        ; a2</span><br><span class="line">LOAD:FFFFFFFF82491192                 xor     edx, edx        ; a3</span><br><span class="line">LOAD:FFFFFFFF82491194                 xor     ecx, ecx</span><br><span class="line">LOAD:FFFFFFFF82491196                 xor     r8d, r8d</span><br><span class="line">LOAD:FFFFFFFF82491199                 call    _sx_xlock_hard</span><br><span class="line">  </span><br><span class="line"></span><br><span class="line">Python&gt;<span class="keyword">print</span> map(hex, idaapi.get_arg_addrs(here()))</span><br></pre></td></tr></table></figure>
-
-<p>通过运行<code>idaapi.get_arg_address（0xFFFFFFFF82491199）</code>，它将按照调用函数时给出的顺序返回3个参数的地址：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[<span class="string">'0xffffffff82491188L'</span>, <span class="string">'0xffffffff8249118fL'</span>, <span class="string">'0xffffffff82491192L'</span>](rdi、rsi、edx)</span><br></pre></td></tr></table></figure>
-
-<h2 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h2><blockquote>
-<ol>
-<li><a href="https://unit42.paloaltonetworks.com/using-idapython-to-make-your-life-easier-part-1/" target="_blank" rel="noopener">https://unit42.paloaltonetworks.com/using-idapython-to-make-your-life-easier-part-1/</a></li>
-</ol>
-</blockquote>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/12/18/GCC%20%E5%92%8C%20Address%20Sanitizer/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -2209,6 +2053,171 @@
 
 
     
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/08/21/More%20Efficient%20Instruction%20Counting%20/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/08/21/More%20Efficient%20Instruction%20Counting%20/" itemprop="url">五、More Efficient Instruction Counting (Trace Instrumentation)</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-08-21T18:18:46+08:00">
+                2020-08-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Pin/" itemprop="url" rel="index">
+                    <span itemprop="name">Pin</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <p>例子 <code>Simple Instruction Count (Instruction Instrumentation)</code>通过在每条指令之前插入一个函数调用来计算已执行指令的数量。在此示例中，我们通过对BBL进行插桩来统计基本块中的指令数，每个BBL的计数器增加一次，而不是对每条指令增加一次，来提高效率。</p>
+<p>该示例可在<code>source/tools/ManualExamples/inscount1.cpp</code>中找到</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fstream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"pin.H"</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">cerr</span>;</span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::ofstream;</span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::ios;</span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">string</span>;</span><br><span class="line"><span class="keyword">using</span> <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">ofstream OutFile;</span><br><span class="line"><span class="comment">// The running count of instructions is kept here</span></span><br><span class="line"><span class="comment">// make it static to help the compiler optimize docount</span></span><br><span class="line"><span class="keyword">static</span> UINT64 icount = <span class="number">0</span>;</span><br><span class="line"><span class="comment">// This function is called before every block</span></span><br><span class="line"><span class="function">VOID <span class="title">docount</span><span class="params">(UINT32 c)</span> </span>&#123; icount += c; &#125;</span><br><span class="line">    </span><br><span class="line"><span class="comment">// Pin calls this function every time a new basic block is encountered</span></span><br><span class="line"><span class="comment">// It inserts a call to docount</span></span><br><span class="line"><span class="function">VOID <span class="title">Trace</span><span class="params">(TRACE trace, VOID *v)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Visit every basic block  in the trace</span></span><br><span class="line">    <span class="keyword">for</span> (BBL bbl = TRACE_BblHead(trace); BBL_Valid(bbl); bbl = BBL_Next(bbl))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// Insert a call to docount before every bbl, passing the number of instructions</span></span><br><span class="line">        BBL_InsertCall(bbl, IPOINT_BEFORE, (AFUNPTR)docount, IARG_UINT32, BBL_NumIns(bbl), IARG_END);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function">KNOB&lt;<span class="built_in">string</span>&gt; <span class="title">KnobOutputFile</span><span class="params">(KNOB_MODE_WRITEONCE, <span class="string">"pintool"</span>,</span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="string">"o"</span>, <span class="string">"inscount.out"</span>, <span class="string">"specify output file name"</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// This function is called when the application exits</span></span><br><span class="line"><span class="function">VOID <span class="title">Fini</span><span class="params">(INT32 code, VOID *v)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Write to a file since cout and cerr maybe closed by the application</span></span><br><span class="line">    OutFile.setf(ios::showbase);</span><br><span class="line">    OutFile &lt;&lt; <span class="string">"Count "</span> &lt;&lt; icount &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    OutFile.<span class="built_in">close</span>();</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Print Help Message                                                    */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="function">INT32 <span class="title">Usage</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">cerr</span> &lt;&lt; <span class="string">"This tool counts the number of dynamic instructions executed"</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="built_in">cerr</span> &lt;&lt; <span class="built_in">endl</span> &lt;&lt; KNOB_BASE::StringKnobSummary() &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="comment">/* Main                                                                  */</span></span><br><span class="line"><span class="comment">/* ===================================================================== */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> * argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// Initialize pin</span></span><br><span class="line">    <span class="keyword">if</span> (PIN_Init(argc, argv)) <span class="keyword">return</span> Usage();</span><br><span class="line">    OutFile.<span class="built_in">open</span>(KnobOutputFile.Value().c_str());</span><br><span class="line">    <span class="comment">// Register Instruction to be called to instrument instructions</span></span><br><span class="line">    TRACE_AddInstrumentFunction(Trace, <span class="number">0</span>);</span><br><span class="line">    <span class="comment">// Register Fini to be called when the application exits</span></span><br><span class="line">    PIN_AddFiniFunction(Fini, <span class="number">0</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// Start the program, never returns</span></span><br><span class="line">    PIN_StartProgram();</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>进行编译：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:ManualExamples<span class="meta"># make obj-ia32/inscount1.so TARGET=ia32</span></span><br><span class="line">g++ -DBIGARRAY_MULTIPLIER=<span class="number">1</span> -Wall -Werror -Wno-unknown-pragmas -fno-<span class="built_in">stack</span>-protector -DTARGET_IA32 -DHOST_IA32 -DTARGET_LINUX  -I../../../source/include/pin -I../../../source/include/pin/gen -I../../../extras/components/include -I../../../extras/xed2-ia32/include -I../../../source/tools/InstLib -O3 -fomit-frame-pointer -fno-strict-aliasing   -c -o obj-ia32/inscount1.o inscount1.cpp</span><br><span class="line">g++ -shared -Wl,--hash-style=sysv -Wl,-Bsymbolic -Wl,--version-script=../../../source/include/pin/pintool.ver    -o obj-ia32/inscount1.so obj-ia32/inscount1.o  -L../../../ia32/lib -L../../../ia32/lib-ext -L../../../ia32/runtime/glibc -L../../../extras/xed2-ia32/lib -lpin -lxed -ldwarf -lelf -ldl</span><br><span class="line"></span><br><span class="line">root@ubuntu:ManualExamples# ls obj-ia32/</span><br><span class="line">inscount1.o    inscount1.so</span><br></pre></td></tr></table></figure>
+
+<p>下面是如何运行它并显示它的输出：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:tmp# /<span class="built_in">home</span>/vuzzer/pin/pin -t ../obj-ia32/inscount1.so -- /bin/ls</span><br><span class="line">inscount.out</span><br><span class="line"></span><br><span class="line">root@ubuntu:tmp<span class="meta"># cat inscount.out </span></span><br><span class="line">Count <span class="number">430267</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="TRACE-BblHead"><a href="#TRACE-BblHead" class="headerlink" title="TRACE_BblHead"></a>TRACE_BblHead</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">BBL <span class="title">LEVEL_PINCLIENT::TRACE_BblHead</span><span class="params">(TRACE trace)</span>	</span></span><br><span class="line"><span class="function">Returns:</span></span><br><span class="line">	tarce的第一个基本块</span><br></pre></td></tr></table></figure>
+
+<h4 id="BBL-Valid"><a href="#BBL-Valid" class="headerlink" title="BBL_Valid"></a>BBL_Valid</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">BOOL <span class="title">LEVEL_PINCLIENT::BBL_Valid</span><span class="params">(BBL x)</span>	</span></span><br><span class="line"><span class="function">Returns:</span></span><br><span class="line">	若 x 不是 BBL_INVALID()，返回True</span><br></pre></td></tr></table></figure>
+
+<h4 id="BBL-Next"><a href="#BBL-Next" class="headerlink" title="BBL_Next"></a>BBL_Next</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">BBL <span class="title">LEVEL_PINCLIENT::BBL_Next</span><span class="params">(BBL x)</span>	</span></span><br><span class="line"><span class="function">Returns:</span></span><br><span class="line">	下一个基本块或BBL_INVALID() if this is the end of trace or rtn</span><br></pre></td></tr></table></figure>
+
+<h4 id="BBL-Address"><a href="#BBL-Address" class="headerlink" title="BBL_Address"></a>BBL_Address</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">ADDRINT <span class="title">LEVEL_PINCLIENT::BBL_Address</span><span class="params">(BBL bbl)</span>	</span></span><br><span class="line"><span class="function">Returns:</span></span><br><span class="line">	基本块的地址</span><br></pre></td></tr></table></figure>
+
+<h4 id="BBL-InsTail"><a href="#BBL-InsTail" class="headerlink" title="BBL_InsTail"></a>BBL_InsTail</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">INS <span class="title">LEVEL_PINCLIENT::BBL_InsTail</span><span class="params">(BBL x)</span>	</span></span><br><span class="line"><span class="function">Returns:	</span></span><br><span class="line">	基本块的最后一条指令</span><br></pre></td></tr></table></figure>
+
+<h4 id="BBL-InsertCall"><a href="#BBL-InsertCall" class="headerlink" title="BBL_InsertCall"></a>BBL_InsertCall</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">VOID <span class="title">LEVEL_PINCLIENT::BBL_InsertCall</span><span class="params">(BBL bbl, IPOINT action, AFUNPTR funptr,	... )</span>		</span></span><br><span class="line">对相关的基本块进行插桩</span><br><span class="line">参数:</span><br><span class="line">bbl	BBL to instrument</span><br><span class="line">action	Specifies before, after, etc.</span><br><span class="line">  IPOINT_BEFORE is always valid <span class="keyword">for</span> all instructions.</span><br><span class="line">  IPOINT_AFTER is valid only when a fall-through exists (i.e. Calls and unconditional branches will fail).</span><br><span class="line">  IPOINT_ANYWHERE will <span class="built_in">put</span> the instrumentation at a place inside the bbl <span class="keyword">for</span> best performance</span><br><span class="line">  IPOINT_TAKEN_BRANCH is invalid <span class="keyword">for</span> non-branches.</span><br><span class="line">funptr	Analysis function to call</span><br><span class="line">...	IARG_TYPE. Arguments to pass to funptr</span><br></pre></td></tr></table></figure>
+
+<h4 id="BBL-NumIns"><a href="#BBL-NumIns" class="headerlink" title="BBL_NumIns"></a>BBL_NumIns</h4><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">UINT32 <span class="title">LEVEL_CORE::BBL_NumIns</span>	<span class="params">(	BBL 	bbl	)</span>	</span></span><br><span class="line">	一个基本块内的指令数量</span><br></pre></td></tr></table></figure>
+
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
   </section>
 
   
@@ -2259,7 +2268,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">25</span>
+                  <span class="site-state-item-count">24</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -2270,7 +2279,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-count">10</span>
                   <span class="site-state-item-name">categories</span>
                 </a>
               </div>
