@@ -249,6 +249,226 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/" itemprop="url">MacOS 配置 LaTeX（MacTeX + VSCode + Skim）</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-07-11T11:33:09+08:00">
+                2020-07-11
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Latex/" itemprop="url" rel="index">
+                    <span itemprop="name">Latex</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h2 id="一、安装准备"><a href="#一、安装准备" class="headerlink" title="一、安装准备"></a>一、安装准备</h2><h3 id="1-安装-MacTeX"><a href="#1-安装-MacTeX" class="headerlink" title="1 安装 MacTeX"></a>1 安装 MacTeX</h3><p>从 <a href="https://links.jianshu.com/go?to=http%3A%2F%2Fwww.tug.org%2Fmactex%2Fmactex-download.html" target="_blank" rel="noopener">Downloading MacTeX 2019 </a>中下载最新版本的 MacTeX 并安装。</p>
+<h3 id="2-安装-VSCode-及相关插件"><a href="#2-安装-VSCode-及相关插件" class="headerlink" title="2 安装 VSCode 及相关插件"></a>2 安装 VSCode 及相关插件</h3><p>从 <a href="https://links.jianshu.com/go?to=https%3A%2F%2Fcode.visualstudio.com%2Fdownload" target="_blank" rel="noopener">Download Visual Studio Code</a> 中下载最新版本的 VSCode 并安装。打开 VSCode，在 <code>Extensions</code> 搜索框中输入 LaTeX, 选择 <code>LaTeX WorkShop</code> 插件并安装。本次测试VSCode版本信息：<code>Version: 1.47.0-insider</code></p>
+<h2 id="二、LaTeX-WorkShop-插件配置中文环境"><a href="#二、LaTeX-WorkShop-插件配置中文环境" class="headerlink" title="二、LaTeX WorkShop 插件配置中文环境"></a>二、LaTeX WorkShop 插件配置中文环境</h2><p>LaTeX WorkShop 插件默认只提供<code>PDFLaTeX</code>，而中文编译需要<code>XeFLaTeX</code>，所以还需另行配置。进入 Settings 的 JSON 文件，加入以下配置：</p>
+<ol>
+<li><p>在latex-workshop.latex.tools配置中，增加xelatex项，具体如下。这一项的作用是在工具集中定义xelatex项，以便下一项配置能找到。在setting搜索框中搜索<code>latex-workshop.latex.tools</code>，打开进行编辑</p>
+<p><img src="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/image-20200711114101327.png" alt="image-20200711114101327"></p>
+<p>增加的内容为：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"name"</span>: <span class="string">"xelatex"</span>,</span><br><span class="line">    <span class="attr">"command"</span>: <span class="string">"xelatex"</span>,</span><br><span class="line">    <span class="attr">"args"</span>: [</span><br><span class="line">        <span class="string">"-synctex=1"</span>,</span><br><span class="line">        <span class="string">"-interaction=nonstopmode"</span>,</span><br><span class="line">        <span class="string">"-file-line-error"</span>,</span><br><span class="line">        <span class="string">"-pdf"</span>,</span><br><span class="line">        <span class="string">"%DOC%"</span></span><br><span class="line">    ]</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+
+
+
+</li>
+</ol>
+<ol start="2">
+<li><p>在latex-workshop.latex.recipes配置中，将第一项的latexmk改为xelatex。这里定义的是编译时调用的工具顺序，默认第一个为latexmk，因为我们要支持中文，所以替换为xelatex。在setting搜索框中搜索<code>latex-workshop.latex.tools</code>，打开进行编辑：</p>
+<p><img src="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/image-20200711114358156.png" alt="image-20200711114358156"></p>
+<p>增加的内容为：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"name"</span>: <span class="string">"xelatex"</span>,</span><br><span class="line">    <span class="attr">"tools"</span>: [</span><br><span class="line">    		<span class="string">"xelatex"</span></span><br><span class="line">    ]</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>修改后的<code>settings.json</code>文件：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"editor.fontSize"</span>: <span class="number">13</span>,</span><br><span class="line">    <span class="attr">"workbench.startupEditor"</span>: <span class="string">"newUntitledFile"</span>,</span><br><span class="line">    <span class="attr">"editor.renderControlCharacters"</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">"files.autoSave"</span>: <span class="string">"off"</span>,</span><br><span class="line">    <span class="attr">"python.analysis.memory.keepLibraryLocalVariables"</span>: <span class="literal">true</span>,</span><br><span class="line">    <span class="attr">"window.zoomLevel"</span>: <span class="number">0</span>,</span><br><span class="line">    <span class="attr">"latex-workshop.latex.tools"</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"xelatex"</span>,</span><br><span class="line">            <span class="attr">"command"</span>: <span class="string">"xelatex"</span>,</span><br><span class="line">            <span class="attr">"args"</span>: [</span><br><span class="line">                <span class="string">"-synctex=1"</span>,</span><br><span class="line">                <span class="string">"-interaction=nonstopmode"</span>,</span><br><span class="line">                <span class="string">"-file-line-error"</span>,</span><br><span class="line">                <span class="string">"-pdf"</span>,</span><br><span class="line">                <span class="string">"%DOC%"</span></span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"latexmk"</span>,</span><br><span class="line">            <span class="attr">"command"</span>: <span class="string">"latexmk"</span>,</span><br><span class="line">            <span class="attr">"args"</span>: [</span><br><span class="line">                <span class="string">"-synctex=1"</span>,</span><br><span class="line">                <span class="string">"-interaction=nonstopmode"</span>,</span><br><span class="line">                <span class="string">"-file-line-error"</span>,</span><br><span class="line">                <span class="string">"-pdf"</span>,</span><br><span class="line">                <span class="string">"-outdir=%OUTDIR%"</span>,</span><br><span class="line">                <span class="string">"%DOC%"</span></span><br><span class="line">            ],</span><br><span class="line">            <span class="attr">"env"</span>: &#123;&#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"lualatexmk"</span>,</span><br><span class="line">            <span class="attr">"command"</span>: <span class="string">"latexmk"</span>,</span><br><span class="line">            <span class="attr">"args"</span>: [</span><br><span class="line">                <span class="string">"-synctex=1"</span>,</span><br><span class="line">                <span class="string">"-interaction=nonstopmode"</span>,</span><br><span class="line">                <span class="string">"-file-line-error"</span>,</span><br><span class="line">                <span class="string">"-lualatex"</span>,</span><br><span class="line">                <span class="string">"-outdir=%OUTDIR%"</span>,</span><br><span class="line">                <span class="string">"%DOC%"</span></span><br><span class="line">            ],</span><br><span class="line">            <span class="attr">"env"</span>: &#123;&#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"latexmk_rconly"</span>,</span><br><span class="line">            <span class="attr">"command"</span>: <span class="string">"latexmk"</span>,</span><br><span class="line">            <span class="attr">"args"</span>: [</span><br><span class="line">                <span class="string">"%DOC%"</span></span><br><span class="line">            ],</span><br><span class="line">            <span class="attr">"env"</span>: &#123;&#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"pdflatex"</span>,</span><br><span class="line">            <span class="attr">"command"</span>: <span class="string">"pdflatex"</span>,</span><br><span class="line">            <span class="attr">"args"</span>: [</span><br><span class="line">                <span class="string">"-synctex=1"</span>,</span><br><span class="line">                <span class="string">"-interaction=nonstopmode"</span>,</span><br><span class="line">                <span class="string">"-file-line-error"</span>,</span><br><span class="line">                <span class="string">"%DOC%"</span></span><br><span class="line">            ],</span><br><span class="line">            <span class="attr">"env"</span>: &#123;&#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"bibtex"</span>,</span><br><span class="line">            <span class="attr">"command"</span>: <span class="string">"bibtex"</span>,</span><br><span class="line">            <span class="attr">"args"</span>: [</span><br><span class="line">                <span class="string">"%DOCFILE%"</span></span><br><span class="line">            ],</span><br><span class="line">            <span class="attr">"env"</span>: &#123;&#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"rnw2tex"</span>,</span><br><span class="line">            <span class="attr">"command"</span>: <span class="string">"Rscript"</span>,</span><br><span class="line">            <span class="attr">"args"</span>: [</span><br><span class="line">                <span class="string">"-e"</span>,</span><br><span class="line">                <span class="string">"knitr::opts_knit$set(concordance = TRUE); knitr::knit('%DOCFILE_EXT%')"</span></span><br><span class="line">            ],</span><br><span class="line">            <span class="attr">"env"</span>: &#123;&#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"jnw2tex"</span>,</span><br><span class="line">            <span class="attr">"command"</span>: <span class="string">"julia"</span>,</span><br><span class="line">            <span class="attr">"args"</span>: [</span><br><span class="line">                <span class="string">"-e"</span>,</span><br><span class="line">                <span class="string">"using Weave; weave(\"%DOC_EXT%\", doctype=\"tex\")"</span></span><br><span class="line">            ],</span><br><span class="line">            <span class="attr">"env"</span>: &#123;&#125;</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"jnw2texmintex"</span>,</span><br><span class="line">            <span class="attr">"command"</span>: <span class="string">"julia"</span>,</span><br><span class="line">            <span class="attr">"args"</span>: [</span><br><span class="line">                <span class="string">"-e"</span>,</span><br><span class="line">                <span class="string">"using Weave; weave(\"%DOC_EXT%\", doctype=\"texminted\")"</span></span><br><span class="line">            ],</span><br><span class="line">            <span class="attr">"env"</span>: &#123;&#125;</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">"latex-workshop.latex.recipes"</span>: [  </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"xelatex"</span>,</span><br><span class="line">            <span class="attr">"tools"</span>: [</span><br><span class="line">                <span class="string">"xelatex"</span></span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"latexmk 🔃"</span>,</span><br><span class="line">            <span class="attr">"tools"</span>: [</span><br><span class="line">                <span class="string">"latexmk"</span></span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"latexmk (latexmkrc)"</span>,</span><br><span class="line">            <span class="attr">"tools"</span>: [</span><br><span class="line">                <span class="string">"latexmk_rconly"</span></span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"latexmk (lualatex)"</span>,</span><br><span class="line">            <span class="attr">"tools"</span>: [</span><br><span class="line">                <span class="string">"lualatexmk"</span></span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"pdflatex ➞ bibtex ➞ pdflatex × 2"</span>,</span><br><span class="line">            <span class="attr">"tools"</span>: [</span><br><span class="line">                <span class="string">"pdflatex"</span>,</span><br><span class="line">                <span class="string">"bibtex"</span>,</span><br><span class="line">                <span class="string">"pdflatex"</span>,</span><br><span class="line">                <span class="string">"pdflatex"</span></span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"Compile Rnw files"</span>,</span><br><span class="line">            <span class="attr">"tools"</span>: [</span><br><span class="line">                <span class="string">"rnw2tex"</span>,</span><br><span class="line">                <span class="string">"latexmk"</span></span><br><span class="line">            ]</span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">"name"</span>: <span class="string">"Compile Jnw files"</span>,</span><br><span class="line">            <span class="attr">"tools"</span>: [</span><br><span class="line">                <span class="string">"jnw2tex"</span>,</span><br><span class="line">                <span class="string">"latexmk"</span></span><br><span class="line">            ]</span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>创建一个.tex文件，编码为utf8，输入以下内容。保存，<code>option + command + B</code>编译，自动编译产生对应的pdf。</p>
+<figure class="highlight tex"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">\<span class="name">documentclass</span><span class="string">[UTF8]</span><span class="string">&#123;ctexart&#125;</span></span></span><br><span class="line"><span class="tag">\<span class="name">title</span><span class="string">&#123;你好，world!&#125;</span></span></span><br><span class="line"><span class="tag">\<span class="name">author</span><span class="string">&#123;李明&#125;</span></span></span><br><span class="line"><span class="tag">\<span class="name">date</span><span class="string">&#123;\today&#125;</span></span></span><br><span class="line"><span class="tag">\<span class="name">begin</span><span class="string">&#123;document&#125;</span></span></span><br><span class="line"><span class="tag">\<span class="name">maketitle</span></span></span><br><span class="line">你好，world!</span><br><span class="line"><span class="tag">\<span class="name">end</span><span class="string">&#123;document&#125;</span></span></span><br></pre></td></tr></table></figure>
+
+<p>得到的结果为：</p>
+<p><img src="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/image-20200711115109103.png" alt="image-20200711115109103"></p>
+</li>
+</ol>
+<h2 id="三、配置VSCode与Skim的LaTeX正反跳转"><a href="#三、配置VSCode与Skim的LaTeX正反跳转" class="headerlink" title="三、配置VSCode与Skim的LaTeX正反跳转"></a>三、配置VSCode与Skim的LaTeX正反跳转</h2><ol>
+<li>安装 <a href="https://links.jianshu.com/go?to=https%3A%2F%2Fskim-app.sourceforge.io%2F" target="_blank" rel="noopener">Skim</a> PDF 阅读器</li>
+</ol>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">brew cask install skim</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>正向跳转</li>
+</ol>
+<p>正向跳转指的是从 .tex 源文件向编译生成的 PDF 文件的跳转。这部分我们主要需要寻找到合适的方式，在命令行状态打开 Skim 应用。</p>
+<p>根据 Skim 官网的介绍，Skim 提供了名为 displayline 的脚本，用于和 TeX 正反同步协同工作。其脚本位于:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;Applications&#x2F;Skim.app&#x2F;Contents&#x2F;SharedSupport&#x2F;displayline</span><br></pre></td></tr></table></figure>
+
+<p>具体用法是:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#x2F;Applications&#x2F;Skim.app&#x2F;Contents&#x2F;SharedSupport&#x2F;displayline %line &quot;%pdffile&quot; &quot;%texfile&quot;</span><br></pre></td></tr></table></figure>
+
+<p>此处 <strong><code>%line</code></strong> 表示 <strong><code>.tex</code></strong> 文件的行号，<strong><code>%pdffile</code></strong> 表示编译生成的 PDF 文件的完整路径，<strong><code>%texfile</code></strong>则是对应的 .tex 源文件。考虑到我们对反向搜索也有需求，按照官方文档，我们还需要加上<strong><code>-r</code></strong>参数。</p>
+<p>因此，在 VSCode 的配置里，我们需要给出这样的 <strong><code>JSON 配置</code></strong>:</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">"latex-workshop.view.pdf.viewer": "external",</span><br><span class="line">"latex-workshop.view.pdf.external.synctex": &#123;</span><br><span class="line">    "command": "/Applications/Skim.app/Contents/SharedSupport/displayline",</span><br><span class="line">    "args": [</span><br><span class="line">        "-r",</span><br><span class="line">        "%LINE%",</span><br><span class="line">        "%PDF%",</span><br><span class="line">        <span class="string">"%TEX%"</span></span><br><span class="line">    ]</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+
+<p><strong><code>LaTeX workshop</code></strong>插件的配置中，除了 <strong><code>latex-workshop.view.pdf.external.synctex</code></strong>，还有一项也和打开外部 PDF 浏览器有关。它是 <strong><code>latex-workshop.view.pdf.external.command</code></strong>，表示简单地打开 PDF 文件，而忽略正向搜索功能。<strong><code>Skim</code></strong>提供的命令行脚本默认不支持这样的操作，我们需要根据<strong><code>displayline</code></strong>脚本自行修改。</p>
+<p><strong><code>displayline</code></strong>脚本调用了 <strong><code>Apple Script</code></strong> 来实现与 <strong><code>Skim.app</code></strong> 的交互，此处我们照葫芦画瓢，模拟一个即可。我们可以将如下脚本保存为 <strong><code>displayfile</code></strong> 并以 <strong><code>chmod u+x displayfile</code></strong> 使其变为可执行脚本，而后将其放在<strong><code>环境变量 PATH</code></strong> 包含的目录中，如：<code>/usr/local/bin</code>。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line"></span><br><span class="line"># displayfile (Skim)</span><br><span class="line">#</span><br><span class="line"># Usage: displayfile [-r] [-g] PDFFILE</span><br><span class="line">#</span><br><span class="line"># Modified from "displayline" to only revert the file, not jump to a given line</span><br><span class="line">#</span><br><span class="line"></span><br><span class="line">if [ $# == 0 -o "$1" == "-h" -o "$1" == "-help" ]; then</span><br><span class="line">  echo "Usage: displayfile [-r] [-g] PDFFILE</span><br><span class="line">Options:</span><br><span class="line">-r, -revert      Revert the file from disk if it was open</span><br><span class="line">-g, -background  Do not bring Skim to the foreground"</span><br><span class="line">  exit 0</span><br><span class="line">fi</span><br><span class="line"></span><br><span class="line"># get arguments</span><br><span class="line">revert=false</span><br><span class="line">activate=true</span><br><span class="line">while [ "$&#123;1:0:1&#125;" == "-" ]; do</span><br><span class="line">  if [ "$1" == "-r" -o "$1" == "-revert" ]; then</span><br><span class="line">    revert=true</span><br><span class="line">  elif [ "$1" == "-g" -o "$1" == "-background" ]; then</span><br><span class="line">    activate=false</span><br><span class="line">  fi</span><br><span class="line">  shift</span><br><span class="line">done</span><br><span class="line">file="$1"</span><br><span class="line">#shopt -s extglob</span><br><span class="line">#[ $# -gt 2 ] &amp;&amp; source="$3" || source="$&#123;file%.@(pdf|dvi|xdv)&#125;.tex"</span><br><span class="line"></span><br><span class="line"># expand relative paths</span><br><span class="line">[ "$&#123;file:0:1&#125;" == "/" ] || file="$&#123;PWD&#125;/$&#123;file&#125;"</span><br><span class="line"></span><br><span class="line"># pass file arguments as NULL-separated string to osascript</span><br><span class="line"># pass through cat to get them as raw bytes to preserve non-ASCII characters</span><br><span class="line">/usr/bin/osascript \</span><br><span class="line">  -e "set theFile to POSIX file \"$file\"" \</span><br><span class="line">  -e "set thePath to POSIX path of (theFile as alias)" \</span><br><span class="line">  -e "tell application \"Skim\"" \</span><br><span class="line">  -e "  if $activate then activate" \</span><br><span class="line">  -e "  if $revert then" \</span><br><span class="line">  -e "    try" \</span><br><span class="line">  -e "      set theDocs to get documents whose path is thePath" \</span><br><span class="line">  -e "      if (count of theDocs) &gt; 0 then revert theDocs" \</span><br><span class="line">  -e "    end try" \</span><br><span class="line">  -e "  end if" \</span><br><span class="line">  -e "  open theFile" \</span><br><span class="line">  -e "end tell"</span><br></pre></td></tr></table></figure>
+
+<p>至此，需要更新 VSCode 的配置。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">"latex-workshop.view.pdf.external.command": &#123;</span><br><span class="line">    "command": "displayfile",</span><br><span class="line">    "args": [</span><br><span class="line">        "-r",</span><br><span class="line">        <span class="string">"%PDF%"</span></span><br><span class="line">    ]</span><br><span class="line">&#125;,</span><br></pre></td></tr></table></figure>
+
+<p><strong>配置完成后,可以从 TeX 源码跳转到 Skim 中对应的 PDF 文件位置(有圆点醒目位置提醒)，快捷键为: <code>option+command+j</code> ；</strong></p>
+<h3 id="反向搜索"><a href="#反向搜索" class="headerlink" title="反向搜索"></a>反向搜索</h3><p>在反向搜索中，我们需要让 Skim 能够打开 VSCode，并将文件名和相应的行号正确地传给 VSCode。根据 Skim 官网的介绍，它只会从<strong><code>/usr/bin</code></strong>和 <strong><code>/usr/local/bin</code></strong> 中检索可执行程序。为此，我们需要将 VSCode 的可执行程序软链到这两个目录中的一个当中。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ln -sf &#x2F;Applications&#x2F;Visual\ Studio\ Code.app&#x2F;Contents&#x2F;MacOS&#x2F;Electron &#x2F;usr&#x2F;local&#x2F;bin&#x2F;vscode</span><br></pre></td></tr></table></figure>
+
+<p>至此，我们在命令行中执行 <strong><code>vscode -g &quot;%file&quot;:%line</code></strong> 即可打开 <strong><code>%file</code></strong> 文件并定位到第 <strong><code>%line</code></strong> 行。于是，我们只需要在 Skim 的同步配置中将预设改为「自定义」(必须改为自动以才可以使用后向跳转)，并将命令和参数分别设置如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Command: vscode</span><br><span class="line">Arguments: -g &quot;%file&quot;:%line</span><br></pre></td></tr></table></figure>
+
+<img src="/2020/07/11/MacOS%E4%B8%8B%E9%85%8D%E7%BD%AELatex/image-20200711115731991.png" alt="image-20200711115109103" style="zoom:50%;">
+
+<p>如此即完成了配置。</p>
+<p><strong>在 Skim 中跳转到TeX源码对应的位置的快捷键: <code>command + shift + click</code></strong></p>
+<h2 id="四、vscode-配置-Latex-编译后自动清理多余文件-log-out等文件"><a href="#四、vscode-配置-Latex-编译后自动清理多余文件-log-out等文件" class="headerlink" title="四、vscode 配置 Latex 编译后自动清理多余文件(.log .out等文件)"></a>四、vscode 配置 Latex 编译后自动清理多余文件(.log .out等文件)</h2><p>在使用VSCode配置Latex时我们都会安装一个环境，就是：Latex Wordshop，在setting中是可以设置生成pdf后清理这些文件，但是版本不同的设置的方法也不同，因此：</p>
+<p>新版VSCode中的setting配置：</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">"latex-workshop.latex.autoClean.run": "onBuilt", //注意结尾是 t 不是 d</span><br><span class="line">"latex-workshop.latex.clean.fileTypes": [</span><br><span class="line">  "*.aux",</span><br><span class="line">  "*.bbl",</span><br><span class="line">  "*.blg",</span><br><span class="line">  "*.idx",</span><br><span class="line">  "*.ind",</span><br><span class="line">  "*.lof",</span><br><span class="line">  "*.lot",</span><br><span class="line">  "*.out",</span><br><span class="line">  "*.toc",</span><br><span class="line">  "*.acn",</span><br><span class="line">  "*.acr",</span><br><span class="line">  "*.alg",</span><br><span class="line">  "*.glg",</span><br><span class="line">  "*.glo",</span><br><span class="line">  "*.gls",</span><br><span class="line">  "*.ist",</span><br><span class="line">  "*.fls",</span><br><span class="line">  "*.log",</span><br><span class="line">  "*.fdb_latexmk",</span><br><span class="line">],</span><br></pre></td></tr></table></figure>
+
+
+<p>一般来说建议保留.synctex.gz 文件，如果希望把这个文件也清理掉，可以在 latex-wordshop.latex.clean.fileTypes 中添加”*.gz”</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a href="https://www.jianshu.com/p/4aee83e66ab8" target="_blank" rel="noopener">https://www.jianshu.com/p/4aee83e66ab8</a></li>
+<li><a href="https://www.jianshu.com/p/29adf0eadd30" target="_blank" rel="noopener">https://www.jianshu.com/p/29adf0eadd30</a></li>
+<li><a href="https://liam.page/2018/04/24/Working-with-VSCode-on-macOS-configuration-LaTeX-workshop-and-Skim/" target="_blank" rel="noopener">https://liam.page/2018/04/24/Working-with-VSCode-on-macOS-configuration-LaTeX-workshop-and-Skim/</a></li>
+<li><a href="https://blog.csdn.net/weixin_35757704/article/details/90597405" target="_blank" rel="noopener">https://blog.csdn.net/weixin_35757704/article/details/90597405</a></li>
+</ol>
+<h2 id="进阶"><a href="#进阶" class="headerlink" title="进阶"></a>进阶</h2><p>1.<a href="https://zhuanlan.zhihu.com/p/108095566" target="_blank" rel="noopener">https://zhuanlan.zhihu.com/p/108095566</a></p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/07/10/REX%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%E6%B5%81%E7%A8%8B/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1231,7 +1451,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">24</span>
+                  <span class="site-state-item-count">25</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -1242,7 +1462,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-count">11</span>
                   <span class="site-state-item-name">categories</span>
                 </a>
               </div>
