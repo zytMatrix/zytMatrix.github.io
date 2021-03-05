@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="摘要对fuzzer发现的每个溃崩输入进行分类，以确定该崩溃输入是否值得进一步研究，如：崩溃的根本原因是什么。往往fuzzer发现的崩溃输入数目很多，此时详细考察每个崩溃输入会非常耗时。本文简要介绍一些可用于崩溃分类过程的技术和工具。以下各节中描述的工具可以减轻分类过程中的一些工作，并协助确定和分析崩溃输入的优先级。 一、gef安装： 12$ wget -O ~&#x2F;.gdbinit-gef.py -q">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何对Fuzzer生成的崩溃输入进行分类">
+<meta property="og:url" content="http://yoursite.com/2021/03/05/%E5%A6%82%E4%BD%95%E5%AF%B9Fuzzer%E7%94%9F%E6%88%90%E7%9A%84%E5%B4%A9%E6%BA%83%E8%BE%93%E5%85%A5%E8%BF%9B%E8%A1%8C%E5%88%86%E7%B1%BB/index.html">
+<meta property="og:site_name" content="Matrix">
+<meta property="og:description" content="摘要对fuzzer发现的每个溃崩输入进行分类，以确定该崩溃输入是否值得进一步研究，如：崩溃的根本原因是什么。往往fuzzer发现的崩溃输入数目很多，此时详细考察每个崩溃输入会非常耗时。本文简要介绍一些可用于崩溃分类过程的技术和工具。以下各节中描述的工具可以减轻分类过程中的一些工作，并协助确定和分析崩溃输入的优先级。 一、gef安装： 12$ wget -O ~&#x2F;.gdbinit-gef.py -q">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20210303224005.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20210304092811.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20210304110318.png">
+<meta property="og:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20210304150923.png">
+<meta property="article:published_time" content="2021-03-05T13:18:41.000Z">
+<meta property="article:modified_time" content="2021-03-05T13:20:51.641Z">
+<meta property="article:author" content="zyt">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20210303224005.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"always","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2021/03/05/如何对Fuzzer生成的崩溃输入进行分类/"/>
+
+
+
+
+
+  <title>如何对Fuzzer生成的崩溃输入进行分类 | Matrix</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Matrix</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/03/05/%E5%A6%82%E4%BD%95%E5%AF%B9Fuzzer%E7%94%9F%E6%88%90%E7%9A%84%E5%B4%A9%E6%BA%83%E8%BE%93%E5%85%A5%E8%BF%9B%E8%A1%8C%E5%88%86%E7%B1%BB/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">如何对Fuzzer生成的崩溃输入进行分类</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2021-03-05T21:18:41+08:00">
+                2021-03-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Crash-Triage/" itemprop="url" rel="index">
+                    <span itemprop="name">Crash Triage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>对fuzzer发现的每个溃崩输入进行分类，以确定该崩溃输入是否值得进一步研究，如：崩溃的根本原因是什么。往往fuzzer发现的崩溃输入数目很多，此时详细考察每个崩溃输入会非常耗时。本文简要介绍一些可用于崩溃分类过程的技术和工具。以下各节中描述的工具可以减轻分类过程中的一些工作，并协助确定和分析崩溃输入的优先级。</p>
+<h2 id="一、gef"><a href="#一、gef" class="headerlink" title="一、gef"></a>一、gef</h2><p><strong>安装：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ wget -O ~/.gdbinit-gef.py -q http:<span class="comment">//gef.blah.cat/py</span></span><br><span class="line">$ echo source ~/.gdbinit-gef.py &gt;&gt; ~/.gdbinit</span><br></pre></td></tr></table></figure>
+
+<p><strong>测试：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">root@vm:/root<span class="meta"># gdb -q /path/to/my/bin</span></span><br><span class="line">GEF <span class="keyword">for</span> linux <span class="built_in">ready</span>, type `gef<span class="number">'</span> to start, `gef <span class="built_in">config</span><span class="number">'</span> to configure</span><br><span class="line"><span class="number">87</span> commands loaded <span class="keyword">for</span> GDB <span class="number">7.11</span><span class="number">.1</span> <span class="keyword">using</span> Python engine <span class="number">3.5</span></span><br><span class="line">[*] <span class="number">5</span> commands could <span class="keyword">not</span> be loaded, <span class="built_in">run</span> `gef missing` to know why.</span><br><span class="line">/path/to/my/bin: No such file <span class="keyword">or</span> directory.</span><br><span class="line">gef➤</span><br></pre></td></tr></table></figure>
+
+<h2 id="二、AFLplusplus"><a href="#二、AFLplusplus" class="headerlink" title="二、AFLplusplus"></a>二、AFLplusplus</h2><p><strong>安装：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ git clone https:<span class="comment">//github.com/AFLplusplus/AFLplusplus</span></span><br><span class="line">$ cd AFLplusplus</span><br><span class="line">$ git checkout <span class="number">2.68</span>c <span class="meta"># <span class="meta-keyword">if</span> you want a specific version, otherwise skip this step</span></span><br><span class="line">$ make distrib</span><br><span class="line">$ sudo make install</span><br></pre></td></tr></table></figure>
+
+<p><strong>编译漏洞程序：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">cd quickstart/</span><br><span class="line">CC=/root/AFLplusplus/afl-gcc  AFL_HARDEN=<span class="number">1</span> make</span><br></pre></td></tr></table></figure>
+
+<p><strong>测试结果：</strong></p>
+<img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20210303224005.png" style="zoom:50%;">
+
+<p><strong>crash信息：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">root@vm:/root/afl-training/quickstart<span class="meta"># ls -alh out/crashes/</span></span><br><span class="line">total <span class="number">36</span>K</span><br><span class="line">drwx------ <span class="number">2</span> root root <span class="number">4.0</span>K <span class="number">3</span>月   <span class="number">3</span> <span class="number">22</span>:<span class="number">39</span> .</span><br><span class="line">drwxr-xr-x <span class="number">5</span> root root <span class="number">4.0</span>K <span class="number">3</span>月   <span class="number">3</span> <span class="number">22</span>:<span class="number">39</span> ..</span><br><span class="line">-rw------- <span class="number">1</span> root root   <span class="number">36</span> <span class="number">3</span>月   <span class="number">3</span> <span class="number">22</span>:<span class="number">39</span> id:<span class="number">000000</span>,sig:<span class="number">11</span>,src:<span class="number">000010</span>,time:<span class="number">7917</span>,op:havoc,rep:<span class="number">32</span></span><br><span class="line">-rw------- <span class="number">1</span> root root   <span class="number">21</span> <span class="number">3</span>月   <span class="number">3</span> <span class="number">22</span>:<span class="number">39</span> id:<span class="number">000001</span>,sig:<span class="number">11</span>,src:<span class="number">000014</span>,time:<span class="number">9351</span>,op:arith8,pos:<span class="number">2</span>,val:+<span class="number">5</span></span><br><span class="line">-rw------- <span class="number">1</span> root root   <span class="number">35</span> <span class="number">3</span>月   <span class="number">3</span> <span class="number">22</span>:<span class="number">39</span> id:<span class="number">000002</span>,sig:<span class="number">11</span>,src:<span class="number">000014</span>,time:<span class="number">9831</span>,op:havoc,rep:<span class="number">2</span></span><br><span class="line">-rw------- <span class="number">1</span> root root   <span class="number">28</span> <span class="number">3</span>月   <span class="number">3</span> <span class="number">22</span>:<span class="number">39</span> id:<span class="number">000003</span>,sig:<span class="number">11</span>,src:<span class="number">000014</span>,time:<span class="number">9848</span>,op:havoc,rep:<span class="number">2</span></span><br><span class="line">-rw------- <span class="number">1</span> root root   <span class="number">44</span> <span class="number">3</span>月   <span class="number">3</span> <span class="number">22</span>:<span class="number">39</span> id:<span class="number">000004</span>,sig:<span class="number">11</span>,src:<span class="number">000014</span>,time:<span class="number">9950</span>,op:havoc,rep:<span class="number">4</span></span><br><span class="line">-rw------- <span class="number">1</span> root root   <span class="number">53</span> <span class="number">3</span>月   <span class="number">3</span> <span class="number">22</span>:<span class="number">39</span> id:<span class="number">000005</span>,sig:<span class="number">11</span>,src:<span class="number">000014</span>,time:<span class="number">9955</span>,op:havoc,rep:<span class="number">8</span></span><br><span class="line">-rw------- <span class="number">1</span> root root  <span class="number">562</span> <span class="number">3</span>月   <span class="number">3</span> <span class="number">22</span>:<span class="number">39</span> README.txt</span><br></pre></td></tr></table></figure>
+
+<p><strong>gef分析结果</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">root@vm:/root/afl-training/quickstart/out/crashes<span class="meta"># gdb -q ../../vulnerable</span></span><br><span class="line">GEF <span class="keyword">for</span> linux <span class="built_in">ready</span>, type `gef<span class="number">'</span> to start, `gef <span class="built_in">config</span><span class="number">'</span> to configure</span><br><span class="line"><span class="number">87</span> commands loaded <span class="keyword">for</span> GDB <span class="number">7.11</span><span class="number">.1</span> <span class="keyword">using</span> Python engine <span class="number">3.5</span></span><br><span class="line">[*] <span class="number">5</span> commands could <span class="keyword">not</span> be loaded, <span class="built_in">run</span> `gef missing` to know why.</span><br><span class="line">Reading symbols from ../../vulnerable...done.</span><br><span class="line">gef➤  r &lt; id:<span class="number">000000</span>,sig:<span class="number">11</span>,src:<span class="number">000010</span>,time:<span class="number">7917</span>,op:havoc,rep:<span class="number">32</span></span><br><span class="line">Starting program: /root/afl-training/quickstart/vulnerable &lt; id:<span class="number">000000</span>,sig:<span class="number">11</span>,src:<span class="number">000010</span>,time:<span class="number">7917</span>,op:havoc,rep:<span class="number">32</span></span><br><span class="line"></span><br><span class="line">Program received signal SIGSEGV, Segmentation fault.</span><br><span class="line"><span class="built_in">process</span> (input=&lt;optimized out&gt;, input@entry=<span class="number">0x7fffffffe380</span> <span class="string">"head "</span>, <span class="string">'9'</span> &lt;repeats <span class="number">15</span> times&gt;, <span class="string">"\"9"</span>, &lt;incomplete sequence \<span class="number">340</span>&gt;) at vulnerable.c:<span class="number">49</span></span><br><span class="line"><span class="number">49</span>				rest[len] = <span class="string">'\0'</span>; <span class="comment">// truncate string at specified offset</span></span><br><span class="line">[ Legend: Modified <span class="keyword">register</span> | Code | Heap | Stack | <span class="keyword">String</span> ]</span><br><span class="line">─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── registers ────</span><br><span class="line">$rax   : <span class="number">0xffffffffa4c67fff</span></span><br><span class="line">$rbx   : <span class="number">0x0</span>               </span><br><span class="line">$rcx   : <span class="number">0x1999999999999999</span></span><br><span class="line">$rdx   : <span class="number">0x0</span>               </span><br><span class="line">$rsp   : <span class="number">0x00007fffffffe320</span>  →  <span class="number">0x00007ffff7b95707</span>  →  <span class="string">"__vdso_getcpu"</span></span><br><span class="line">$rbp   : <span class="number">0x00007fffffffe380</span>  →  <span class="number">0x3939392064616568</span> (<span class="string">"head 999"</span>?)</span><br><span class="line">$rsi   : <span class="number">0xfffffff2</span>        </span><br><span class="line">$rdi   : <span class="number">0x22</span>              </span><br><span class="line">$rip   : <span class="number">0x0000000000400faf</span>  →  &lt;<span class="built_in">process</span>+<span class="number">639</span>&gt; mov BYTE PTR [r11+rax*<span class="number">1</span>+<span class="number">0x1</span>], <span class="number">0x0</span></span><br><span class="line">$r8    : <span class="number">0x00007fffffffe394</span>  →  <span class="number">0xfafa0000e0393922</span></span><br><span class="line">$r9    : <span class="number">0x0</span>               </span><br><span class="line">$r10   : <span class="number">0x00007ffff7b80c40</span>  →  <span class="number">0x0002000200020002</span></span><br><span class="line">$r11   : <span class="number">0x00007fffffffe394</span>  →  <span class="number">0xfafa0000e0393922</span></span><br><span class="line">$r12   : <span class="number">0x00007fffffffe395</span>  →  <span class="number">0x39fafa0000e03939</span></span><br><span class="line">$r13   : <span class="number">0x00007fffffffe4e0</span>  →  <span class="number">0x0000000000000001</span></span><br><span class="line">$r14   : <span class="number">0x0</span>               </span><br><span class="line">$r15   : <span class="number">0x0</span>               </span><br><span class="line">$eflags: [carry PARITY adjust zero sign trap INTERRUPT direction <span class="built_in">overflow</span> RESUME virtualx86 identification]</span><br><span class="line">$cs: <span class="number">0x0033</span> $ss: <span class="number">0x002b</span> $ds: <span class="number">0x0000</span> $es: <span class="number">0x0000</span> $fs: <span class="number">0x0000</span> $gs: <span class="number">0x0000</span> </span><br><span class="line">─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── <span class="built_in">stack</span> ────</span><br><span class="line"><span class="number">0x00007fffffffe320</span>│+<span class="number">0x0000</span>: <span class="number">0x00007ffff7b95707</span>  →  <span class="string">"__vdso_getcpu"</span>	 ← $rsp</span><br><span class="line"><span class="number">0x00007fffffffe328</span>│+<span class="number">0x0008</span>: <span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x00007fffffffe330</span>│+<span class="number">0x0010</span>: <span class="number">0x00007fffffffe395</span>  →  <span class="number">0x39fafa0000e03939</span></span><br><span class="line"><span class="number">0x00007fffffffe338</span>│+<span class="number">0x0018</span>: <span class="number">0x134d0e73044e8d00</span></span><br><span class="line"><span class="number">0x00007fffffffe340</span>│+<span class="number">0x0020</span>: <span class="number">0x00007ffff7ffea98</span>  →  <span class="number">0x00007ffff7ffe9c8</span>  →  <span class="number">0x00007ffff7ffe738</span>  →  <span class="number">0x00007ffff7ffe710</span>  →  <span class="number">0x00007ffff7ffa000</span>  →  <span class="number">0x00010102464c457f</span></span><br><span class="line"><span class="number">0x00007fffffffe348</span>│+<span class="number">0x0028</span>: <span class="number">0x00007fffffffe380</span>  →  <span class="number">0x3939392064616568</span></span><br><span class="line"><span class="number">0x00007fffffffe350</span>│+<span class="number">0x0030</span>: <span class="number">0x00007fffffffe4e8</span>  →  <span class="number">0x00007fffffffe768</span>  →  <span class="string">"/root/afl-training/quickstart/vulnerable"</span></span><br><span class="line"><span class="number">0x00007fffffffe358</span>│+<span class="number">0x0038</span>: <span class="number">0x0000000000400c20</span>  →  &lt;_start+<span class="number">0</span>&gt; <span class="keyword">xor</span> ebp, ebp</span><br><span class="line">[!] Command 'context' failed to execute properly, reason: 'NoneType' object is not iterable</span><br></pre></td></tr></table></figure>
+
+<p>由上可得的信息有：</p>
+<ul>
+<li>崩溃信号： signal SIGSEGV</li>
+<li>崩溃时的源码信息：行号，代码（编译时添加-g参数）</li>
+<li>栈、寄存器信息</li>
+</ul>
+<h2 id="三、GDB-exploitable-plugin"><a href="#三、GDB-exploitable-plugin" class="headerlink" title="三、GDB exploitable plugin"></a>三、GDB exploitable plugin</h2><p>这是<code>GDB</code>的一个插件，用来判定一个<code>crash</code>能否被利用，它提供了一些分类器来对程序当前崩溃状态进行判定。如果插件识别出程序崩溃时的状态，插件会为崩溃时状态分配一个可利用的类别。</p>
+<p>它的作用是可以帮助用户对<code>crash</code>根据可利用性进行优先级排序。那些被识别为不可利用的<code>crash</code>或插件无法评估的<code>crash</code>仍然值得进一步分析，但是能应对大多数情况。</p>
+<p><strong>安装：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git clone https:<span class="comment">//github.com/jfoote/exploitable.git</span></span><br><span class="line">cd exploitable/</span><br><span class="line">apt install execstack</span><br><span class="line">python <span class="built_in">setup</span>.py test</span><br><span class="line">python <span class="built_in">setup</span>.py install</span><br></pre></td></tr></table></figure>
+
+<p>测试上面的<code>crash</code>输入：<code>id:000000,sig:11,src:000010,time:7917,op:havoc,rep:32</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">gef➤  exploitable </span><br><span class="line">Description: Access violation on destination operand</span><br><span class="line">Short description: DestAv (<span class="number">8</span>/<span class="number">22</span>)</span><br><span class="line">Hash: c7c94564fa106de33f1f050fc7680f5a.c7c94564fa106de33f1f050fc7680f5a</span><br><span class="line">Exploitability Classification: EXPLOITABLE</span><br><span class="line">Explanation: The target crashed on an access violation at an address matching the destination operand of the instruction. This likely indicates a <span class="built_in">write</span> access violation, which means the attacker may control the <span class="built_in">write</span> address <span class="keyword">and</span>/<span class="keyword">or</span> value.</span><br><span class="line">Other tags: AccessViolation (<span class="number">21</span>/<span class="number">22</span>)</span><br></pre></td></tr></table></figure>
+
+<p>该插件将<code>crash</code>分类为<code>EXPLOITABLE</code>，并提供了崩溃情况的简要说明。目前为止，插件并未考虑如何绕过利用过程中的缓解措施等。但是，<code>EXPLOITABLE</code>类别是一个很好的指示，表明此错误提供了可能有用的利用原语。该插件的描述和说明还可以帮助用户快速确定错误的类别可能是什么。</p>
+<p>测试<code>crash</code>输入：<code>id:000005,sig:11,src:000014,time:9955,op:havoc,rep:8</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">gef➤  r &lt; id:<span class="number">000005</span>,sig:<span class="number">11</span>,src:<span class="number">000014</span>,time:<span class="number">9955</span>,op:havoc,rep:<span class="number">8</span></span><br><span class="line">Starting program: /root/afl-training/quickstart/vulnerable &lt; id:<span class="number">000005</span>,sig:<span class="number">11</span>,src:<span class="number">000014</span>,time:<span class="number">9955</span>,op:havoc,rep:<span class="number">8</span></span><br><span class="line"></span><br><span class="line">Program received signal SIGSEGV, Segmentation fault.</span><br><span class="line"><span class="built_in">process</span> (input=&lt;optimized out&gt;, input@entry=<span class="number">0x7fffffffe380</span> <span class="string">"u "</span>, <span class="string">'4'</span> &lt;repeats <span class="number">28</span> times&gt;, <span class="string">"he]d 4444444A44A44d4444"</span>) at vulnerable.c:<span class="number">31</span></span><br><span class="line"><span class="number">31</span>				<span class="keyword">char</span> c = rest[i];</span><br><span class="line">[ Legend: Modified <span class="keyword">register</span> | Code | Heap | Stack | <span class="keyword">String</span> ]</span><br><span class="line">─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── registers ────</span><br><span class="line">$rax   : <span class="number">0xc30</span>             </span><br><span class="line">$rbx   : <span class="number">0x0</span>               </span><br><span class="line">$rcx   : <span class="number">0x2</span>               </span><br><span class="line">$rdx   : <span class="number">0x1</span>               </span><br><span class="line">$rsp   : <span class="number">0x00007fffffffe320</span>  →  <span class="number">0x0000000000000035</span> (<span class="string">"5"</span>?)</span><br><span class="line">$rbp   : <span class="number">0x0000000000605260</span>  →  <span class="string">"E]D 4444444A44A44D4444"</span></span><br><span class="line">$rsi   : <span class="number">0xc7</span>              </span><br><span class="line">$rdi   : <span class="number">0x00007fffffffe3a0</span>  →  <span class="string">"]d 4444444A44A44d4444"</span></span><br><span class="line">$rip   : <span class="number">0x0000000000401b34</span>  →  &lt;<span class="built_in">process</span>+<span class="number">3588</span>&gt; movdqa xmm13, XMMWORD PTR [rdi+rax*<span class="number">1</span>+<span class="number">0x30</span>]</span><br><span class="line">$r8    : <span class="number">0xfffffff</span>         </span><br><span class="line">$r9    : <span class="number">0xfffffffe</span>        </span><br><span class="line">$r10   : <span class="number">0xfffffff0</span>        </span><br><span class="line">$r11   : <span class="number">0x0000000000605261</span>  →  <span class="string">"]D 4444444A44A44D4444"</span></span><br><span class="line">$r12   : <span class="number">0x00007fffffffe39e</span>  →  <span class="string">"he]d 4444444A44A44d4444"</span></span><br><span class="line">$r13   : <span class="number">0xffffffffffffffff</span></span><br><span class="line">$r14   : <span class="number">0x00007fffffffe39f</span>  →  <span class="string">"e]d 4444444A44A44d4444"</span></span><br><span class="line">$r15   : <span class="number">0x7fffffffffffffff</span></span><br><span class="line">$eflags: [carry parity adjust zero sign trap INTERRUPT direction <span class="built_in">overflow</span> RESUME virtualx86 identification]</span><br><span class="line">$cs: <span class="number">0x0033</span> $ss: <span class="number">0x002b</span> $ds: <span class="number">0x0000</span> $es: <span class="number">0x0000</span> $fs: <span class="number">0x0000</span> $gs: <span class="number">0x0000</span> </span><br><span class="line">─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── <span class="built_in">stack</span> ────</span><br><span class="line"><span class="number">0x00007fffffffe320</span>│+<span class="number">0x0000</span>: <span class="number">0x0000000000000035</span> (<span class="string">"5"</span>?)	 ← $rsp</span><br><span class="line"><span class="number">0x00007fffffffe328</span>│+<span class="number">0x0008</span>: <span class="number">0xffffffff00000000</span></span><br><span class="line"><span class="number">0x00007fffffffe330</span>│+<span class="number">0x0010</span>: <span class="number">0x00007fffffffe39f</span>  →  <span class="string">"e]d 4444444A44A44d4444"</span></span><br><span class="line"><span class="number">0x00007fffffffe338</span>│+<span class="number">0x0018</span>: <span class="number">0xdde30b66a19eef00</span></span><br><span class="line"><span class="number">0x00007fffffffe340</span>│+<span class="number">0x0020</span>: <span class="number">0x00007ffff7ffea98</span>  →  <span class="number">0x00007ffff7ffe9c8</span>  →  <span class="number">0x00007ffff7ffe738</span>  →  <span class="number">0x00007ffff7ffe710</span>  →  <span class="number">0x00007ffff7ffa000</span>  →  <span class="number">0x00010102464c457f</span></span><br><span class="line"><span class="number">0x00007fffffffe348</span>│+<span class="number">0x0028</span>: <span class="number">0x00007fffffffe380</span>  →  <span class="string">"u 4444444444444444444444444444he]d 4444444A44A44d4[...]"</span></span><br><span class="line"><span class="number">0x00007fffffffe350</span>│+<span class="number">0x0030</span>: <span class="number">0x00007fffffffe4e8</span>  →  <span class="number">0x00007fffffffe768</span>  →  <span class="string">"/root/afl-training/quickstart/vulnerable"</span></span><br><span class="line"><span class="number">0x00007fffffffe358</span>│+<span class="number">0x0038</span>: <span class="number">0x0000000000400c20</span>  →  &lt;_start+<span class="number">0</span>&gt; <span class="keyword">xor</span> ebp, ebp</span><br><span class="line">[!] Command 'context' failed to execute properly, reason: 'NoneType' object is not iterable</span><br><span class="line">gef➤  exploitable </span><br><span class="line">Description: Access violation on source operand</span><br><span class="line">Short description: SourceAv (<span class="number">19</span>/<span class="number">22</span>)</span><br><span class="line">Hash: <span class="number">0f</span>e8f44deb493d085f92c9f5fa03a71a<span class="number">.0f</span>e8f44deb493d085f92c9f5fa03a71a</span><br><span class="line">Exploitability Classification: UNKNOWN</span><br><span class="line">Explanation: The target crashed on an access violation at an address matching the source operand of the current instruction. This likely indicates a <span class="built_in">read</span> access violation.</span><br><span class="line">Other tags: AccessViolation (<span class="number">21</span>/<span class="number">22</span>)</span><br></pre></td></tr></table></figure>
+
+<p>测试<code>crash</code>输入：<code>id:000001,sig:11,src:000014,time:9351,op:arith8,pos:2,val:+5</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">gef➤  r &lt; id:<span class="number">000001</span>,sig:<span class="number">11</span>,src:<span class="number">000014</span>,time:<span class="number">9351</span>,op:arith8,pos:<span class="number">2</span>,val:+<span class="number">5</span></span><br><span class="line">Starting program: /root/afl-training/quickstart/vulnerable &lt; id:<span class="number">000001</span>,sig:<span class="number">11</span>,src:<span class="number">000014</span>,time:<span class="number">9351</span>,op:arith8,pos:<span class="number">2</span>,val:+<span class="number">5</span></span><br><span class="line"></span><br><span class="line">Program received signal SIGSEGV, Segmentation fault.</span><br><span class="line"><span class="built_in">process</span> (input=&lt;optimized out&gt;, input@entry=<span class="number">0x7fffffffe380</span> <span class="string">"u 9"</span>, <span class="string">'4'</span> &lt;repeats <span class="number">18</span> times&gt;) at vulnerable.c:<span class="number">31</span></span><br><span class="line"><span class="number">31</span>				<span class="keyword">char</span> c = rest[i];</span><br><span class="line">[ Legend: Modified <span class="keyword">register</span> | Code | Heap | Stack | <span class="keyword">String</span> ]</span><br><span class="line">─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── registers ────</span><br><span class="line">$rax   : <span class="number">0xc30</span>             </span><br><span class="line">$rbx   : <span class="number">0x0</span>               </span><br><span class="line">$rcx   : <span class="number">0x2</span>               </span><br><span class="line">$rdx   : <span class="number">0xa</span>               </span><br><span class="line">$rsp   : <span class="number">0x00007fffffffe320</span>  →  <span class="number">0x0000000000000015</span></span><br><span class="line">$rbp   : <span class="number">0x0000000000605260</span>  →  <span class="number">0x0000000000000000</span></span><br><span class="line">$rsi   : <span class="number">0xc7</span>              </span><br><span class="line">$rdi   : <span class="number">0x00007fffffffe3a0</span>  →  <span class="number">0x0000000000000000</span></span><br><span class="line">$rip   : <span class="number">0x0000000000401b34</span>  →  &lt;<span class="built_in">process</span>+<span class="number">3588</span>&gt; movdqa xmm13, XMMWORD PTR [rdi+rax*<span class="number">1</span>+<span class="number">0x30</span>]</span><br><span class="line">$r8    : <span class="number">0xfffffff</span>         </span><br><span class="line">$r9    : <span class="number">0xfffffff5</span>        </span><br><span class="line">$r10   : <span class="number">0xfffffff0</span>        </span><br><span class="line">$r11   : <span class="number">0x000000000060526a</span>  →  <span class="number">0x0000000000000000</span></span><br><span class="line">$r12   : <span class="number">0x00007fffffffe395</span>  →  <span class="number">0x0000000000000000</span></span><br><span class="line">$r13   : <span class="number">0xffffffffffffffff</span></span><br><span class="line">$r14   : <span class="number">0x00007fffffffe396</span>  →  <span class="number">0x0000000000000000</span></span><br><span class="line">$r15   : <span class="number">0x7fffffffffffffff</span></span><br><span class="line">$eflags: [carry parity adjust zero sign trap INTERRUPT direction <span class="built_in">overflow</span> RESUME virtualx86 identification]</span><br><span class="line">$cs: <span class="number">0x0033</span> $ss: <span class="number">0x002b</span> $ds: <span class="number">0x0000</span> $es: <span class="number">0x0000</span> $fs: <span class="number">0x0000</span> $gs: <span class="number">0x0000</span> </span><br><span class="line">─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── <span class="built_in">stack</span> ────</span><br><span class="line"><span class="number">0x00007fffffffe320</span>│+<span class="number">0x0000</span>: <span class="number">0x0000000000000015</span>	 ← $rsp</span><br><span class="line"><span class="number">0x00007fffffffe328</span>│+<span class="number">0x0008</span>: <span class="number">0xffffffff00000000</span></span><br><span class="line"><span class="number">0x00007fffffffe330</span>│+<span class="number">0x0010</span>: <span class="number">0x00007fffffffe396</span>  →  <span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x00007fffffffe338</span>│+<span class="number">0x0018</span>: <span class="number">0xa765e3c4b4acfa00</span></span><br><span class="line"><span class="number">0x00007fffffffe340</span>│+<span class="number">0x0020</span>: <span class="number">0x00007ffff7ffea98</span>  →  <span class="number">0x00007ffff7ffe9c8</span>  →  <span class="number">0x00007ffff7ffe738</span>  →  <span class="number">0x00007ffff7ffe710</span>  →  <span class="number">0x00007ffff7ffa000</span>  →  <span class="number">0x00010102464c457f</span></span><br><span class="line"><span class="number">0x00007fffffffe348</span>│+<span class="number">0x0028</span>: <span class="number">0x00007fffffffe380</span>  →  <span class="string">"u 9444444444444444444"</span></span><br><span class="line"><span class="number">0x00007fffffffe350</span>│+<span class="number">0x0030</span>: <span class="number">0x00007fffffffe4e8</span>  →  <span class="number">0x00007fffffffe768</span>  →  <span class="string">"/root/afl-training/quickstart/vulnerable"</span></span><br><span class="line"><span class="number">0x00007fffffffe358</span>│+<span class="number">0x0038</span>: <span class="number">0x0000000000400c20</span>  →  &lt;_start+<span class="number">0</span>&gt; <span class="keyword">xor</span> ebp, ebp</span><br><span class="line">[!] Command 'context' failed to execute properly, reason: 'NoneType' object is not iterable</span><br><span class="line">gef➤  exploitable </span><br><span class="line">Description: Access violation on source operand</span><br><span class="line">Short description: SourceAv (<span class="number">19</span>/<span class="number">22</span>)</span><br><span class="line">Hash: <span class="number">0f</span>e8f44deb493d085f92c9f5fa03a71a<span class="number">.0f</span>e8f44deb493d085f92c9f5fa03a71a</span><br><span class="line">Exploitability Classification: UNKNOWN</span><br><span class="line">Explanation: The target crashed on an access violation at an address matching the source operand of the current instruction. This likely indicates a <span class="built_in">read</span> access violation.</span><br><span class="line">Other tags: AccessViolation (<span class="number">21</span>/<span class="number">22</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="四、Crashwalk"><a href="#四、Crashwalk" class="headerlink" title="四、Crashwalk"></a>四、Crashwalk</h2><p><code>Crashwalk</code>是对上述插件<code>exploitable</code>的补充。<code>Crashwalk</code>可以遍历<code>AFL</code>生成的crash输入，并在崩溃状态下运行<code>exploitable</code>。最终，它将创建一个包含来<code>exploitable</code>输出<code>crashwalk.db</code>文件。可以将它简单看做：一个自动使用<code>GDB</code>对每个<code>crash</code>输入进行检查，自动运行插件<code>exploitable</code>并获得其输出内容的工具。</p>
+<p><code>Crashwalk</code>似乎在从<code>stdin</code>而非从文件读取输入的程序上重现崩溃时会有一些问题，因此，在本示例中，将使用程序<code>fuzzgoat</code>。</p>
+<p><strong>安装</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git clone https:<span class="comment">//github.com/bnagy/crashwalk.git</span></span><br><span class="line">$ sudo apt-<span class="built_in">get</span> install golang</span><br><span class="line">$ <span class="keyword">export</span> GOPATH=$PWD/crashwalk/</span><br><span class="line">$ go <span class="built_in">get</span> -u github.com/bnagy/crashwalk/cmd/...</span><br></pre></td></tr></table></figure>
+
+<p><strong>对目标程序进行fuzz</strong>：</p>
+<img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20210304092811.png" style="zoom:50%;">
+
+<p><strong>使用crashwalk：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ <span class="keyword">export</span> CW_EXPLOITABLE=/root/exploitable/exploitable/exploitable.py</span><br><span class="line">$ ./crashwalk/bin/cwtriage -root ./fuzzgoat/out/crashes -match id -- ./fuzzgoat/fuzzgoat @@</span><br></pre></td></tr></table></figure>
+
+<p>由于<code>cwtriage</code>使用了<code>exploitable</code>，所以需要指明<code>exploitable</code> 的路径：设置环境变量<code>CW_EXPLOITABLE</code>。参数<code>-match</code>表明<code>crash</code>文件表达式信息，用来识别<code>crash</code>文件信息。由于AFL挖掘出的<code>crash</code>文件名开头是<code>id</code>，所以我们的设置为：<code>-match id</code>。参数<code>@@</code>表明<code>crash</code>文件应该作为参数传递给二进制程序。</p>
+<p>运行上述命令得到的输出是：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">---CRASH SUMMARY---</span><br><span class="line">Filename: fuzzgoat/out/crashes/id:<span class="number">000000</span>,sig:<span class="number">11</span>,src:<span class="number">000000</span>,time:<span class="number">191</span>,op:arith8,pos:<span class="number">5</span>,val:<span class="number">-5</span></span><br><span class="line">SHA1: <span class="number">45b</span>b9b6983e58a877957a2eb4409ad2c18939452</span><br><span class="line">Classification: PROBABLY_NOT_EXPLOITABLE</span><br><span class="line">Hash: <span class="number">0b</span>54f82b97d9e614dba4f9d9352def3d<span class="number">.0b</span>54f82b97d9e614dba4f9d9352def3d</span><br><span class="line">Command: ./fuzzgoat/fuzzgoat fuzzgoat/out/crashes/id:<span class="number">000000</span>,sig:<span class="number">11</span>,src:<span class="number">000000</span>,time:<span class="number">191</span>,op:arith8,pos:<span class="number">5</span>,val:<span class="number">-5</span></span><br><span class="line">Faulting Frame:</span><br><span class="line">   json_value_free_ex @ <span class="number">0x000055555555e46c</span>: in /root/fuzzgoat/fuzzgoat</span><br><span class="line">Disassembly:</span><br><span class="line">   <span class="number">0x000055555555e451</span>: call <span class="number">0x55555555e680</span> &lt;__afl_maybe_log&gt;</span><br><span class="line">   <span class="number">0x000055555555e456</span>: mov rax,QWORD PTR [rsp+<span class="number">0x10</span>]</span><br><span class="line">   <span class="number">0x000055555555e45b</span>: mov rcx,QWORD PTR [rsp+<span class="number">0x8</span>]</span><br><span class="line">   <span class="number">0x000055555555e460</span>: mov rdx,QWORD PTR [rsp]</span><br><span class="line">   <span class="number">0x000055555555e464</span>: lea rsp,[rsp+<span class="number">0x98</span>]</span><br><span class="line">=&gt; <span class="number">0x000055555555e46c</span>: mov eax,DWORD PTR [rbx+<span class="number">0x8</span>]</span><br><span class="line">   <span class="number">0x000055555555e46f</span>: cmp eax,<span class="number">0x2</span></span><br><span class="line">   <span class="number">0x000055555555e472</span>: jne <span class="number">0x55555555e2e8</span> &lt;json_value_free+<span class="number">152</span>&gt;</span><br><span class="line">   <span class="number">0x000055555555e478</span>: lea rsp,[rsp<span class="number">-0x98</span>]</span><br><span class="line">   <span class="number">0x000055555555e480</span>: mov QWORD PTR [rsp],rdx</span><br><span class="line">Stack Head (<span class="number">3</span> entries):</span><br><span class="line">   json_value_free_ex        @ <span class="number">0x000055555555e46c</span>: in /root/fuzzgoat/fuzzgoat</span><br><span class="line">   json_value_free           @ <span class="number">0x000055555555e46c</span>: in /root/fuzzgoat/fuzzgoat</span><br><span class="line">   main                      @ <span class="number">0x00005555555551f6</span>: in /root/fuzzgoat/fuzzgoat</span><br><span class="line">Registers:</span><br><span class="line">rax=<span class="number">0x0000000000000001</span> rbx=<span class="number">0x0000000000000021</span> rcx=<span class="number">0x0000000000000001</span> rdx=<span class="number">0x0000000000000000</span> </span><br><span class="line">rsi=<span class="number">0x0000000000000009</span> rdi=<span class="number">0x0000555555762520</span> rbp=<span class="number">0x00005555557624c0</span> rsp=<span class="number">0x00007fffffffe250</span> </span><br><span class="line"> r8=<span class="number">0x0000555555762550</span>  r9=<span class="number">0x0000000000000000</span> r10=<span class="number">0x0000000000000000</span> r11=<span class="number">0x000055555555eb47</span> </span><br><span class="line">r12=<span class="number">0x0000000000000008</span> r13=<span class="number">0x0000555555761260</span> r14=<span class="number">0x0000555555761280</span> r15=<span class="number">0x0000000000000000</span> </span><br><span class="line">rip=<span class="number">0x000055555555e46c</span> efl=<span class="number">0x0000000000010206</span>  cs=<span class="number">0x0000000000000033</span>  ss=<span class="number">0x000000000000002b</span> </span><br><span class="line"> ds=<span class="number">0x0000000000000000</span>  es=<span class="number">0x0000000000000000</span>  fs=<span class="number">0x0000000000000000</span>  gs=<span class="number">0x0000000000000000</span> </span><br><span class="line">Extra Data:</span><br><span class="line">   Description: Access violation near <span class="literal">NULL</span> on source operand</span><br><span class="line">   Short description: SourceAvNearNull (<span class="number">16</span>/<span class="number">22</span>)</span><br><span class="line">   Explanation: The target crashed on an access violation at an address matching the source operand of the current instruction. This likely indicates a <span class="built_in">read</span> access violation, which may mean the application crashed on a simple <span class="literal">NULL</span> dereference to data structure that has no immediate effect on control of the processor.</span><br><span class="line">---END SUMMARY---</span><br><span class="line"></span><br><span class="line">---CRASH SUMMARY---</span><br><span class="line">Filename: fuzzgoat/out/crashes/id:<span class="number">000001</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">462</span>,op:havoc,rep:<span class="number">8</span></span><br><span class="line">SHA1: <span class="number">9</span>c08dafb954cbeb51a275891a24eaf851c071900</span><br><span class="line">Classification: EXPLOITABLE</span><br><span class="line">Hash: c4f0988a8dae89b95cf01d71d85553e9<span class="number">.23f</span>a7969f3cb9c54fd796568f394dc7f</span><br><span class="line">Command: ./fuzzgoat/fuzzgoat fuzzgoat/out/crashes/id:<span class="number">000001</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">462</span>,op:havoc,rep:<span class="number">8</span></span><br><span class="line">... ...</span><br><span class="line">---END SUMMARY---</span><br></pre></td></tr></table></figure>
+
+<p>使用<code>cwdump</code>来分析<code>crashwalk.db</code>文件：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line">root@vm:/root# ./crashwalk/bin/cwdump ./crashwalk.db </span><br><span class="line">(<span class="number">1</span> of <span class="number">4</span>) - Hash: <span class="number">0b</span>54f82b97d9e614dba4f9d9352def3d<span class="number">.0b</span>54f82b97d9e614dba4f9d9352def3d</span><br><span class="line">---CRASH SUMMARY---</span><br><span class="line">Filename: fuzzgoat/out/crashes/id:<span class="number">000006</span>,sig:<span class="number">11</span>,src:<span class="number">000000</span>,time:<span class="number">5072</span>,op:havoc,rep:<span class="number">2</span></span><br><span class="line">SHA1: d6bfc450688c952fb51a9c283586e8e3109ed9de</span><br><span class="line">Classification: UNKNOWN</span><br><span class="line">Hash: <span class="number">0b</span>54f82b97d9e614dba4f9d9352def3d<span class="number">.0b</span>54f82b97d9e614dba4f9d9352def3d</span><br><span class="line">Command: ./fuzzgoat/fuzzgoat fuzzgoat/out/crashes/id:<span class="number">000006</span>,sig:<span class="number">11</span>,src:<span class="number">000000</span>,time:<span class="number">5072</span>,op:havoc,rep:<span class="number">2</span></span><br><span class="line">Faulting Frame:</span><br><span class="line">   json_value_free_ex @ <span class="number">0x000055555555e46c</span>: in /root/fuzzgoat/fuzzgoat</span><br><span class="line">Disassembly:</span><br><span class="line">   <span class="number">0x000055555555e451</span>: call <span class="number">0x55555555e680</span> &lt;__afl_maybe_log&gt;</span><br><span class="line">   <span class="number">0x000055555555e456</span>: mov rax,QWORD PTR [rsp+<span class="number">0x10</span>]</span><br><span class="line">   <span class="number">0x000055555555e45b</span>: mov rcx,QWORD PTR [rsp+<span class="number">0x8</span>]</span><br><span class="line">   <span class="number">0x000055555555e460</span>: mov rdx,QWORD PTR [rsp]</span><br><span class="line">   <span class="number">0x000055555555e464</span>: lea rsp,[rsp+<span class="number">0x98</span>]</span><br><span class="line">=&gt; <span class="number">0x000055555555e46c</span>: mov eax,DWORD PTR [rbx+<span class="number">0x8</span>]</span><br><span class="line">   <span class="number">0x000055555555e46f</span>: cmp eax,<span class="number">0x2</span></span><br><span class="line">   <span class="number">0x000055555555e472</span>: jne <span class="number">0x55555555e2e8</span> &lt;json_value_free+<span class="number">152</span>&gt;</span><br><span class="line">   <span class="number">0x000055555555e478</span>: lea rsp,[rsp<span class="number">-0x98</span>]</span><br><span class="line">   <span class="number">0x000055555555e480</span>: mov QWORD PTR [rsp],rdx</span><br><span class="line">Stack Head (<span class="number">3</span> entries):</span><br><span class="line">   json_value_free_ex        @ <span class="number">0x000055555555e46c</span>: in /root/fuzzgoat/fuzzgoat</span><br><span class="line">   json_value_free           @ <span class="number">0x000055555555e46c</span>: in /root/fuzzgoat/fuzzgoat</span><br><span class="line">   main                      @ <span class="number">0x00005555555551f6</span>: in /root/fuzzgoat/fuzzgoat</span><br><span class="line">Registers:</span><br><span class="line">rax=<span class="number">0x0000000000000001</span> rbx=<span class="number">0x000000000001fac1</span> rcx=<span class="number">0x0000000000000001</span> rdx=<span class="number">0x0000000000000000</span> </span><br><span class="line">rsi=<span class="number">0x0000000000000010</span> rdi=<span class="number">0x0000555555762520</span> rbp=<span class="number">0x00005555557624c0</span> rsp=<span class="number">0x00007fffffffe250</span> </span><br><span class="line"> r8=<span class="number">0x0000000000000000</span>  r9=<span class="number">0x0000000000000000</span> r10=<span class="number">0x0000000000000009</span> r11=<span class="number">0x000055555555eb2f</span> </span><br><span class="line">r12=<span class="number">0x0000000000000007</span> r13=<span class="number">0x0000555555761260</span> r14=<span class="number">0x0000555555761280</span> r15=<span class="number">0x0000000000000000</span> </span><br><span class="line">rip=<span class="number">0x000055555555e46c</span> efl=<span class="number">0x0000000000010202</span>  cs=<span class="number">0x0000000000000033</span>  ss=<span class="number">0x000000000000002b</span> </span><br><span class="line"> ds=<span class="number">0x0000000000000000</span>  es=<span class="number">0x0000000000000000</span>  fs=<span class="number">0x0000000000000000</span>  gs=<span class="number">0x0000000000000000</span> </span><br><span class="line">Extra Data:</span><br><span class="line">   Description: Access violation on source operand</span><br><span class="line">   Short description: SourceAv (<span class="number">19</span>/<span class="number">22</span>)</span><br><span class="line">   Explanation: The target crashed on an access violation at an address matching the source operand of the current instruction. This likely indicates a <span class="built_in">read</span> access violation.</span><br><span class="line">---END SUMMARY---</span><br><span class="line"></span><br><span class="line">(<span class="number">1</span> of <span class="number">2</span>) - Hash: c4f0988a8dae89b95cf01d71d85553e9<span class="number">.23f</span>a7969f3cb9c54fd796568f394dc7f</span><br><span class="line">---CRASH SUMMARY---</span><br><span class="line">Filename: fuzzgoat/out/crashes/id:<span class="number">000001</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">462</span>,op:havoc,rep:<span class="number">8</span></span><br><span class="line">SHA1: <span class="number">9</span>c08dafb954cbeb51a275891a24eaf851c071900</span><br><span class="line">Classification: EXPLOITABLE</span><br><span class="line">Hash: c4f0988a8dae89b95cf01d71d85553e9<span class="number">.23f</span>a7969f3cb9c54fd796568f394dc7f</span><br><span class="line">Command: ./fuzzgoat/fuzzgoat fuzzgoat/out/crashes/id:<span class="number">000001</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">462</span>,op:havoc,rep:<span class="number">8</span></span><br><span class="line">... ...</span><br><span class="line">Extra Data:</span><br><span class="line">   Description: Heap error</span><br><span class="line">   Short description: HeapError (<span class="number">10</span>/<span class="number">22</span>)</span><br><span class="line">   Explanation: The target<span class="number">'</span>s backtrace indicates that libc has detected a heap error <span class="keyword">or</span> that the target was executing a heap function when it stopped. This could be due to heap corruption, passing a bad pointer to a heap function such as <span class="built_in">free</span>(), etc. Since heap errors might include <span class="built_in">buffer</span> overflows, use-after-<span class="built_in">free</span> situations, etc. they are generally considered exploitable.</span><br><span class="line">---END SUMMARY---</span><br><span class="line"></span><br><span class="line">(<span class="number">1</span> of <span class="number">1</span>) - Hash: <span class="number">7e602</span>b02ee692c15c21dd3b75900877a<span class="number">.7e602</span>b02ee692c15c21dd3b75900877a</span><br><span class="line">---CRASH SUMMARY---</span><br><span class="line">Filename: fuzzgoat/out/crashes/id:<span class="number">000002</span>,sig:<span class="number">11</span>,src:<span class="number">000000</span>,time:<span class="number">594</span>,op:havoc,rep:<span class="number">4</span></span><br><span class="line">SHA1: ddbf3aa6373d825b6bc607d8ae404b792d8fe273</span><br><span class="line">Classification: PROBABLY_NOT_EXPLOITABLE</span><br><span class="line">Hash: <span class="number">7e602</span>b02ee692c15c21dd3b75900877a<span class="number">.7e602</span>b02ee692c15c21dd3b75900877a</span><br><span class="line">Command: ./fuzzgoat/fuzzgoat fuzzgoat/out/crashes/id:<span class="number">000002</span>,sig:<span class="number">11</span>,src:<span class="number">000000</span>,time:<span class="number">594</span>,op:havoc,rep:<span class="number">4</span></span><br><span class="line">... ...</span><br><span class="line">Extra Data:</span><br><span class="line">   Description: Access violation near <span class="literal">NULL</span> on source operand</span><br><span class="line">   Short description: SourceAvNearNull (<span class="number">16</span>/<span class="number">22</span>)</span><br><span class="line">   Explanation: The target crashed on an access violation at an address matching the source operand of the current instruction. This likely indicates a <span class="built_in">read</span> access violation, which may mean the application crashed on a simple <span class="literal">NULL</span> dereference to data structure that has no immediate effect on control of the processor.</span><br><span class="line">---END SUMMARY---</span><br></pre></td></tr></table></figure>
+
+<p>由上可知，7个<code>crash</code>根据其能否被利用、漏洞类型被分为3类。</p>
+<blockquote>
+<ol>
+<li><a href="https://github.com/bnagy/crashwalk" target="_blank" rel="noopener">https://github.com/bnagy/crashwalk</a></li>
+</ol>
+</blockquote>
+<h2 id="五、AFL-crash-exploration-mode"><a href="#五、AFL-crash-exploration-mode" class="headerlink" title="五、AFL crash exploration mode"></a>五、AFL crash exploration mode</h2><p>这是<code>AFL</code>自己提供的一个模块，它以已知的<code>crash</code>作为输入，并且在此基础上进行测试来发现其他变体。此模式下，<code>AFL</code>能识别出那些应用于生成<code>crash</code>文件的变化，保证在仍能触发相同<code>crash</code>的情况下探索其他的代码区域。</p>
+<p>一般来说，我们希望<code>fuzzer</code>发现越多的唯一<code>crash</code>，而不是一直触发相同的<code>crash</code>。但是，<code>AFL</code>中的<code>exploration mode</code>的目的是：创建一个小的语料库，可以快速的对他们进行检查，来查看攻击者对错读地址的控制程度，或者是否可能实现越界读</p>
+<p>换句话说，查看一个<code>crash</code>的多种变化可以帮助了解这个<code>crash</code>提供了多少灵活性，例如：如果崩溃是地址写相关的，但无法控制该地址，那这可能不是一个特别有用的原语。 另一方面，如果<code>AFL</code>的<code>exploration mode</code>表示可以更改输入以实现任意地址写，则更有可能利用该漏洞。</p>
+<p>使用命令：<code>afl-fuzz -C -i out/crashes/ -o crash_exploration/ -- ./vulnerable</code>进行测试：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">$ afl-fuzz -C -i out/crashes/ -o crash_exploration/ -- ./vulnerable</span><br><span class="line">afl-fuzz++<span class="number">2.68</span>c based on afl by Michal Zalewski <span class="keyword">and</span> a big online community</span><br><span class="line">[+] afl++ is maintained by Marc <span class="string">"van Hauser"</span> Heuse, Heiko <span class="string">"hexcoder"</span> Eißfeldt, Andrea Fioraldi <span class="keyword">and</span> Dominik Maier</span><br><span class="line">[+] afl++ is <span class="built_in">open</span> source, <span class="built_in">get</span> it at https:<span class="comment">//github.com/AFLplusplus/AFLplusplus</span></span><br><span class="line">[+] Power schedules from github.com/mboehme/aflfast</span><br><span class="line">[+] Python Mutator <span class="keyword">and</span> llvm_mode instrument file <span class="built_in">list</span> from github.com/choller/afl</span><br><span class="line">[+] MOpt Mutator from github.com/puppet-meteor/MOpt-AFL</span><br><span class="line">[*] Getting to work...</span><br><span class="line">[+] Using exploration-<span class="function">based constant power <span class="title">schedule</span> <span class="params">(EXPLORE, <span class="keyword">default</span>)</span></span></span><br><span class="line">[*] Checking core_pattern...</span><br><span class="line">[!] WARNING: Could <span class="keyword">not</span> check CPU scaling governor</span><br><span class="line">[+] You have 2 CPU cores and 1 runnable tasks (utilization: 50%).</span><br><span class="line">[+] Try parallel jobs - see /usr/local/share/doc/afl/parallel_fuzzing.md.</span><br><span class="line">[*] Setting up output directories...</span><br><span class="line">[+] Output directory <span class="built_in">exists</span> but deemed OK to reuse.</span><br><span class="line">[*] Deleting old session data...</span><br><span class="line">[+] Output dir cleanup successful.</span><br><span class="line">[*] Checking CPU core loadout...</span><br><span class="line">[+] Found a <span class="built_in">free</span> CPU core, <span class="keyword">try</span> binding to #<span class="number">0.</span></span><br><span class="line">[*] Scanning 'out/crashes/'...</span><br><span class="line">[+] No <span class="keyword">auto</span>-generated dictionary tokens to reuse.</span><br><span class="line">[*] Creating hard links <span class="keyword">for</span> all input files...</span><br><span class="line">[*] Validating target binary...</span><br><span class="line">[*] Attempting dry run with 'id:000000,sig:11,src:000010,time:7917,op:havoc,rep:32'...</span><br><span class="line">[*] Spinning up the fork server...</span><br><span class="line">[+] All right - fork server is up.</span><br><span class="line">    len = <span class="number">36</span>, <span class="built_in">map</span> <span class="built_in">size</span> = <span class="number">6</span>, exec speed = <span class="number">160</span> us</span><br><span class="line">[*] Attempting dry run with 'id:000001,sig:11,src:000014,time:9351,op:arith8,pos:2,val:+5'...</span><br><span class="line">    len = <span class="number">21</span>, <span class="built_in">map</span> <span class="built_in">size</span> = <span class="number">30</span>, exec speed = <span class="number">237</span> us</span><br><span class="line">[*] Attempting dry run with 'id:000002,sig:11,src:000014,time:9831,op:havoc,rep:2'...</span><br><span class="line">    len = <span class="number">35</span>, <span class="built_in">map</span> <span class="built_in">size</span> = <span class="number">22</span>, exec speed = <span class="number">234</span> us</span><br><span class="line">[*] Attempting dry run with 'id:000003,sig:11,src:000014,time:9848,op:havoc,rep:2'...</span><br><span class="line">    len = <span class="number">28</span>, <span class="built_in">map</span> <span class="built_in">size</span> = <span class="number">28</span>, exec speed = <span class="number">231</span> us</span><br><span class="line">[*] Attempting dry run with 'id:000004,sig:11,src:000014,time:9950,op:havoc,rep:4'...</span><br><span class="line">    len = <span class="number">44</span>, <span class="built_in">map</span> <span class="built_in">size</span> = <span class="number">23</span>, exec speed = <span class="number">227</span> us</span><br><span class="line">[*] Attempting dry run with 'id:000005,sig:11,src:000014,time:9955,op:havoc,rep:8'...</span><br><span class="line">    len = <span class="number">53</span>, <span class="built_in">map</span> <span class="built_in">size</span> = <span class="number">21</span>, exec speed = <span class="number">244</span> us</span><br><span class="line">[+] All test cases processed.</span><br><span class="line"></span><br><span class="line">[+] Here are some useful stats:</span><br><span class="line"></span><br><span class="line">    Test <span class="keyword">case</span> count : <span class="number">6</span> favored, <span class="number">0</span> variable, <span class="number">6</span> total</span><br><span class="line">       Bitmap range : <span class="number">6</span> to <span class="number">30</span> bits (average: <span class="number">21.67</span> bits)</span><br><span class="line">        Exec timing : <span class="number">160</span> to <span class="number">244</span> us (average: <span class="number">222</span> us)</span><br><span class="line"></span><br><span class="line">[*] Applying timeout settings from resumed session (<span class="number">20</span> ms).</span><br><span class="line">[+] All <span class="built_in">set</span> <span class="keyword">and</span> <span class="built_in">ready</span> to roll!</span><br></pre></td></tr></table></figure>
+
+<p>在<code>AFL</code>的普通模式下，上面的<code>dry run</code>是为了检查<code>test case</code>是否满足<code>sanity check</code>，确保他们不会直接导致程序崩溃。<code>AFL</code>会<code>clean</code>测试文件，确保程序的行为正常并开始循环测试这些输入来发现反常的行为。与之相反，<code>exploration mode</code>是为了确保这些<code>test case</code>已经导致了崩溃，因为他的目的是在保证触发同样崩溃的基础上来探索程序中其他代码、路径。</p>
+<p><strong>测试结果：</strong></p>
+<img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20210304110318.png" style="zoom:50%;">
+
+<p>顶部显示的名称是<code>peruvian are-rabbit</code>，这是<code>crash exploration mode</code>的名称。 我们感兴趣的是<code>unique crash</code>，因为他是在已有<code>crash</code>的基础上触发了新的路径。如果我们得到足够多能触发新路径但保持原<code>crash</code>的输入，我们就能对他们进行比较，得到不同之处。<code>crasg exploration mode</code>有助于对于确定哪些crash值得进行进一步的研究。</p>
+<blockquote>
+<ol>
+<li><a href="https://github.com/google/AFL#10-crash-triage" target="_blank" rel="noopener">https://github.com/google/AFL#10-crash-triage</a></li>
+<li><a href="https://lcamtuf.blogspot.com/2014/11/afl-fuzz-crash-exploration-mode.html" target="_blank" rel="noopener">https://lcamtuf.blogspot.com/2014/11/afl-fuzz-crash-exploration-mode.html</a></li>
+</ol>
+</blockquote>
+<h2 id="六、rr-Record-and-Replay-Framework"><a href="#六、rr-Record-and-Replay-Framework" class="headerlink" title="六、rr (Record and Replay Framework)"></a>六、rr (Record and Replay Framework)</h2><p><code>rr</code>可以<code>recording</code>程序的执行。然后可以<code>debiug</code>这个<code>recording</code>，可以查看不同时间点的程序状态，所以有时候也将其称为<code>time-travel debugging</code>或<code>timeless debugging</code>。</p>
+<p>从对fuzzer生成的crashes进行分类来说，rr最明显的优势是他可以很方便的从崩溃点进行回滚，以此来分析崩溃输入是如何产生的以及其执行路径是什么。</p>
+<p>使用<code>rr</code>的另一个好处是更方便对<code>non-determinism</code>导致的崩溃进行分析，只需要重现一次获得<code>rr</code>产生的<code>recording</code>即可。通常，要是想对<code>crash</code>进行调试，并且回到较早的时间点进行检查，需要重新运行目标程序，再次分析程序。对于非确定性错误，是程序重新发生同样的崩溃可能比较麻烦。由于<code>rr</code>会<code>recording</code>该程序的执行情况，因此可以快速返回到较早的时间点进行检查，然后再返回到当前点。不再需要重新运行该程序，每次<code>recording</code>都会始终以相同的方式重现程序的执行。</p>
+<p>但<code>rr</code>依赖于虚拟机中某些特定的硬件虚拟化，并非每个虚拟化平台都支持。目前通过<code>VMWare</code>能成功运行<code>rr</code>，但无法通过<code>VirtualBox</code>不行。此外，<code>rr</code>当前仅支持<code>Linux</code>。</p>
+<p><strong>安装依赖：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-<span class="built_in">get</span> install ccache cmake make g++-multilib gdb pkg-<span class="built_in">config</span> coreutils python3-pexpect manpages-dev git ninja-build capnproto libcapnp-dev</span><br></pre></td></tr></table></figure>
+
+<p><strong>下载源码并编译：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git clone https:<span class="comment">//github.com/mozilla/rr.git</span></span><br><span class="line"><span class="built_in">mkdir</span> obj &amp;&amp; cd obj</span><br><span class="line">cmake ../rr</span><br><span class="line">make -j8</span><br><span class="line">sudo make install</span><br></pre></td></tr></table></figure>
+
+<p><strong>环境配置：</strong></p>
+<p>在支持的虚拟化平台上安装<code>rr</code>后，首先需要将<code>perf_event_paranoid</code>文件的值设置为<code>1</code>来允许<code>rr</code>读取特定的性能事件：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">echo 1 &gt; &#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;perf_event_paranoid</span><br></pre></td></tr></table></figure>
+
+<p>如果是使用虚拟机，还需要进行以下设置：</p>
+<img src="https://cdn.jsdelivr.net/gh/zytMatrix/images/posts/20210304150923.png" style="zoom: 50%;">
+
+<p>使用命令<code>rr record</code>，得到测试结果：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ rr record ./vulnerable &lt; out/crashes/id\:<span class="number">000000</span>\,sig\:<span class="number">11</span>\,src\:<span class="number">000010</span>\,time\:<span class="number">7917</span>\,op\:havoc\,rep\:<span class="number">32</span> </span><br><span class="line">rr: Saving execution to trace directory `/<span class="built_in">home</span>/zyt/.local/share/rr/vulnerable<span class="number">-0'.</span></span><br><span class="line">Segmentation fault</span><br><span class="line">  </span><br><span class="line">$ vim /<span class="built_in">home</span>/zyt/.local/share/rr/vulnerable<span class="number">-0</span>/</span><br><span class="line">data                        mmap_hardlink_3_vulnerable  tasks                       </span><br><span class="line">events                      mmaps                       version</span><br></pre></td></tr></table></figure>
+
+<p>然后使用命令<code>rr replay</code>来启动一个<code>GDB session</code>来检查刚刚记录程序执行的<code>recording</code>。如下所示，程序开始运行并且在<code>_start()</code>函数处：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">────────────────────────────────────── code:x86:<span class="number">64</span> ──────────────────────────────────────────</span><br><span class="line">   <span class="number">0x7f280d06407d</span> &lt;oom+<span class="number">28</span>&gt;         call   <span class="number">0x7f280d080210</span> &lt;__GI__exit&gt;</span><br><span class="line">   <span class="number">0x7f280d064082</span>                  nop    WORD PTR cs:[rax+rax*<span class="number">1</span>+<span class="number">0x0</span>]</span><br><span class="line">   <span class="number">0x7f280d06408c</span>                  nop    DWORD PTR [rax+<span class="number">0x0</span>]</span><br><span class="line"> → <span class="number">0x7f280d064090</span> &lt;_start+<span class="number">0</span>&gt;       mov    rdi, rsp</span><br><span class="line">   <span class="number">0x7f280d064093</span> &lt;_start+<span class="number">3</span>&gt;       call   <span class="number">0x7f280d064ea0</span> &lt;_dl_start&gt;</span><br><span class="line">   <span class="number">0x7f280d064098</span> &lt;_dl_start_user+<span class="number">0</span>&gt; mov    r12, rax</span><br><span class="line">   <span class="number">0x7f280d06409b</span> &lt;_dl_start_user+<span class="number">3</span>&gt; mov    eax, DWORD PTR [rip+<span class="number">0x228697</span>]        # <span class="number">0x7f280d28c738</span> &lt;_dl_skip_args&gt;</span><br><span class="line">   <span class="number">0x7f280d0640a1</span> &lt;_dl_start_user+<span class="number">9</span>&gt; pop    rdx</span><br><span class="line">   <span class="number">0x7f280d0640a2</span> &lt;_dl_start_user+<span class="number">10</span>&gt; lea    rsp, [rsp+rax*<span class="number">8</span>]</span><br><span class="line">─────────────────────────────────────────threads────────────────────────────────────────────────</span><br><span class="line">[#<span class="number">0</span>] Id <span class="number">1</span>, stopped <span class="number">0x7f280d064090</span> in _start (), reason: STOPPED</span><br><span class="line">────────────────────────────────────────────────────── trace ───────────────────────────────────</span><br><span class="line">[#<span class="number">0</span>] <span class="number">0x7f280d064090</span> → _start()</span><br><span class="line">─────────────────────────────────────────────────────────────────────────────────────────────────</span><br><span class="line"><span class="number">0x00007f280d064090</span> in _start () from /lib64/ld-linux-x86<span class="number">-64.</span>so<span class="number">.2</span></span><br><span class="line">gef➤</span><br></pre></td></tr></table></figure>
+
+<p>输入<code>c</code>继续执行，到达程序崩溃的地方：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">     <span class="number">0x400fbf</span> &lt;<span class="built_in">process</span>+<span class="number">655</span>&gt;    jmp    <span class="number">0x400ea8</span> &lt;<span class="built_in">process</span>+<span class="number">376</span>&gt;</span><br><span class="line">     <span class="number">0x400fc4</span> &lt;<span class="built_in">process</span>+<span class="number">660</span>&gt;    nop    DWORD PTR [rax+<span class="number">0x0</span>]</span><br><span class="line">     <span class="number">0x400fc8</span> &lt;<span class="built_in">process</span>+<span class="number">664</span>&gt;    lea    rdi, [rbp+<span class="number">0x2</span>]</span><br><span class="line">─────────────────────────────────── source:vulnerable.c+<span class="number">49</span> ───────────────────────────────────────────────</span><br><span class="line">     <span class="number">44</span>	 	&#123; <span class="comment">// head command</span></span><br><span class="line">     <span class="number">45</span>	 		<span class="keyword">if</span> (<span class="built_in">strlen</span>(input) &gt; <span class="number">6</span>)</span><br><span class="line">     <span class="number">46</span>	 		&#123;</span><br><span class="line">     <span class="number">47</span>	 			len = strtol(input + <span class="number">4</span>, &amp;rest, <span class="number">10</span>);</span><br><span class="line">     <span class="number">48</span>	 			rest += <span class="number">1</span>;		  <span class="comment">// skip the first char (should be a space)</span></span><br><span class="line">            <span class="comment">// rest=0x00007fff832657d0  →  [...]  →  0x39fafa0000e03939, len=-0x5b398001</span></span><br><span class="line"> →   <span class="number">49</span>	 			rest[len] = <span class="string">'\0'</span>; <span class="comment">// truncate string at specified offset</span></span><br><span class="line">     <span class="number">50</span>	 			<span class="built_in">printf</span>(<span class="string">"%s\n"</span>, rest);</span><br><span class="line">     <span class="number">51</span>	 		&#125;</span><br><span class="line">     <span class="number">52</span>	 		<span class="keyword">else</span></span><br><span class="line">     <span class="number">53</span>	 		&#123;</span><br><span class="line">     <span class="number">54</span>	 			<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"head input was too small\n"</span>);</span><br><span class="line">────────────────────────────────────────── threads ───────────────────────────────────────────────────</span><br><span class="line">[#0] Id 1, stopped 0x400faf in process (), reason: SIGSEGV</span><br><span class="line">─────────────────────────────────────── trace ───────────────────────────────────────────────────────</span><br><span class="line">[#<span class="number">0</span>] <span class="number">0x400faf</span> → <span class="built_in">process</span>(input=&lt;optimized out&gt;)</span><br><span class="line">[#<span class="number">1</span>] <span class="number">0x400a98</span> → main(argc=&lt;optimized out&gt;, argv=<span class="number">0x7fff83265988</span>)</span><br><span class="line">─────────────────────────────────────────────────────────────────────────────────────────</span><br><span class="line"><span class="built_in">process</span> (input=&lt;optimized out&gt;, input@entry=<span class="number">0x7fff83265820</span> <span class="string">"head "</span>, <span class="string">'9'</span> &lt;repeats <span class="number">15</span> times&gt;, <span class="string">"\"9"</span>, &lt;incomplete sequence \<span class="number">340</span>&gt;) at vulnerable.c:<span class="number">49</span></span><br><span class="line"><span class="number">49</span>				rest[len] = <span class="string">'\0'</span>; <span class="comment">// truncate string at specified offset</span></span><br><span class="line">gef➤</span><br></pre></td></tr></table></figure>
+
+<p>到目前为止，除了能一遍又一遍地执行完全相同的程序之外，没有发现其他东西。现在，让我们看看<code>rr</code>的主要功能之一。如果我们想知道程序崩溃前的状态，该怎么办？通常，我们必须重新执行整个二进制程序，并在崩溃点前的指令上设置一个断点。但使用<code>rr</code>，我们可以利用反向执行来实现回滚：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">    <span class="number">0x400fa3</span> &lt;<span class="built_in">process</span>+<span class="number">627</span>&gt;    adc    BYTE PTR [rax<span class="number">-0x68</span>], cl</span><br><span class="line">    <span class="number">0x400fa6</span> &lt;<span class="built_in">process</span>+<span class="number">630</span>&gt;    lea    r12, [r11+<span class="number">0x1</span>]</span><br><span class="line">    <span class="number">0x400faa</span> &lt;<span class="built_in">process</span>+<span class="number">634</span>&gt;    mov    QWORD PTR [rsp+<span class="number">0x10</span>], r12</span><br><span class="line">→   <span class="number">0x400faf</span> &lt;<span class="built_in">process</span>+<span class="number">639</span>&gt;    mov    BYTE PTR [r11+rax*<span class="number">1</span>+<span class="number">0x1</span>], <span class="number">0x0</span></span><br><span class="line">    <span class="number">0x400fb5</span> &lt;<span class="built_in">process</span>+<span class="number">645</span>&gt;    mov    rdi, QWORD PTR [rsp+<span class="number">0x10</span>]</span><br><span class="line">    <span class="number">0x400fba</span> &lt;<span class="built_in">process</span>+<span class="number">650</span>&gt;    call   <span class="number">0x4008a0</span> &lt;<span class="built_in">puts</span>@plt&gt;</span><br><span class="line">    <span class="number">0x400fbf</span> &lt;<span class="built_in">process</span>+<span class="number">655</span>&gt;    jmp    <span class="number">0x400ea8</span> &lt;<span class="built_in">process</span>+<span class="number">376</span>&gt;</span><br><span class="line">    <span class="number">0x400fc4</span> &lt;<span class="built_in">process</span>+<span class="number">660</span>&gt;    nop    DWORD PTR [rax+<span class="number">0x0</span>]</span><br><span class="line">    <span class="number">0x400fc8</span> &lt;<span class="built_in">process</span>+<span class="number">664</span>&gt;    lea    rdi, [rbp+<span class="number">0x2</span>]</span><br></pre></td></tr></table></figure>
+
+<p>当前的指令是<code>0x400faf</code>，现在可以使用<code>rr</code>的命令<code>reverse-step</code>来回滚，执行4次后：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">    <span class="number">0x400f90</span> &lt;<span class="built_in">process</span>+<span class="number">608</span>&gt;    lea    rsi, [rsp+<span class="number">0x10</span>]</span><br><span class="line">    <span class="number">0x400f95</span> &lt;<span class="built_in">process</span>+<span class="number">613</span>&gt;    mov    edx, <span class="number">0xa</span></span><br><span class="line">    <span class="number">0x400f9a</span> &lt;<span class="built_in">process</span>+<span class="number">618</span>&gt;    call   <span class="number">0x400900</span> &lt;strtol@plt&gt;</span><br><span class="line">→   <span class="number">0x400f9f</span> &lt;<span class="built_in">process</span>+<span class="number">623</span>&gt;    mov    r11, QWORD PTR [rsp+<span class="number">0x10</span>]</span><br><span class="line">    <span class="number">0x400fa4</span> &lt;<span class="built_in">process</span>+<span class="number">628</span>&gt;    cdqe   </span><br><span class="line">    <span class="number">0x400fa6</span> &lt;<span class="built_in">process</span>+<span class="number">630</span>&gt;    lea    r12, [r11+<span class="number">0x1</span>]</span><br><span class="line">    <span class="number">0x400faa</span> &lt;<span class="built_in">process</span>+<span class="number">634</span>&gt;    mov    QWORD PTR [rsp+<span class="number">0x10</span>], r12</span><br><span class="line">    <span class="number">0x400faf</span> &lt;<span class="built_in">process</span>+<span class="number">639</span>&gt;    mov    BYTE PTR [r11+rax*<span class="number">1</span>+<span class="number">0x1</span>], <span class="number">0x0</span></span><br><span class="line">    <span class="number">0x400fb5</span> &lt;<span class="built_in">process</span>+<span class="number">645</span>&gt;    mov    rdi, QWORD PTR [rsp+<span class="number">0x10</span>]</span><br></pre></td></tr></table></figure>
+
+<p>如上所示，我们已经回滚到之前的指令。下一步回退会进入到函数<code>strtol()</code>中，假设我们不想对其调试，可以直接使用命令<code>reverse-next</code>来跳过：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">    <span class="number">0x400f7b</span> &lt;<span class="built_in">process</span>+<span class="number">587</span>&gt;    mov    rcx, QWORD PTR [rsp+<span class="number">0x8</span>]</span><br><span class="line">    <span class="number">0x400f80</span> &lt;<span class="built_in">process</span>+<span class="number">592</span>&gt;    mov    rdx, QWORD PTR [rsp]</span><br><span class="line">    <span class="number">0x400f84</span> &lt;<span class="built_in">process</span>+<span class="number">596</span>&gt;    lea    rsp, [rsp+<span class="number">0x98</span>]</span><br><span class="line">→   <span class="number">0x400f8c</span> &lt;<span class="built_in">process</span>+<span class="number">604</span>&gt;    lea    rdi, [rbp+<span class="number">0x4</span>]</span><br><span class="line">    <span class="number">0x400f90</span> &lt;<span class="built_in">process</span>+<span class="number">608</span>&gt;    lea    rsi, [rsp+<span class="number">0x10</span>]</span><br><span class="line">    <span class="number">0x400f95</span> &lt;<span class="built_in">process</span>+<span class="number">613</span>&gt;    mov    edx, <span class="number">0xa</span></span><br><span class="line">    <span class="number">0x400f9a</span> &lt;<span class="built_in">process</span>+<span class="number">618</span>&gt;    call   <span class="number">0x400900</span> &lt;strtol@plt&gt;</span><br><span class="line">    <span class="number">0x400f9f</span> &lt;<span class="built_in">process</span>+<span class="number">623</span>&gt;    mov    r11, QWORD PTR [rsp+<span class="number">0x10</span>]</span><br><span class="line">    <span class="number">0x400fa4</span> &lt;<span class="built_in">process</span>+<span class="number">628</span>&gt;    cdqe</span><br></pre></td></tr></table></figure>
+
+<p>如上所示，我们已经跳过了函数<code>strtol()</code>。假设我们像知道一个内存地址什么时候被改变以及该地址保存的数据在<code>crash</code>前是怎么变化的。使用命令<code>c</code>使程序继续执行到达崩溃点，然后使用命令`watch进行设置：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">watch *<span class="number">0x00007fff83265820</span></span><br></pre></td></tr></table></figure>
+
+<p>设置后：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">     <span class="number">54</span>	 			<span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"head input was too small\n"</span>);</span><br><span class="line">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── threads ────</span><br><span class="line">[#0] Id 1, stopped 0x400faf in process (), reason: SIGSEGV</span><br><span class="line">─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── trace ────</span><br><span class="line">[#<span class="number">0</span>] <span class="number">0x400faf</span> → <span class="built_in">process</span>(input=&lt;optimized out&gt;)</span><br><span class="line">[#<span class="number">1</span>] <span class="number">0x400a98</span> → main(argc=&lt;optimized out&gt;, argv=<span class="number">0x7fff83265988</span>)</span><br><span class="line">──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span><br><span class="line"><span class="built_in">process</span> (input=&lt;optimized out&gt;, input@entry=<span class="number">0x7fff83265820</span> <span class="string">"head "</span>, <span class="string">'9'</span> &lt;repeats <span class="number">15</span> times&gt;, <span class="string">"\"9"</span>, &lt;incomplete sequence \<span class="number">340</span>&gt;) at vulnerable.c:<span class="number">49</span></span><br><span class="line"><span class="number">49</span>				rest[len] = <span class="string">'\0'</span>; <span class="comment">// truncate string at specified offset</span></span><br><span class="line">gef➤  watch *<span class="number">0x00007fff83265820</span></span><br><span class="line">Hardware watchpoint <span class="number">2</span>: *<span class="number">0x00007fff83265820</span></span><br></pre></td></tr></table></figure>
+
+<p>With that set, let’s now run the “reverse-continue” command to go back in time until the most recent write to that address</p>
+<p>然后，我们运行命令<code>reverse-continue</code>来回退，直到最近该地址被写入的时刻：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── <span class="built_in">stack</span> ────</span><br><span class="line"><span class="number">0x00000000681ffdd8</span>│+<span class="number">0x0000</span>: <span class="number">0x00007f280ce58e44</span>  →  &lt;syscall_hook+<span class="number">10916</span>&gt; mov r15, rax	 ← $rsp</span><br><span class="line"><span class="number">0x00000000681ffde0</span>│+<span class="number">0x0008</span>: <span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x00000000681ffde8</span>│+<span class="number">0x0010</span>: <span class="number">0x000000007fffffff</span></span><br><span class="line"><span class="number">0x00000000681ffdf0</span>│+<span class="number">0x0018</span>: <span class="number">0x00007f280c85a320</span>  →  <span class="number">0x0000000000000001</span></span><br><span class="line"><span class="number">0x00000000681ffdf8</span>│+<span class="number">0x0020</span>: <span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x00000000681ffe00</span>│+<span class="number">0x0028</span>: <span class="number">0x0000000000000081</span></span><br><span class="line"><span class="number">0x00000000681ffe08</span>│+<span class="number">0x0030</span>: <span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x00000000681ffe10</span>│+<span class="number">0x0038</span>: <span class="number">0x0000000000000000</span></span><br><span class="line">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────── code:x86:<span class="number">64</span> ────</span><br><span class="line">   <span class="number">0x7f280ce55214</span> &lt;copy_output_buffer.part+<span class="number">20</span>&gt; rol    BYTE PTR [rcx+rcx*<span class="number">8</span><span class="number">-0x76b7f48b</span>], <span class="number">1</span></span><br><span class="line">   <span class="number">0x7f280ce5521b</span> &lt;copy_output_buffer.part+<span class="number">27</span>&gt; (bad)  </span><br><span class="line">   <span class="number">0x7f280ce5521c</span> &lt;copy_output_buffer.part+<span class="number">28</span>&gt; mov    ecx, r8d</span><br><span class="line"> → <span class="number">0x7f280ce5521f</span> &lt;copy_output_buffer.part+<span class="number">31</span>&gt; rep    movs BYTE PTR es:[rdi], BYTE PTR ds:[rsi]</span><br><span class="line">   <span class="number">0x7f280ce55221</span> &lt;copy_output_buffer.part+<span class="number">33</span>&gt; add    rax, r8</span><br><span class="line">   <span class="number">0x7f280ce55224</span> &lt;copy_output_buffer.part+<span class="number">36</span>&gt; repz   ret</span><br><span class="line">   <span class="number">0x7f280ce55226</span>                  nop    WORD PTR cs:[rax+rax*<span class="number">1</span>+<span class="number">0x0</span>]</span><br><span class="line">   <span class="number">0x7f280ce55230</span> &lt;force_traced_syscall_for_chaos_mode.part+<span class="number">0</span>&gt; mov    edx, DWORD PTR [rip+<span class="number">0x206e4a</span>]        # <span class="number">0x7f280d05c080</span> &lt;buffer_chaos_mode_syscalls&gt;</span><br><span class="line">   <span class="number">0x7f280ce55236</span> &lt;force_traced_syscall_for_chaos_mode.part+<span class="number">6</span>&gt; mov    eax, DWORD PTR [rip+<span class="number">0x206e48</span>]        # <span class="number">0x7f280d05c084</span> &lt;trace_chaos_mode_syscalls&gt;</span><br><span class="line">[!] Command 'context' failed to execute properly, reason: argument of type 'NoneType' is not iterable</span><br><span class="line"></span><br><span class="line">Hardware watchpoint <span class="number">2</span>: * <span class="number">0x00007fff83265820</span></span><br><span class="line"></span><br><span class="line">Old value = <span class="number">0x64616568</span></span><br><span class="line">New value = <span class="number">0x616568</span></span><br><span class="line"><span class="number">0x00007f280ce5521f</span> in local_memcpy (n=<span class="number">0x24</span>, source=<span class="number">0x7f280d16f02e</span>, dest=<span class="number">0x7fff83265823</span>) at /root/rr/src/preload/syscallbuf.c:<span class="number">196</span></span><br><span class="line"><span class="number">196</span>	  __asm__ __volatile__(<span class="string">"rep movsb\n\t"</span></span><br></pre></td></tr></table></figure>
+
+<p>现在，我们可以确切地看到地址中的内容合适被更改以及写入的内容。注意，由于是回退操作，因此“Old value”实际上是该地址最近被修改的值，而“新值”是该地址在更改之前持有的值。<code>向后</code>观察地址的每次更改都可以帮助查找棘手的错误，如：UAF。</p>
+<p><code>rr</code>是执行详细崩溃分析的出色工具。但是，进行仔细的调试可能是一个缓慢的过程，因此，在开始对由<code>Fuzzer</code>生成的崩溃进行分类时，<code>rr</code>可能并不是首选工具。相反，可以通过使用本文前面详细介绍的一些分类工具来缩小可能发生的崩溃的数量。一旦将崩溃输入减少到一定的数目，在使用工具rr，可以大大减少调试崩溃以确定安全隐患所花费的时间。</p>
+<p><code>rr</code>的设计旨在使更复杂的软件（例如浏览器）的调试更加容易。如果想了解<code>rr的在实际中较为复杂程序上如何使用，可以参考链接</code>3。</p>
+<blockquote>
+<ol>
+<li><a href="https://github.com/mozilla/rr" target="_blank" rel="noopener">https://github.com/mozilla/rr</a></li>
+<li><a href="https://rr-project.org/" target="_blank" rel="noopener">https://rr-project.org/</a></li>
+<li><a href="https://blog.ret2.io/2018/06/19/pwn2own-2018-root-cause-analysis/" target="_blank" rel="noopener">https://blog.ret2.io/2018/06/19/pwn2own-2018-root-cause-analysis/</a></li>
+</ol>
+</blockquote>
+<h2 id="七、总结"><a href="#七、总结" class="headerlink" title="七、总结"></a>七、总结</h2><p>本文主要是介绍了一些对<code>crash</code>输入进行分类的工具，可以减少分析的繁琐程度和时间开销。</p>
+<ul>
+<li>可以仅使用<code>crash</code>文件作为输入，在<code>GDB</code>（或其他调试器）中重新运行目标二进制程序来对crash进行分类。这可以重现崩溃，并在调试器中检查有关崩溃的详细信息</li>
+<li><code>exploitable</code>是<code>GDB</code>的一个插件。它会检查目标程序在崩溃点处的状态，并根据当前漏洞能否被利用对其进行分类。</li>
+<li><code>Crashwalk</code>是一款与<code>exploitable</code>搭配使用的工具，可以遍历<code>AFL</code>生成的所有<code>crash</code>输入，并使用<code>exploitable</code>对其进行分析，将结果存储在<code>crashwalk.db</code>文件中。这样可以避免每次对单个崩溃手动运行插件来调试，<code>Crashwalk</code>为了使得结果便于理解，进行了简单的排序。</li>
+<li>AFL的<code>crash exploration mode</code>，通过对当前<code>crash</code>输入进行变异，以便在不更改原来崩溃的情况下探索新的代码路径。这有助于更好地了解攻击者对错误地址或其他崩溃的实际控制权，并且可以在进行漏洞利用时选择最有可能成功的崩溃输入。</li>
+<li><code>rr</code>可以记录程序的执行，然后在调试会话中重放该程序。这样可以很容易地“遍历”整个执行过程，从而避免一遍又一遍地重新启动程序。并且便于检查崩溃之前的程序状态。</li>
+</ul>
+<blockquote>
+<ol>
+<li><a href="https://trustfoundry.net/introduction-to-triaging-fuzzer-generated-crashes/" target="_blank" rel="noopener">https://trustfoundry.net/introduction-to-triaging-fuzzer-generated-crashes/</a></li>
+</ol>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/01/26/IDAPython%E6%8F%90%E5%8F%96%E7%A8%8B%E5%BA%8F%E4%B8%ADCompare%E5%AD%97%E7%AC%A6%E4%BF%A1%E6%81%AF/" rel="next" title="IDAPython提取程序中Compare字符信息">
+                <i class="fa fa-chevron-left"></i> IDAPython提取程序中Compare字符信息
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/03/05/How%20Fuzzers%20Decide%20if%20a%20Crash%20is%20Unique/" rel="prev" title="How Fuzzers Decide if a Crash is Unique.md">
+                How Fuzzers Decide if a Crash is Unique.md <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">zyt</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">27</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#摘要"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一、gef"><span class="nav-number">2.</span> <span class="nav-text">一、gef</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、AFLplusplus"><span class="nav-number">3.</span> <span class="nav-text">二、AFLplusplus</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、GDB-exploitable-plugin"><span class="nav-number">4.</span> <span class="nav-text">三、GDB exploitable plugin</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、Crashwalk"><span class="nav-number">5.</span> <span class="nav-text">四、Crashwalk</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、AFL-crash-exploration-mode"><span class="nav-number">6.</span> <span class="nav-text">五、AFL crash exploration mode</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#六、rr-Record-and-Replay-Framework"><span class="nav-number">7.</span> <span class="nav-text">六、rr (Record and Replay Framework)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#七、总结"><span class="nav-number">8.</span> <span class="nav-text">七、总结</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zyt</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

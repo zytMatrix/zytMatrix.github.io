@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-CN">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="How Fuzzers Decide if a Crash is Unique摘要主要是研究AFL++和Honggfuzz判定unique crash的不同之处。 test1.c： 123456789101112131415161718192021222324252627282930313233343536373839#include &lt;unistd.h&gt;#include &lt;st">
+<meta property="og:type" content="article">
+<meta property="og:title" content="How Fuzzers Decide if a Crash is Unique.md">
+<meta property="og:url" content="http://yoursite.com/2021/03/05/How%20Fuzzers%20Decide%20if%20a%20Crash%20is%20Unique/index.html">
+<meta property="og:site_name" content="Matrix">
+<meta property="og:description" content="How Fuzzers Decide if a Crash is Unique摘要主要是研究AFL++和Honggfuzz判定unique crash的不同之处。 test1.c： 123456789101112131415161718192021222324252627282930313233343536373839#include &lt;unistd.h&gt;#include &lt;st">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-03-05T13:21:16.000Z">
+<meta property="article:modified_time" content="2021-03-05T13:23:01.839Z">
+<meta property="article:author" content="zyt">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"always","offset":12,"b2t":false,"scrollpercent":true,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2021/03/05/How Fuzzers Decide if a Crash is Unique/"/>
+
+
+
+
+
+  <title>How Fuzzers Decide if a Crash is Unique.md | Matrix</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Matrix</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            Tags
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            Categories
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2021/03/05/How%20Fuzzers%20Decide%20if%20a%20Crash%20is%20Unique/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="zyt">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Matrix">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">How Fuzzers Decide if a Crash is Unique.md</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2021-03-05T21:21:16+08:00">
+                2021-03-05
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">In</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Crash-Triage/" itemprop="url" rel="index">
+                    <span itemprop="name">Crash Triage</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="How-Fuzzers-Decide-if-a-Crash-is-Unique"><a href="#How-Fuzzers-Decide-if-a-Crash-is-Unique" class="headerlink" title="How Fuzzers Decide if a Crash is Unique"></a>How Fuzzers Decide if a Crash is Unique</h1><h2 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h2><p>主要是研究AFL++和Honggfuzz判定unique crash的不同之处。</p>
+<p><strong>test1.c：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">vuln</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span>* n = (<span class="keyword">void</span>*) <span class="number">0</span>;</span><br><span class="line">    *n = <span class="number">42</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">char</span> buf[<span class="number">100</span>];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> len = <span class="built_in">read</span>(<span class="number">0</span>, &amp;buf, <span class="number">99</span>);</span><br><span class="line">    buf[len] = <span class="string">'\x00'</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"%s\n"</span>, buf);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'0'</span>)</span><br><span class="line">        vuln();</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'1'</span>)</span><br><span class="line">        vuln();</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'2'</span>)</span><br><span class="line">        vuln();</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'3'</span>)</span><br><span class="line">        vuln();</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'4'</span>)</span><br><span class="line">        vuln();</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'5'</span>)</span><br><span class="line">        vuln();</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'6'</span>)</span><br><span class="line">        vuln();</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'7'</span>)</span><br><span class="line">        vuln();</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'8'</span>)</span><br><span class="line">        vuln();</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'9'</span>)</span><br><span class="line">        vuln();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>test2.c：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">vuln</span><span class="params">(<span class="keyword">char</span> *buf)</span> </span>&#123;</span><br><span class="line">    <span class="built_in">free</span>(buf);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">char</span> buf[<span class="number">100</span>];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> len = <span class="built_in">read</span>(<span class="number">0</span>, &amp;buf, <span class="number">99</span>);</span><br><span class="line">    buf[len] = <span class="string">'\x00'</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">char</span> *buf2 = <span class="built_in">malloc</span>(<span class="number">128</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'0'</span>)</span><br><span class="line">        vuln(buf2);</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'1'</span>)</span><br><span class="line">        vuln(buf2);</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'2'</span>)</span><br><span class="line">        vuln(buf2);</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'3'</span>)</span><br><span class="line">        vuln(buf2);</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'4'</span>)</span><br><span class="line">        vuln(buf2);</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'5'</span>)</span><br><span class="line">        vuln(buf2);</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'6'</span>)</span><br><span class="line">        vuln(buf2);</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'7'</span>)</span><br><span class="line">        vuln(buf2);</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'8'</span>)</span><br><span class="line">        vuln(buf2);</span><br><span class="line">    <span class="keyword">if</span> (buf[<span class="number">0</span>] == <span class="string">'9'</span>)</span><br><span class="line">        vuln(buf2);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">free</span>(buf2);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用相同的字典：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cat dict.txt</span><br><span class="line"><span class="number">0</span></span><br><span class="line"><span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>使用相同的初始种子：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">cat in_1 in_2</span><br><span class="line">a</span><br><span class="line">a1</span><br></pre></td></tr></table></figure>
+
+<h2 id="一、环境准备"><a href="#一、环境准备" class="headerlink" title="一、环境准备"></a>一、环境准备</h2><p>按照官网安装两个<code>fuzzer</code>，并编译测试程序。</p>
+<p><strong>honggfuzz：</strong></p>
+<ul>
+<li><pre><code class="c">docker <span class="built_in">run</span>  -itd --restart=always --name zyt_honggfuzz --privileged -v /data/honggfuzz/:/data -p <span class="number">30001</span>:<span class="number">22</span> zjuchenyuan/honggfuzz /bin/bashc
+&lt;!--￼<span class="number">4</span>--&gt;
+</code></pre>
+</li>
+</ul>
+<p><strong>AFL++：</strong></p>
+<ul>
+<li><pre><code class="c">docker <span class="built_in">run</span>  -itd --restart=always --name zyt_aflpp --privileged -v /data/afl++/:/data -p <span class="number">30000</span>:<span class="number">22</span> aflplusplus/aflplusplus /bin/bash
+&lt;!--￼<span class="number">5</span>--&gt;
+</code></pre>
+</li>
+</ul>
+<h2 id="二、对test-1进行测试"><a href="#二、对test-1进行测试" class="headerlink" title="二、对test_1进行测试"></a>二、对test_1进行测试</h2><h3 id="1、honggfuzz"><a href="#1、honggfuzz" class="headerlink" title="1、honggfuzz"></a>1、honggfuzz</h3><p><strong>测试：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">honggfuzz -i input/ --output out/ -W out/crashes/ -s -w dict.txt -- ./test1_hong <span class="comment">//-o参数报错</span></span><br><span class="line"></span><br><span class="line">------------------------[  <span class="number">0</span> days <span class="number">00</span> hrs <span class="number">00</span> mins <span class="number">08</span> secs ]----------------------</span><br><span class="line">  Iterations : <span class="number">356</span></span><br><span class="line">  Mode [<span class="number">3</span>/<span class="number">3</span>] : Feedback Driven Mode</span><br><span class="line">      Target : ./test1_hong</span><br><span class="line">     Threads : <span class="number">1</span>, CPUs: <span class="number">2</span>, CPU%: <span class="number">104</span>% [<span class="number">52</span>%/CPU]</span><br><span class="line">       Speed : <span class="number">108</span>/sec [avg: <span class="number">44</span>]</span><br><span class="line">     Crashes : <span class="number">70</span> [unique: <span class="number">9</span>, blacklist: <span class="number">0</span>, verified: <span class="number">0</span>]</span><br><span class="line">    Timeouts : <span class="number">0</span> [<span class="number">10</span> sec]</span><br><span class="line"> Corpus Size : <span class="number">16</span>, <span class="built_in">max</span>: <span class="number">8192</span> bytes, init: <span class="number">2</span> files</span><br><span class="line">  Cov Update : <span class="number">0</span> days <span class="number">00</span> hrs <span class="number">00</span> mins <span class="number">01</span> secs ago</span><br><span class="line">    Coverage : edge: <span class="number">22</span>/<span class="number">22</span> [<span class="number">100</span>%] pc: <span class="number">0</span> cmp: <span class="number">319</span></span><br><span class="line">---------------------------------- [ LOGS ] ------------------/ honggfuzz <span class="number">2.0</span> /-</span><br></pre></td></tr></table></figure>
+
+<p><strong>结果输出：</strong></p>
+<p>如下所示，<code>Honggfuzz</code>的<code>crash</code>文件还包含一些其他的信息，如：崩溃信号、指令地址、指令的<code>AT&amp;T</code>汇编码、<code>call stack</code>的<code>hash</code>值</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">root@de807c761e71:/data<span class="meta"># ls out/crashes/</span></span><br><span class="line">HONGGFUZZ.REPORT.TXT</span><br><span class="line">SIGSEGV.PC<span class="number">.428f</span>a3.STACK<span class="number">.1730949569</span>.CODE<span class="number">.1</span>.ADDR<span class="number">.0</span>.INSTR.movl___$<span class="number">0x2a</span>,(%rdi).fuzz</span><br><span class="line">SIGSEGV.PC<span class="number">.428f</span>a3.STACK<span class="number">.1733f</span>1e06f.CODE<span class="number">.1</span>.ADDR<span class="number">.0</span>.INSTR.movl___$<span class="number">0x2a</span>,(%rdi).fuzz</span><br><span class="line">SIGSEGV.PC<span class="number">.428f</span>a3.STACK<span class="number">.17728</span>a643c.CODE<span class="number">.1</span>.ADDR<span class="number">.0</span>.INSTR.movl___$<span class="number">0x2a</span>,(%rdi).fuzz</span><br><span class="line">SIGSEGV.PC<span class="number">.428f</span>a3.STACK<span class="number">.1772e8</span>d49e.CODE<span class="number">.1</span>.ADDR<span class="number">.0</span>.INSTR.movl___$<span class="number">0x2a</span>,(%rdi).fuzz</span><br><span class="line">SIGSEGV.PC<span class="number">.428f</span>a3.STACK<span class="number">.1773b</span>8140e.CODE<span class="number">.1</span>.ADDR<span class="number">.0</span>.INSTR.movl___$<span class="number">0x2a</span>,(%rdi).fuzz</span><br><span class="line">SIGSEGV.PC<span class="number">.428f</span>a3.STACK<span class="number">.17b</span>55c53ac.CODE<span class="number">.1</span>.ADDR<span class="number">.0</span>.INSTR.movl___$<span class="number">0x2a</span>,(%rdi).fuzz</span><br><span class="line">SIGSEGV.PC<span class="number">.428f</span>a3.STACK<span class="number">.17b</span>5b90c66.CODE<span class="number">.1</span>.ADDR<span class="number">.0</span>.INSTR.movl___$<span class="number">0x2a</span>,(%rdi).fuzz</span><br><span class="line">SIGSEGV.PC<span class="number">.428f</span>a3.STACK<span class="number">.17b</span>6ed13b1.CODE<span class="number">.1</span>.ADDR<span class="number">.0</span>.INSTR.movl___$<span class="number">0x2a</span>,(%rdi).fuzz</span><br><span class="line">SIGSEGV.PC<span class="number">.428f</span>a3.STACK<span class="number">.17f</span>4119132.CODE<span class="number">.1</span>.ADDR<span class="number">.0</span>.INSTR.movl___$<span class="number">0x2a</span>,(%rdi).fuzz</span><br></pre></td></tr></table></figure>
+
+<h3 id="2、AFL"><a href="#2、AFL" class="headerlink" title="2、AFL++"></a>2、AFL++</h3><p><strong>测试：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">[afl++]root@<span class="number">78950679</span>a281:/data<span class="meta"># afl-fuzz -i input/ -o out/ -x dict.txt -- ./test1_afl </span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">               american fuzzy lop ++<span class="number">3.01</span>a (<span class="keyword">default</span>) [fast] &#123;<span class="number">0</span>&#125;</span><br><span class="line">┌─ <span class="built_in">process</span> timing ────────────────────────────────────┬─ overall results ────┐</span><br><span class="line">│        <span class="built_in">run</span> time : <span class="number">0</span> days, <span class="number">0</span> hrs, <span class="number">0</span> <span class="built_in">min</span>, <span class="number">11</span> sec      │  cycles done : <span class="number">9</span>     │</span><br><span class="line">│   last <span class="keyword">new</span> path : none yet (odd, check syntax!)     │  total paths : <span class="number">2</span>     │</span><br><span class="line">│ last uniq crash : <span class="number">0</span> days, <span class="number">0</span> hrs, <span class="number">0</span> <span class="built_in">min</span>, <span class="number">8</span> sec       │ uniq crashes : <span class="number">10</span>    │</span><br><span class="line">│  last uniq hang : none seen yet                     │   uniq hangs : <span class="number">0</span>     │</span><br><span class="line">├─ cycle progress ───────────────────┬─ <span class="built_in">map</span> coverage ─┴──────────────────────┤</span><br><span class="line">│  now processing : <span class="number">0.40</span> (<span class="number">0.0</span>%)      │    <span class="built_in">map</span> density : <span class="number">6.25</span>% / <span class="number">6.25</span>%        │</span><br><span class="line">│ paths timed out : <span class="number">0</span> (<span class="number">0.00</span>%)        │ count coverage : <span class="number">1.00</span> bits/tuple      │</span><br><span class="line">├─ stage progress ───────────────────┼─ findings in depth ───────────────────┤</span><br><span class="line">│  now trying : havoc                │ favored paths : <span class="number">1</span> (<span class="number">50.00</span>%)            │</span><br><span class="line">│ stage execs : <span class="number">188</span>/<span class="number">256</span> (<span class="number">73.44</span>%)     │  <span class="keyword">new</span> edges on : <span class="number">1</span> (<span class="number">50.00</span>%)            │</span><br><span class="line">│ total execs : <span class="number">10.2</span>k                │ total crashes : <span class="number">10</span> (<span class="number">10</span> unique)        │</span><br><span class="line">│  exec speed : <span class="number">786.8</span>/sec            │  total tmouts : <span class="number">181</span> (<span class="number">12</span> unique)       │</span><br><span class="line">├─ fuzzing strategy yields ──────────┴───────────────┬─ path geometry ───────┤</span><br><span class="line">│   <span class="built_in">bit</span> flips : n/a, n/a, n/a                        │    levels : <span class="number">1</span>         │</span><br><span class="line">│  <span class="keyword">byte</span> flips : n/a, n/a, n/a                        │   pending : <span class="number">0</span>         │</span><br><span class="line">│ arithmetics : n/a, n/a, n/a                        │  pend fav : <span class="number">0</span>         │</span><br><span class="line">│  known ints : n/a, n/a, n/a                        │ own finds : <span class="number">0</span>         │</span><br><span class="line">│  dictionary : n/a, n/a, n/a                        │  imported : <span class="number">0</span>         │</span><br><span class="line">│havoc/splice : <span class="number">10</span>/<span class="number">9984</span>, <span class="number">0</span>/<span class="number">0</span>                         │ stability : <span class="number">100.00</span>%   │</span><br><span class="line">│   py/custom : <span class="number">0</span>/<span class="number">0</span>, <span class="number">0</span>/<span class="number">0</span>                             ├───────────────────────┘</span><br><span class="line">│        trim : n/a, n/a                             │          [cpu000:<span class="number">800</span>%]</span><br><span class="line">└────────────────────────────────────────────────────┘</span><br><span class="line"></span><br><span class="line">+++ Testing aborted by user +++</span><br><span class="line">[+] We<span class="number">'</span>re done here. Have a nice day!</span><br></pre></td></tr></table></figure>
+
+<p><strong>结果输出：</strong></p>
+<p>如下所示，<code>AFL++</code>输出的<code>crash</code>文件包含信号（<code>SIGILL</code>）、<code>crash</code>文件的父文件、变异方式等</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[afl++]root@<span class="number">78950679</span>a281:/data<span class="meta"># ls out/default/crashes/</span></span><br><span class="line">README.txt                                             id:<span class="number">000005</span>,sig:<span class="number">04</span>,src:<span class="number">000000</span>,time:<span class="number">1323</span>,op:havoc,rep:<span class="number">8</span></span><br><span class="line">id:<span class="number">000000</span>,sig:<span class="number">04</span>,src:<span class="number">000000</span>,time:<span class="number">419</span>,op:havoc,rep:<span class="number">16</span>   id:<span class="number">000006</span>,sig:<span class="number">04</span>,src:<span class="number">000000</span>,time:<span class="number">1576</span>,op:havoc,rep:<span class="number">2</span></span><br><span class="line">id:<span class="number">000001</span>,sig:<span class="number">04</span>,src:<span class="number">000000</span>,time:<span class="number">654</span>,op:havoc,rep:<span class="number">16</span>   id:<span class="number">000007</span>,sig:<span class="number">04</span>,src:<span class="number">000000</span>,time:<span class="number">1719</span>,op:havoc,rep:<span class="number">8</span></span><br><span class="line">id:<span class="number">000002</span>,sig:<span class="number">04</span>,src:<span class="number">000000</span>,time:<span class="number">787</span>,op:havoc,rep:<span class="number">8</span>    id:<span class="number">000008</span>,sig:<span class="number">04</span>,src:<span class="number">000000</span>,time:<span class="number">2568</span>,op:havoc,rep:<span class="number">4</span></span><br><span class="line">id:<span class="number">000003</span>,sig:<span class="number">04</span>,src:<span class="number">000000</span>,time:<span class="number">942</span>,op:havoc,rep:<span class="number">16</span>   id:<span class="number">000009</span>,sig:<span class="number">04</span>,src:<span class="number">000000</span>,time:<span class="number">2872</span>,op:havoc,rep:<span class="number">16</span></span><br><span class="line">id:<span class="number">000004</span>,sig:<span class="number">04</span>,src:<span class="number">000000</span>,time:<span class="number">1098</span>,op:havoc,rep:<span class="number">16</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="三、对test-2测试"><a href="#三、对test-2测试" class="headerlink" title="三、对test_2测试"></a>三、对test_2测试</h2><p>第一次使用编译源码的方式来得到二进制并测试，但是<code>AFL++</code>只能挖到一个<code>unique crash</code>，应该是插桩的位置太少了（由前面源码编译的日志可知），所以第二次直接用<code>gcc</code>编译得到二进制，然后利用两个<code>fuzzer</code>的二进制模式来进行<code>fuzz</code>。</p>
+<h3 id="测试一（源码编译）"><a href="#测试一（源码编译）" class="headerlink" title="测试一（源码编译）"></a>测试一（源码编译）</h3><h3 id="1-honggfuzz"><a href="#1-honggfuzz" class="headerlink" title="1. honggfuzz"></a>1. honggfuzz</h3><p><strong>测试：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">  </span><br><span class="line">------------------------[  <span class="number">0</span> days <span class="number">00</span> hrs <span class="number">00</span> mins <span class="number">30</span> secs ]----------------------</span><br><span class="line">  Iterations : <span class="number">225</span></span><br><span class="line">  Mode [<span class="number">3</span>/<span class="number">3</span>] : Feedback Driven Mode</span><br><span class="line">      Target : ./test2_hong</span><br><span class="line">     Threads : <span class="number">1</span>, CPUs: <span class="number">2</span>, CPU%: <span class="number">200</span>% [<span class="number">100</span>%/CPU]</span><br><span class="line">       Speed : <span class="number">7</span>/sec [avg: <span class="number">7</span>]</span><br><span class="line">     Crashes : <span class="number">50</span> [unique: <span class="number">1</span>, blacklist: <span class="number">0</span>, verified: <span class="number">0</span>]</span><br><span class="line">    Timeouts : <span class="number">0</span> [<span class="number">10</span> sec]</span><br><span class="line"> Corpus Size : <span class="number">15</span>, <span class="built_in">max</span>: <span class="number">8192</span> bytes, init: <span class="number">2</span> files</span><br><span class="line">  Cov Update : <span class="number">0</span> days <span class="number">00</span> hrs <span class="number">00</span> mins <span class="number">03</span> secs ago</span><br><span class="line">    Coverage : edge: <span class="number">23</span>/<span class="number">24</span> [<span class="number">95</span>%] pc: <span class="number">1</span> cmp: <span class="number">319</span></span><br><span class="line">---------------------------------- [ LOGS ] ------------------/ honggfuzz <span class="number">2.0</span> /-</span><br></pre></td></tr></table></figure>
+
+<p><strong>结果输出：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">root@de807c761e71:/data<span class="meta"># ls out/crashes2/</span></span><br><span class="line">HONGGFUZZ.REPORT.TXT  SIGABRT.PC<span class="number">.7f</span>fff7a42428.STACK.d38a05301.CODE.<span class="number">-6.</span>ADDR<span class="number">.0</span>.INSTR.cmp____$<span class="number">0xfffffffffffff000</span>,%rax.fuzz</span><br></pre></td></tr></table></figure>
+
+<h3 id="2、AFL-1"><a href="#2、AFL-1" class="headerlink" title="2、AFL++"></a>2、AFL++</h3><p><strong>测试：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"> afl-fuzz -i input/ -o out2/ -x dict.txt -- ./test2_afl</span><br><span class="line"> </span><br><span class="line"> 						american fuzzy lop ++<span class="number">3.01</span>a (<span class="keyword">default</span>) [fast] &#123;<span class="number">0</span>&#125;</span><br><span class="line">┌─ <span class="built_in">process</span> timing ────────────────────────────────────┬─ overall results ────┐</span><br><span class="line">│        <span class="built_in">run</span> time : <span class="number">0</span> days, <span class="number">0</span> hrs, <span class="number">1</span> <span class="built_in">min</span>, <span class="number">30</span> sec      │  cycles done : <span class="number">65</span>    │</span><br><span class="line">│   last <span class="keyword">new</span> path : none yet (odd, check syntax!)     │  total paths : <span class="number">2</span>     │</span><br><span class="line">│ last uniq crash : <span class="number">0</span> days, <span class="number">0</span> hrs, <span class="number">1</span> <span class="built_in">min</span>, <span class="number">30</span> sec      │ uniq crashes : <span class="number">1</span>     │</span><br><span class="line">│  last uniq hang : none seen yet                     │   uniq hangs : <span class="number">0</span>     │</span><br><span class="line">├─ cycle progress ───────────────────┬─ <span class="built_in">map</span> coverage ─┴──────────────────────┤</span><br><span class="line">│  now processing : <span class="number">0.264</span> (<span class="number">0.0</span>%)     │    <span class="built_in">map</span> density : <span class="number">6.25</span>% / <span class="number">6.25</span>%        │</span><br><span class="line">│ paths timed out : <span class="number">0</span> (<span class="number">0.00</span>%)        │ count coverage : <span class="number">1.00</span> bits/tuple      │</span><br><span class="line">├─ stage progress ───────────────────┼─ findings in depth ───────────────────┤</span><br><span class="line">│  now trying : havoc                │ favored paths : <span class="number">1</span> (<span class="number">50.00</span>%)            │</span><br><span class="line">│ stage execs : <span class="number">40</span>/<span class="number">256</span> (<span class="number">15.62</span>%)      │  <span class="keyword">new</span> edges on : <span class="number">1</span> (<span class="number">50.00</span>%)            │</span><br><span class="line">│ total execs : <span class="number">67.4</span>k                │ total crashes : <span class="number">1</span> (<span class="number">1</span> unique)          │</span><br><span class="line">│  exec speed : <span class="number">678.6</span>/sec            │  total tmouts : <span class="number">1485</span> (<span class="number">3</span> unique)       │</span><br><span class="line">├─ fuzzing strategy yields ──────────┴───────────────┬─ path geometry ───────┤</span><br><span class="line">│   <span class="built_in">bit</span> flips : n/a, n/a, n/a                        │    levels : <span class="number">1</span>         │</span><br><span class="line">│  <span class="keyword">byte</span> flips : n/a, n/a, n/a                        │   pending : <span class="number">0</span>         │</span><br><span class="line">│ arithmetics : n/a, n/a, n/a                        │  pend fav : <span class="number">0</span>         │</span><br><span class="line">│  known ints : n/a, n/a, n/a                        │ own finds : <span class="number">0</span>         │</span><br><span class="line">│  dictionary : n/a, n/a, n/a                        │  imported : <span class="number">0</span>         │</span><br><span class="line">│havoc/splice : <span class="number">1</span>/<span class="number">67.3</span>k, <span class="number">0</span>/<span class="number">0</span>                         │ stability : <span class="number">100.00</span>%   │</span><br><span class="line">│   py/custom : <span class="number">0</span>/<span class="number">0</span>, <span class="number">0</span>/<span class="number">0</span>                             ├───────────────────────┘</span><br><span class="line">│        trim : n/a, n/a                             │          [cpu000:<span class="number">750</span>%]</span><br><span class="line">└────────────────────────────────────────────────────┘</span><br><span class="line"></span><br><span class="line">+++ Testing aborted by user +++</span><br></pre></td></tr></table></figure>
+
+<p><strong>结果输出：</strong></p>
+<p>如下所示，AFL++输出的crash文件包含信号（SIGABRT）、crash文件的父文件、变异方式等</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[afl++]root@<span class="number">78950679</span>a281:/data<span class="meta"># ls out2/default/crashes/</span></span><br><span class="line">README.txt  id:<span class="number">000000</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">140</span>,op:havoc,rep:<span class="number">8</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="测试二（二进制）"><a href="#测试二（二进制）" class="headerlink" title="测试二（二进制）"></a>测试二（二进制）</h3><h3 id="1、honggfuzz-1"><a href="#1、honggfuzz-1" class="headerlink" title="1、honggfuzz"></a>1、honggfuzz</h3><p><strong>测试：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">honggfuzz -i input/ --output out/ -W out/crashes2/ -s -w dict.txt -- ./a.out</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">------------------------[  <span class="number">0</span> days <span class="number">00</span> hrs <span class="number">00</span> mins <span class="number">10</span> secs ]----------------------</span><br><span class="line">  Iterations : <span class="number">1316</span> [<span class="number">1.32</span>k]</span><br><span class="line">  Mode [<span class="number">3</span>/<span class="number">3</span>] : Feedback Driven Mode</span><br><span class="line">      Target : ./a.out</span><br><span class="line">     Threads : <span class="number">1</span>, CPUs: <span class="number">2</span>, CPU%: <span class="number">105</span>% [<span class="number">52</span>%/CPU]</span><br><span class="line">       Speed : <span class="number">107</span>/sec [avg: <span class="number">131</span>]</span><br><span class="line">     Crashes : <span class="number">95</span> [unique: <span class="number">1</span>, blacklist: <span class="number">0</span>, verified: <span class="number">0</span>]</span><br><span class="line">    Timeouts : <span class="number">0</span> [<span class="number">10</span> sec]</span><br><span class="line"> Corpus Size : <span class="number">1</span>, <span class="built_in">max</span>: <span class="number">8192</span> bytes, init: <span class="number">2</span> files</span><br><span class="line">  Cov Update : <span class="number">0</span> days <span class="number">00</span> hrs <span class="number">00</span> mins <span class="number">10</span> secs ago</span><br><span class="line">    Coverage : edge: <span class="number">0</span>/<span class="number">0</span> [<span class="number">0</span>%] pc: <span class="number">0</span> cmp: <span class="number">0</span></span><br><span class="line">---------------------------------- [ LOGS ] ------------------/ honggfuzz <span class="number">2.0</span> /-</span><br></pre></td></tr></table></figure>
+
+<p><strong>结果输出：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">root@de807c761e71:/data<span class="meta"># ls out/crashes2/</span></span><br><span class="line">HONGGFUZZ.REPORT.TXT  SIGABRT.PC<span class="number">.7f</span>fff7a42428.STACK.cfb95914e.CODE.<span class="number">-6.</span>ADDR<span class="number">.0</span>.INSTR.cmp____$<span class="number">0xfffffffffffff000</span>,%rax.fuzz</span><br></pre></td></tr></table></figure>
+
+<h3 id="2、AFL-2"><a href="#2、AFL-2" class="headerlink" title="2、AFL++"></a>2、AFL++</h3><p><strong>测试：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"> afl-fuzz -i input/ -o out2/ -x dict.txt -Q -- ./a.out</span><br><span class="line">   </span><br><span class="line">               american fuzzy lop ++<span class="number">3.01</span>a (<span class="keyword">default</span>) [fast] &#123;<span class="number">0</span>&#125;</span><br><span class="line">┌─ <span class="built_in">process</span> timing ────────────────────────────────────┬─ overall results ────┐</span><br><span class="line">│        <span class="built_in">run</span> time : <span class="number">0</span> days, <span class="number">0</span> hrs, <span class="number">0</span> <span class="built_in">min</span>, <span class="number">10</span> sec      │  cycles done : <span class="number">11</span>    │</span><br><span class="line">│   last <span class="keyword">new</span> path : none yet (odd, check syntax!)     │  total paths : <span class="number">2</span>     │</span><br><span class="line">│ last uniq crash : <span class="number">0</span> days, <span class="number">0</span> hrs, <span class="number">0</span> <span class="built_in">min</span>, <span class="number">7</span> sec       │ uniq crashes : <span class="number">10</span>    │</span><br><span class="line">│  last uniq hang : none seen yet                     │   uniq hangs : <span class="number">0</span>     │</span><br><span class="line">├─ cycle progress ───────────────────┬─ <span class="built_in">map</span> coverage ─┴──────────────────────┤</span><br><span class="line">│  now processing : <span class="number">0</span>*<span class="number">48</span> (<span class="number">0.0</span>%)      │    <span class="built_in">map</span> density : <span class="number">0.05</span>% / <span class="number">0.05</span>%        │</span><br><span class="line">│ paths timed out : <span class="number">0</span> (<span class="number">0.00</span>%)        │ count coverage : <span class="number">1.00</span> bits/tuple      │</span><br><span class="line">├─ stage progress ───────────────────┼─ findings in depth ───────────────────┤</span><br><span class="line">│  now trying : havoc                │ favored paths : <span class="number">1</span> (<span class="number">50.00</span>%)            │</span><br><span class="line">│ stage execs : <span class="number">167</span>/<span class="number">192</span> (<span class="number">86.98</span>%)     │  <span class="keyword">new</span> edges on : <span class="number">1</span> (<span class="number">50.00</span>%)            │</span><br><span class="line">│ total execs : <span class="number">9217</span>                 │ total crashes : <span class="number">10</span> (<span class="number">10</span> unique)        │</span><br><span class="line">│  exec speed : <span class="number">956.0</span>/sec            │  total tmouts : <span class="number">167</span> (<span class="number">10</span> unique)       │</span><br><span class="line">├─ fuzzing strategy yields ──────────┴───────────────┬─ path geometry ───────┤</span><br><span class="line">│   <span class="built_in">bit</span> flips : n/a, n/a, n/a                        │    levels : <span class="number">1</span>         │</span><br><span class="line">│  <span class="keyword">byte</span> flips : n/a, n/a, n/a                        │   pending : <span class="number">0</span>         │</span><br><span class="line">│ arithmetics : n/a, n/a, n/a                        │  pend fav : <span class="number">1</span>         │</span><br><span class="line">│  known ints : n/a, n/a, n/a                        │ own finds : <span class="number">0</span>         │</span><br><span class="line">│  dictionary : n/a, n/a, n/a                        │  imported : <span class="number">0</span>         │</span><br><span class="line">│havoc/splice : <span class="number">10</span>/<span class="number">9024</span>, <span class="number">0</span>/<span class="number">0</span>                         │ stability : <span class="number">100.00</span>%   │</span><br><span class="line">│   py/custom : <span class="number">0</span>/<span class="number">0</span>, <span class="number">0</span>/<span class="number">0</span>                             ├───────────────────────┘</span><br><span class="line">│        trim : n/a, n/a                             │          [cpu000:<span class="number">100</span>%]</span><br><span class="line">└────────────────────────────────────────────────────┘</span><br><span class="line"></span><br><span class="line">+++ Testing aborted by user +++</span><br><span class="line">[+] We<span class="number">'</span>re done here. Have a nice day!</span><br></pre></td></tr></table></figure>
+
+<p><strong>测试结果：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[afl++]root@<span class="number">78950679</span>a281:/data<span class="meta"># ls out2/default/crashes/</span></span><br><span class="line">README.txt                                            id:<span class="number">000005</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">1114</span>,op:havoc,rep:<span class="number">8</span></span><br><span class="line">id:<span class="number">000000</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">211</span>,op:havoc,rep:<span class="number">8</span>   id:<span class="number">000006</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">1427</span>,op:havoc,rep:<span class="number">4</span></span><br><span class="line">id:<span class="number">000001</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">360</span>,op:havoc,rep:<span class="number">16</span>  id:<span class="number">000007</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">1570</span>,op:havoc,rep:<span class="number">2</span></span><br><span class="line">id:<span class="number">000002</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">552</span>,op:havoc,rep:<span class="number">16</span>  id:<span class="number">000008</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">1779</span>,op:havoc,rep:<span class="number">4</span></span><br><span class="line">id:<span class="number">000003</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">789</span>,op:havoc,rep:<span class="number">16</span>  id:<span class="number">000009</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">2478</span>,op:havoc,rep:<span class="number">16</span></span><br><span class="line">id:<span class="number">000004</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">918</span>,op:havoc,rep:<span class="number">8</span></span><br></pre></td></tr></table></figure>
+
+<p><code>honggfuzz</code>挖掘出的<code>crash</code>与<code>AFL ++</code>挖掘出的<code>crash</code>崩溃信号一致，但<code>honggfuzz</code>只有一个<code>unique crash</code>而<code>AFL++</code>有10个<code>unique crash</code>。<code>AFL</code>及其派生<code>fuzz</code>工具是检查不同的<code>crash</code>输入是否执行了相同的边来确定其唯一性。也即，不同的<code>crash</code>输入如果执行了相同的边，属于相同的崩溃。但若执行了不同的边，属于不同的崩溃。<code>Honggfuzz</code>的策略是，程序发生崩溃时，对<code>stack frame</code>进行分析，计算其<code>hash</code>值，以此作为崩溃唯一性的判断标准。</p>
+<p>如下所示，对于<code>test1.c</code>来说，发生崩溃时的调用栈是<code>main-&gt;vuln</code>；但是发生与<code>main</code>函数的不同地址处，所以<code>honggfuzz</code>将其识别为不同的崩溃。</p>
+<p><strong>id_1：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">     <span class="number">0x428f92</span> &lt;vuln+<span class="number">18</span>&gt;        call   <span class="number">0x429fc0</span> &lt;__sanitizer_cov_trace_pc_guard&gt;</span><br><span class="line">     <span class="number">0x428f97</span> &lt;vuln+<span class="number">23</span>&gt;        mov    QWORD PTR [rbp<span class="number">-0x8</span>], <span class="number">0x0</span></span><br><span class="line">     <span class="number">0x428f9f</span> &lt;vuln+<span class="number">31</span>&gt;        mov    rdi, QWORD PTR [rbp<span class="number">-0x8</span>]</span><br><span class="line"> →   <span class="number">0x428fa3</span> &lt;vuln+<span class="number">35</span>&gt;        mov    DWORD PTR [rdi], <span class="number">0x2a</span></span><br><span class="line">     <span class="number">0x428fa9</span> &lt;vuln+<span class="number">41</span>&gt;        add    rsp, <span class="number">0x10</span></span><br><span class="line">     <span class="number">0x428fad</span> &lt;vuln+<span class="number">45</span>&gt;        pop    rbp</span><br><span class="line">     <span class="number">0x428fae</span> &lt;vuln+<span class="number">46</span>&gt;        ret    </span><br><span class="line">     <span class="number">0x428faf</span>                  nop    </span><br><span class="line">     <span class="number">0x428fb0</span> &lt;main+<span class="number">0</span>&gt;         push   rbp</span><br><span class="line">─────────────────────────────────────────────────────────── threads ────</span><br><span class="line">[#0] Id 1, Name: "test1_hong", stopped 0x428fa3 in vuln (), reason: SIGSEGV</span><br><span class="line">──────────────────────────────────────────────────────────── trace ────</span><br><span class="line">[#<span class="number">0</span>] <span class="number">0x428fa3</span> → vuln()</span><br><span class="line">[#<span class="number">1</span>] <span class="number">0x4290bb</span> → main()</span><br><span class="line">──────────────────────────────────────────────────────────────</span><br><span class="line"><span class="number">0x0000000000428fa3</span> <span class="function">in <span class="title">vuln</span> <span class="params">()</span></span></span><br></pre></td></tr></table></figure>
+
+<p><strong>id_2：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">     <span class="number">0x428f92</span> &lt;vuln+<span class="number">18</span>&gt;        call   <span class="number">0x429fc0</span> &lt;__sanitizer_cov_trace_pc_guard&gt;</span><br><span class="line">     <span class="number">0x428f97</span> &lt;vuln+<span class="number">23</span>&gt;        mov    QWORD PTR [rbp<span class="number">-0x8</span>], <span class="number">0x0</span></span><br><span class="line">     <span class="number">0x428f9f</span> &lt;vuln+<span class="number">31</span>&gt;        mov    rdi, QWORD PTR [rbp<span class="number">-0x8</span>]</span><br><span class="line"> →   <span class="number">0x428fa3</span> &lt;vuln+<span class="number">35</span>&gt;        mov    DWORD PTR [rdi], <span class="number">0x2a</span></span><br><span class="line">     <span class="number">0x428fa9</span> &lt;vuln+<span class="number">41</span>&gt;        add    rsp, <span class="number">0x10</span></span><br><span class="line">     <span class="number">0x428fad</span> &lt;vuln+<span class="number">45</span>&gt;        pop    rbp</span><br><span class="line">     <span class="number">0x428fae</span> &lt;vuln+<span class="number">46</span>&gt;        ret    </span><br><span class="line">     <span class="number">0x428faf</span>                  nop    </span><br><span class="line">     <span class="number">0x428fb0</span> &lt;main+<span class="number">0</span>&gt;         push   rbp</span><br><span class="line">───────────────────────────────────────────────────── threads ────</span><br><span class="line">[#0] Id 1, Name: "test1_hong", stopped 0x428fa3 in vuln (), reason: SIGSEGV</span><br><span class="line">───────────────────────────────────────────────────── trace ────</span><br><span class="line">[#<span class="number">0</span>] <span class="number">0x428fa3</span> → vuln()</span><br><span class="line">[#<span class="number">1</span>] <span class="number">0x429338</span> → main()</span><br><span class="line">─────────────────────────────────────────────────────────────────────</span><br><span class="line"><span class="number">0x0000000000428fa3</span> <span class="function">in <span class="title">vuln</span> <span class="params">()</span></span></span><br></pre></td></tr></table></figure>
+
+<p>但是对于<code>test2.c</code>来说，我们查看发生崩溃时的调用栈可知，当前程序执行状态不在我们的程序中，而是在<code>libc</code>中。这是由于<code>main-&gt;vuln(free)-&gt;main-&gt;free</code>，也即最后崩溃时的调用栈是<code>main-&gt;free</code>。所以所有的崩溃输入在<code>honggfuzz</code>看来都是相同的。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">   <span class="number">0x7ffff7a20fab</span> &lt;raise+<span class="number">187</span>&gt;      mov    edi, <span class="number">0x2</span></span><br><span class="line">   <span class="number">0x7ffff7a20fb0</span> &lt;raise+<span class="number">192</span>&gt;      mov    eax, <span class="number">0xe</span></span><br><span class="line">   <span class="number">0x7ffff7a20fb5</span> &lt;raise+<span class="number">197</span>&gt;      syscall </span><br><span class="line"> → <span class="number">0x7ffff7a20fb7</span> &lt;raise+<span class="number">199</span>&gt;      mov    rcx, QWORD PTR [rsp+<span class="number">0x108</span>]</span><br><span class="line">   <span class="number">0x7ffff7a20fbf</span> &lt;raise+<span class="number">207</span>&gt;      <span class="keyword">xor</span>    rcx, QWORD PTR fs:<span class="number">0x28</span></span><br><span class="line">   <span class="number">0x7ffff7a20fc8</span> &lt;raise+<span class="number">216</span>&gt;      mov    eax, r8d</span><br><span class="line">   <span class="number">0x7ffff7a20fcb</span> &lt;raise+<span class="number">219</span>&gt;      jne    <span class="number">0x7ffff7a20fec</span> &lt;__GI_raise+<span class="number">252</span>&gt;</span><br><span class="line">   <span class="number">0x7ffff7a20fcd</span> &lt;raise+<span class="number">221</span>&gt;      add    rsp, <span class="number">0x118</span></span><br><span class="line">   <span class="number">0x7ffff7a20fd4</span> &lt;raise+<span class="number">228</span>&gt;      ret    </span><br><span class="line">─────────────────────────────────────────────────────── threads ────</span><br><span class="line">[#<span class="number">0</span>] Id <span class="number">1</span>, Name: <span class="string">"a.out"</span>, stopped <span class="number">0x7ffff7a20fb7</span> in __GI_raise (), reason: SIGABRT</span><br><span class="line">──────────────────────────────────────────────────────── trace ────</span><br><span class="line">[#<span class="number">0</span>] <span class="number">0x7ffff7a20fb7</span> → __GI_raise(sig=<span class="number">0x6</span>)</span><br><span class="line">[#<span class="number">1</span>] <span class="number">0x7ffff7a22921</span> → __GI_abort()</span><br><span class="line">[#<span class="number">2</span>] <span class="number">0x7ffff7a6b967</span> → __libc_message(action=do_abort, fmt=<span class="number">0x7ffff7b98b0d</span> <span class="string">"%s\n"</span>)</span><br><span class="line">[#<span class="number">3</span>] <span class="number">0x7ffff7a729da</span> → malloc_printerr(str=<span class="number">0x7ffff7b9a778</span> <span class="string">"free(): double free detected in tcache 2"</span>)</span><br><span class="line">[#<span class="number">4</span>] <span class="number">0x7ffff7a7a20d</span> → _int_free(have_lock=<span class="number">0x0</span>, p=<span class="number">0x555555559250</span>, av=<span class="number">0x7ffff7dcdc40</span> &lt;main_arena&gt;)</span><br><span class="line">[#<span class="number">5</span>] <span class="number">0x7ffff7a7a20d</span> → __GI___libc_free(mem=<span class="number">0x555555559260</span>)</span><br><span class="line">[#<span class="number">6</span>] <span class="number">0x5555555552e8</span> → main()</span><br><span class="line">────────────────────────────────────────────────────────────────────</span><br><span class="line">__GI_raise (sig=sig@entry=<span class="number">0x6</span>) at ../sysdeps/unix/sysv/linux/raise.c:<span class="number">51</span></span><br><span class="line"><span class="number">51</span>	../sysdeps/unix/sysv/linux/raise.c: No such file <span class="keyword">or</span> directory.</span><br></pre></td></tr></table></figure>
+
+<p>本文主要是为了说明两个<code>fuzzer</code>判定<code>unique crash</code>的不同之处。但从<code>test1.c</code>的测试结果来看，<code>AFL++</code>的判定标准并不合理，实际的错误与输入数据无关，输入并不会影响漏洞本身。</p>
+<h2 id="四、exploitable"><a href="#四、exploitable" class="headerlink" title="四、exploitable"></a>四、exploitable</h2><p>这是<code>gdb</code>的一个插件，它也使用了程序崩溃时<code>stack frame</code>的<code>hash</code>值作为<code>crash</code>分类的标准。</p>
+<p><strong>test1.c：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">[#<span class="number">0</span>] <span class="number">0x428fa3</span> → vuln()</span><br><span class="line">[#<span class="number">1</span>] <span class="number">0x4290bb</span> → main()</span><br><span class="line">─────────────────────────────────────────────────────────────────────────</span><br><span class="line"><span class="number">0x0000000000428fa3</span> <span class="function">in <span class="title">vuln</span> <span class="params">()</span></span></span><br><span class="line">gef➤  exploitable </span><br><span class="line">Description: Access violation near <span class="literal">NULL</span> on destination operand</span><br><span class="line">Short description: DestAvNearNull (<span class="number">15</span>/<span class="number">22</span>)</span><br><span class="line">Hash: <span class="number">4</span>c033e9bab954200ad1a1c2f7e900862<span class="number">.4</span>c033e9bab954200ad1a1c2f7e900862</span><br><span class="line">Exploitability Classification: PROBABLY_EXPLOITABLE</span><br><span class="line">Explanation: The target crashed on an access violation at an address matching the destination operand of the instruction. This likely indicates a <span class="built_in">write</span> access violation, which means the attacker may control <span class="built_in">write</span> address <span class="keyword">and</span>/<span class="keyword">or</span> value. However, it there is a chance it could be a <span class="literal">NULL</span> dereference.</span><br><span class="line">Other tags: AccessViolation (<span class="number">21</span>/<span class="number">22</span>)</span><br></pre></td></tr></table></figure>
+
+<p><strong>test2.c：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">[#<span class="number">0</span>] <span class="number">0x7ffff7a20fb7</span> → __GI_raise(sig=<span class="number">0x6</span>)</span><br><span class="line">[#<span class="number">1</span>] <span class="number">0x7ffff7a22921</span> → __GI_abort()</span><br><span class="line">[#<span class="number">2</span>] <span class="number">0x7ffff7a6b967</span> → __libc_message(action=do_abort, fmt=<span class="number">0x7ffff7b98b0d</span> <span class="string">"%s\n"</span>)</span><br><span class="line">[#<span class="number">3</span>] <span class="number">0x7ffff7a729da</span> → malloc_printerr(str=<span class="number">0x7ffff7b9a778</span> <span class="string">"free(): double free detected in tcache 2"</span>)</span><br><span class="line">[#<span class="number">4</span>] <span class="number">0x7ffff7a7a20d</span> → _int_free(have_lock=<span class="number">0x0</span>, p=<span class="number">0x555555559250</span>, av=<span class="number">0x7ffff7dcdc40</span> &lt;main_arena&gt;)</span><br><span class="line">[#<span class="number">5</span>] <span class="number">0x7ffff7a7a20d</span> → __GI___libc_free(mem=<span class="number">0x555555559260</span>)</span><br><span class="line">[#<span class="number">6</span>] <span class="number">0x5555555552e8</span> → main()</span><br><span class="line">───────────────────────────────────────────────────────────────────────────</span><br><span class="line">__GI_raise (sig=sig@entry=<span class="number">0x6</span>) at ../sysdeps/unix/sysv/linux/raise.c:<span class="number">51</span></span><br><span class="line"><span class="number">51</span>	../sysdeps/unix/sysv/linux/raise.c: No such file <span class="keyword">or</span> directory.</span><br><span class="line">gef➤  exploitable </span><br><span class="line">Description: Heap error</span><br><span class="line">Short description: HeapError (<span class="number">10</span>/<span class="number">22</span>)</span><br><span class="line">Hash: e34fddc8b3624c6925411059ef0e7e48<span class="number">.4f</span>2fa546c07f6ab6315cb75f6168e245</span><br><span class="line">Exploitability Classification: EXPLOITABLE</span><br><span class="line">Explanation: The target's backtrace indicates that libc has detected a heap error or that the target was executing a heap function when it stopped. This could be due to heap corruption, passing a bad pointer to a heap function such as free(), etc. Since heap errors might include buffer overflows, use-after-free situations, etc. they are generally considered exploitable.</span><br><span class="line">Other tags: AbortSignal (<span class="number">20</span>/<span class="number">22</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="五、CrashWalk"><a href="#五、CrashWalk" class="headerlink" title="五、CrashWalk"></a>五、CrashWalk</h2><p><code>CrashWalk</code>可以自动化运行<code>exploitable</code>插件，对<code>crash</code>进行批量分析，并将结果保存至<code>db</code>文件。</p>
+<p><strong>test1.c：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/root/crashwalk/bin/cwtriage -root ./out/<span class="keyword">default</span>/crashes/ -match id -- ./test1_afl</span><br></pre></td></tr></table></figure>
+
+<p>查看db文件</p>
+<p>按理说，<code>crashwalk</code>应该将10个<code>crash</code>分为10种类型才对，不该是一种类型。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">root@vm:/data/afl++# /root/crashwalk/bin/cwdump ./crashwalk.db </span><br><span class="line">(<span class="number">1</span> of <span class="number">10</span>) - Hash: b285fc0ef368db2a018e400ea5c1d9f1.b285fc0ef368db2a018e400ea5c1d9f1</span><br><span class="line">---CRASH SUMMARY---</span><br><span class="line">Filename: out/<span class="keyword">default</span>/crashes/id:<span class="number">000004</span>,sig:<span class="number">04</span>,src:<span class="number">000000</span>,time:<span class="number">1098</span>,op:havoc,rep:<span class="number">16</span></span><br><span class="line">SHA1: <span class="number">1b</span>6453892473a467d07372d45eb05abc2031647a</span><br><span class="line">Classification: EXPLOITABLE</span><br><span class="line">Hash: b285fc0ef368db2a018e400ea5c1d9f1.b285fc0ef368db2a018e400ea5c1d9f1</span><br><span class="line">Command: ./test1_afl</span><br><span class="line">Faulting Frame:</span><br><span class="line">   main @ <span class="number">0x00000000004013fe</span>: in /data/afl++/test1_afl</span><br><span class="line">Disassembly:</span><br><span class="line">   <span class="number">0x00000000004013ef</span>: mov rcx,QWORD PTR [r14]</span><br><span class="line">   <span class="number">0x00000000004013f2</span>: mov dl,BYTE PTR [rcx+rax*<span class="number">1</span>]</span><br><span class="line">   <span class="number">0x00000000004013f5</span>: add dl,<span class="number">0x1</span></span><br><span class="line">   <span class="number">0x00000000004013f8</span>: adc dl,<span class="number">0x0</span></span><br><span class="line">   <span class="number">0x00000000004013fb</span>: mov BYTE PTR [rcx+rax*<span class="number">1</span>],dl</span><br><span class="line">=&gt; <span class="number">0x00000000004013fe</span>: ud2</span><br><span class="line">Stack Head (<span class="number">1</span> entries):</span><br><span class="line">   main                      @ <span class="number">0x00000000004013fe</span>: in /data/afl++/test1_afl</span><br><span class="line">Registers:</span><br><span class="line">rax=<span class="number">0x0000000000000006</span> rbx=<span class="number">0x00007fffffffe310</span> rcx=<span class="number">0x0000000000406190</span> rdx=<span class="number">0x00007ffff7dcf801</span> </span><br><span class="line">rsi=<span class="number">0x00007fffffffe310</span> rdi=<span class="number">0x00007ffff7dce760</span> rbp=<span class="number">0x0000000000403b90</span> rsp=<span class="number">0x00007fffffffe310</span> </span><br><span class="line"> r8=<span class="number">0x0000000000000000</span>  r9=<span class="number">0x0000000000000000</span> r10=<span class="number">0x0000000000607010</span> r11=<span class="number">0x0000000000000000</span> </span><br><span class="line">r12=<span class="number">0x0000000000401220</span> r13=<span class="number">0x00007fffffffe460</span> r14=<span class="number">0x0000000000406128</span> r15=<span class="number">0x0000000000000000</span> </span><br><span class="line">rip=<span class="number">0x00000000004013fe</span> efl=<span class="number">0x0000000000010202</span>  cs=<span class="number">0x0000000000000033</span>  ss=<span class="number">0x000000000000002b</span> </span><br><span class="line"> ds=<span class="number">0x0000000000000000</span>  es=<span class="number">0x0000000000000000</span>  fs=<span class="number">0x0000000000000000</span>  gs=<span class="number">0x0000000000000000</span> </span><br><span class="line">Extra Data:</span><br><span class="line">   Description: Bad instruction</span><br><span class="line">   Short description: BadInstruction (<span class="number">9</span>/<span class="number">22</span>)</span><br><span class="line">   Explanation: The target tried to execute a malformed <span class="keyword">or</span> privileged instruction. This may indicate that the control flow is tainted.</span><br><span class="line">---END SUMMARY---</span><br></pre></td></tr></table></figure>
+
+<p><strong>test2.c：</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">/root/crashwalk/bin/cwtriage -root ./out2/<span class="keyword">default</span>/crashes/ -match id -- ./a.out</span><br></pre></td></tr></table></figure>
+
+<p>查看db文件：</p>
+<p>由下可知，<code>crashwalk</code>将10个<code>crash</code>分类为同一类型。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">root@vm:/data/afl++# /root/crashwalk/bin/cwdump ./crashwalk.db </span><br><span class="line">(<span class="number">1</span> of <span class="number">10</span>) - Hash: <span class="number">9b</span>d3e28a685f34691518e98a9108508a<span class="number">.1b</span>6f925959746a071401ff0dac31e6d4</span><br><span class="line">---CRASH SUMMARY---</span><br><span class="line">Filename: out2/<span class="keyword">default</span>/crashes/id:<span class="number">000004</span>,sig:<span class="number">06</span>,src:<span class="number">000000</span>,time:<span class="number">918</span>,op:havoc,rep:<span class="number">8</span></span><br><span class="line">SHA1: <span class="number">58444</span>a509ad03bdb1afc44f126f7a1650717ddd1</span><br><span class="line">Classification: EXPLOITABLE</span><br><span class="line">Hash: <span class="number">9b</span>d3e28a685f34691518e98a9108508a<span class="number">.1b</span>6f925959746a071401ff0dac31e6d4</span><br><span class="line">Command: ./a.out</span><br><span class="line">Faulting Frame:</span><br><span class="line">   main @ <span class="number">0x00005555555552e8</span>: in /data/afl++/a.out</span><br><span class="line">Disassembly:</span><br><span class="line">   <span class="number">0x00007ffff7a20fa6</span>: <span class="keyword">xor</span> edx,edx</span><br><span class="line">   <span class="number">0x00007ffff7a20fa8</span>: mov rsi,r9</span><br><span class="line">   <span class="number">0x00007ffff7a20fab</span>: mov edi,<span class="number">0x2</span></span><br><span class="line">   <span class="number">0x00007ffff7a20fb0</span>: mov eax,<span class="number">0xe</span></span><br><span class="line">   <span class="number">0x00007ffff7a20fb5</span>: syscall</span><br><span class="line">=&gt; <span class="number">0x00007ffff7a20fb7</span>: mov rcx,QWORD PTR [rsp+<span class="number">0x108</span>]</span><br><span class="line">   <span class="number">0x00007ffff7a20fbf</span>: <span class="keyword">xor</span> rcx,QWORD PTR fs:<span class="number">0x28</span></span><br><span class="line">   <span class="number">0x00007ffff7a20fc8</span>: mov eax,r8d</span><br><span class="line">   <span class="number">0x00007ffff7a20fcb</span>: jne <span class="number">0x7ffff7a20fec</span> &lt;__GI_raise+<span class="number">252</span>&gt;</span><br><span class="line">   <span class="number">0x00007ffff7a20fcd</span>: add rsp,<span class="number">0x118</span></span><br><span class="line">Stack Head (<span class="number">7</span> entries):</span><br><span class="line">   __GI_raise                @ <span class="number">0x00007ffff7a20fb7</span>: in (BL)</span><br><span class="line">   __GI_abort                @ <span class="number">0x00007ffff7a22921</span>: in (BL)</span><br><span class="line">   __libc_message            @ <span class="number">0x00007ffff7a6b967</span>: in (BL)</span><br><span class="line">   malloc_printerr           @ <span class="number">0x00007ffff7a729da</span>: in (BL)</span><br><span class="line">   _int_free                 @ <span class="number">0x00007ffff7a7a20d</span>: in (BL)</span><br><span class="line">   __GI___libc_free          @ <span class="number">0x00007ffff7a7a20d</span>: in (BL)</span><br><span class="line">   main                      @ <span class="number">0x00005555555552e8</span>: in /data/afl++/a.out</span><br><span class="line">Registers:</span><br><span class="line">rax=<span class="number">0x0000000000000000</span> rbx=<span class="number">0x00007fffffffe180</span> rcx=<span class="number">0x00007ffff7a20fb7</span> rdx=<span class="number">0x0000000000000000</span> </span><br><span class="line">rsi=<span class="number">0x00007fffffffdf10</span> rdi=<span class="number">0x0000000000000002</span> rbp=<span class="number">0x00007fffffffe280</span> rsp=<span class="number">0x00007fffffffdf10</span> </span><br><span class="line"> r8=<span class="number">0x0000000000000000</span>  r9=<span class="number">0x00007fffffffdf10</span> r10=<span class="number">0x0000000000000008</span> r11=<span class="number">0x0000000000000246</span> </span><br><span class="line">r12=<span class="number">0x00007fffffffe180</span> r13=<span class="number">0x0000000000001000</span> r14=<span class="number">0x0000000000000000</span> r15=<span class="number">0x0000000000000030</span> </span><br><span class="line">rip=<span class="number">0x00007ffff7a20fb7</span> efl=<span class="number">0x0000000000000246</span>  cs=<span class="number">0x0000000000000033</span>  ss=<span class="number">0x000000000000002b</span> </span><br><span class="line"> ds=<span class="number">0x0000000000000000</span>  es=<span class="number">0x0000000000000000</span>  fs=<span class="number">0x0000000000000000</span>  gs=<span class="number">0x0000000000000000</span> </span><br><span class="line">Extra Data:</span><br><span class="line">   Description: Heap error</span><br><span class="line">   Short description: HeapError (<span class="number">10</span>/<span class="number">22</span>)</span><br><span class="line">   Explanation: The target<span class="number">'</span>s backtrace indicates that libc has detected a heap error <span class="keyword">or</span> that the target was executing a heap function when it stopped. This could be due to heap corruption, passing a bad pointer to a heap function such as <span class="built_in">free</span>(), etc. Since heap errors might include <span class="built_in">buffer</span> overflows, use-after-<span class="built_in">free</span> situations, etc. they are generally considered exploitable.</span><br><span class="line">---END SUMMARY---</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ol>
+<li><a href="https://insinuator.net/2020/12/how-fuzzers-decide-if-a-crash-is-unique/" target="_blank" rel="noopener">https://insinuator.net/2020/12/how-fuzzers-decide-if-a-crash-is-unique/</a></li>
+</ol>
+</blockquote>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/03/05/%E5%A6%82%E4%BD%95%E5%AF%B9Fuzzer%E7%94%9F%E6%88%90%E7%9A%84%E5%B4%A9%E6%BA%83%E8%BE%93%E5%85%A5%E8%BF%9B%E8%A1%8C%E5%88%86%E7%B1%BB/" rel="next" title="如何对Fuzzer生成的崩溃输入进行分类">
+                <i class="fa fa-chevron-left"></i> 如何对Fuzzer生成的崩溃输入进行分类
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name">zyt</p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">27</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">categories</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">tags</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#How-Fuzzers-Decide-if-a-Crash-is-Unique"><span class="nav-number">1.</span> <span class="nav-text">How Fuzzers Decide if a Crash is Unique</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#摘要"><span class="nav-number">1.1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#一、环境准备"><span class="nav-number">1.2.</span> <span class="nav-text">一、环境准备</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二、对test-1进行测试"><span class="nav-number">1.3.</span> <span class="nav-text">二、对test_1进行测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1、honggfuzz"><span class="nav-number">1.3.1.</span> <span class="nav-text">1、honggfuzz</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2、AFL"><span class="nav-number">1.3.2.</span> <span class="nav-text">2、AFL++</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三、对test-2测试"><span class="nav-number">1.4.</span> <span class="nav-text">三、对test_2测试</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#测试一（源码编译）"><span class="nav-number">1.4.1.</span> <span class="nav-text">测试一（源码编译）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-honggfuzz"><span class="nav-number">1.4.2.</span> <span class="nav-text">1. honggfuzz</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2、AFL-1"><span class="nav-number">1.4.3.</span> <span class="nav-text">2、AFL++</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#测试二（二进制）"><span class="nav-number">1.4.4.</span> <span class="nav-text">测试二（二进制）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1、honggfuzz-1"><span class="nav-number">1.4.5.</span> <span class="nav-text">1、honggfuzz</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2、AFL-2"><span class="nav-number">1.4.6.</span> <span class="nav-text">2、AFL++</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四、exploitable"><span class="nav-number">1.5.</span> <span class="nav-text">四、exploitable</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五、CrashWalk"><span class="nav-number">1.6.</span> <span class="nav-text">五、CrashWalk</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">zyt</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+          <span id="scrollpercent"><span>0</span>%</span>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
